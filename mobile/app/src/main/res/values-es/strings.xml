@@ -1,0 +1,814 @@
+<resources>
+    <string name="app_name">YAOP</string>
+
+    <!-- Navigation & Common -->
+    <string name="tab_journal">Escribir</string>
+    <string name="tab_timeline">Cronología</string>
+    <string name="tab_created">Timeline</string>
+    <string name="today">Hoy</string>
+    <string name="week_number">Semana %1$d</string>
+    <string name="daily_note">Nota diaria</string>
+    <string name="references_for_this_day">Referencias de este día</string>
+    <string name="related_tasks">Tareas relacionadas</string>
+    <string name="related_dates">Fechas relacionadas</string>
+    <string name="objects_and_tags">Objetos y etiquetas</string>
+    <string name="references_count">Referencias (%1$d)</string>
+
+    <!-- Actions & Common Buttons -->
+    <string name="action_add_block">Añadir bloque</string>
+    <string name="action_delete_block">Eliminar bloque</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="back">Atrás</string>
+    <string name="options">Opciones</string>
+    <string name="toggle_calendar">Alternar calendario</string>
+
+    <!-- Block Placeholders -->
+    <string name="placeholder_default">Escribe \'/\' para comandos o \'@\' para vincular&#8230;</string>
+    <string name="placeholder_heading">Encabezado %1$s</string>
+    <string name="placeholder_todo">Tarea pendiente&#8230;</string>
+    <string name="placeholder_bullet">Elemento de lista&#8230;</string>
+    <string name="placeholder_numbered">Lista numerada&#8230;</string>
+    <string name="placeholder_roman">Elemento de lista romana&#8230;</string>
+    <string name="placeholder_quote">Cita textual&#8230;</string>
+    <string name="placeholder_callout">Nota destacada&#8230;</string>
+    <string name="placeholder_code">// Código aquí&#8230;</string>
+    <string name="placeholder_toggle">Encabezado desplegable&#8230;</string>
+    <string name="placeholder_toggle_child">Texto dentro del desplegable&#8230;</string>
+    <string name="placeholder_math">Fórmula TeX&#8230;</string>
+    <string name="placeholder_cell">Celda</string>
+    <string name="linked_object_prefix">Objeto vinculado: %1$s</string>
+
+    <!-- Block Types -->
+    <string name="block_type_paragraph">Texto (Párrafo)</string>
+    <string name="block_type_h1">Encabezado 1 (H1)</string>
+    <string name="block_type_h2">Encabezado 2 (H2)</string>
+    <string name="block_type_h3">Encabezado 3 (H3)</string>
+    <string name="block_type_h4">Encabezado 4 (H4)</string>
+    <string name="block_type_todo">Lista de tareas</string>
+    <string name="block_type_bullet">Lista con viñetas</string>
+    <string name="block_type_numbered">Lista numerada</string>
+    <string name="block_type_roman">Lista romana</string>
+    <string name="block_type_quote">Cita textual</string>
+    <string name="block_type_callout">Nota destacada</string>
+    <string name="block_type_code">Bloque de código</string>
+    <string name="block_type_divider">Separador divisor</string>
+    <string name="block_type_toggle">Desplegable (Toggle)</string>
+    <string name="block_type_math">TeX / Matemática</string>
+    <string name="block_type_table">Tabla</string>
+
+    <!-- TeX / Math Block -->
+    <string name="tex_preview_button">TeX</string>
+    <string name="tex_badge">TeX</string>
+    <string name="tex_code_title">TeX-Code</string>
+    <string name="tex_preview_title">Vista previa</string>
+    <string name="action_done">Listo</string>
+    <string name="action_collapse_math">Ocultar editor</string>
+    <string name="empty_math_formula">Fórmula vacía — tocar para editar</string>
+    <string name="learn_more">Aprender más</string>
+
+    <!-- Table Block Actions -->
+    <string name="action_add_column">Añadir columna</string>
+    <string name="action_add_row">Añadir fila</string>
+    <string name="action_delete_column">Eliminar columna</string>
+    <string name="action_delete_row">Eliminar fila</string>
+    <string name="action_clear_table">Limpiar tabla</string>
+    <string name="table_options">Opciones de tabla</string>
+
+    <!-- Code Block Actions & Languages -->
+    <string name="copy_code">Copiar código</string>
+    <string name="code_copied">Código copiado al portapapeles</string>
+    <string name="code_options">Opciones de código</string>
+    <string name="action_clear_code">Limpiar código</string>
+    <string name="language_javascript">JavaScript</string>
+    <string name="language_typescript">TypeScript</string>
+    <string name="language_kotlin">Kotlin</string>
+    <string name="language_python">Python</string>
+    <string name="language_java">Java</string>
+    <string name="language_cpp">C++</string>
+    <string name="language_html">HTML</string>
+    <string name="language_css">CSS</string>
+    <string name="language_json">JSON</string>
+    <string name="language_sql">SQL</string>
+    <string name="language_markdown">Markdown</string>
+    <string name="language_shell">Shell</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_insert_block_title">Insertar bloque</string>
+    <string name="dialog_link_object_title">Vincular objeto</string>
+    <string name="search_objects_placeholder">Buscar notas, tareas, libros&#8230;</string>
+    <string name="no_objects_found">No se encontraron objetos</string>
+    <string name="create_object_with_name">Crear \"%1$s\"</string>
+    <string name="create_new_object">Crear nuevo objeto</string>
+    <string name="create_object_subtitle">Crear y vincular un nuevo objeto</string>
+    <string name="dialog_create_object_title">Crear nuevo objeto</string>
+    <string name="label_select_type">Seleccionar tipo:</string>
+    <string name="label_title">Título</string>
+    <string name="placeholder_title_example">p. ej. Diseño de aplicaciones</string>
+    <string name="action_create">Crear</string>
+
+    <!-- Editor Accessory Keyboard Bar -->
+    <string name="kb_action_outdent">Desangrar / Párrafo</string>
+    <string name="kb_action_indent">Sangrar / Viñeta</string>
+    <string name="kb_action_toggle_heading">Encabezado H1/H2/H3</string>
+    <string name="kb_action_insert_block">Insertar bloque (Slash / +)</string>
+    <string name="kb_action_mention_object">Vincular objeto (@)</string>
+    <string name="kb_action_tag">Etiqueta (#)</string>
+    <string name="kb_action_toggle_todo">Tarea To-Do</string>
+    <string name="kb_action_toggle_quote">Cita textual</string>
+    <string name="kb_action_toggle_code">Código</string>
+    <string name="kb_action_hide_keyboard">Ocultar teclado</string>
+    <string name="action_line_break">Salto de línea</string>
+
+    <!-- Editor Toolbar (rail above the IME) -->
+    <string name="toolbar_overflow">Más herramientas</string>
+    <string name="toolbar_section_style">Estilo</string>
+    <string name="toolbar_section_lists">Listas</string>
+    <string name="toolbar_section_objects">Objetos y etiquetas</string>
+    <string name="toolbar_section_blocks">Bloques</string>
+    <string name="toolbar_section_math">Matemática</string>
+    <string name="toolbar_section_code">Código</string>
+    <string name="toolbar_section_table">Tabla</string>
+    <string name="action_strikethrough">Tachado</string>
+    <string name="action_highlight">Resaltado</string>
+    <string name="action_wikilink">Enlace wiki ([[objeto]])</string>
+    <string name="action_paragraph">Párrafo</string>
+
+    <!-- Tags Bottom Sheet -->
+    <string name="search_or_create_placeholder">Buscar o crear</string>
+    <string name="new_tag_action">+ Nuevo Etiqueta</string>
+    <string name="tags_badge">Etiquetas</string>
+    <string name="no_tags_found">No se encontraron etiquetas</string>
+    <string name="action_remove_tag">Eliminar etiqueta %1$s</string>
+
+    <!-- Slash & Mention Bottom Sheets -->
+    <string name="search_block_type_placeholder">Buscar tipo de bloque&#8230;</string>
+    <string name="new_object_action">+ Nuevo Objeto</string>
+    <string name="objects_badge">Objetos</string>
+    <string name="badge_block_types">Bloques</string>
+    <string name="action_remove_mention">Eliminar mención %1$s</string>
+
+    <!-- Object Detail Tabs & References -->
+    <string name="tab_content">Contenido</string>
+    <string name="tab_properties">Propiedades</string>
+    <string name="tab_references">Vínculos</string>
+    <string name="section_outgoing_references">A dónde apunta (%1$d)</string>
+    <string name="section_incoming_references">Quién apunta a él (%1$d)</string>
+    <string name="section_attachments">Adjuntos (%1$d)</string>
+    <string name="no_outgoing_references">Este objeto no apunta a ningún otro objeto todavía</string>
+    <string name="no_incoming_references">Ningún objeto hace referencia a este objeto todavía</string>
+    <string name="no_attachments">No hay archivos adjuntos</string>
+    <string name="pin_to_top">Fijar al inicio</string>
+    <string name="unpin_from_top">Desfijar del inicio</string>
+    <string name="move_to_trash">Mover a la papelera</string>
+    <string name="title_placeholder">Título</string>
+
+    <!-- Spaces Screen -->
+    <string name="spaces_title">Espacios</string>
+    <string name="search_spaces_placeholder">Buscar objetos, etiquetas, notas...</string>
+    <string name="filter_all">Todos</string>
+    <string name="no_matches_found">No se encontraron coincidencias</string>
+    <string name="no_objects_yet">Aún no hay objetos</string>
+    <string name="tap_to_create_hint">Toca el botón + para crear una nota, etiqueta u objeto</string>
+    <string name="create_object_fab">Crear objeto</string>
+    <string name="search_action">Buscar</string>
+
+    <!-- Contextual Type Selector Bar -->
+    <string name="hide_types">Ocultar tipos ▾</string>
+    <string name="show_types">Mostrar tipos ▴</string>
+    <string name="type_search">Buscar</string>
+    <string name="type_note">Nota</string>
+    <string name="type_tasks">Tareas</string>
+    <string name="type_bookmark">Marcador</string>
+    <string name="type_project">Proyecto</string>
+
+    <!-- Rich Text Formatting Actions -->
+    <string name="action_bold">Negrita</string>
+    <string name="action_italic">Cursiva</string>
+    <string name="action_inline_code">Código en línea</string>
+    <string name="action_bullet_list">Lista con viñetas</string>
+    <string name="action_numbered_list">Lista numerada</string>
+    <string name="action_roman_list">Lista romana</string>
+
+    <!-- Contextual TeX Math Toolbar -->
+    <string name="math_fraction">Fracción</string>
+    <string name="math_exponent">Exponente</string>
+    <string name="math_subscript">Subíndice</string>
+    <string name="math_sqrt">Raíz cuadrada</string>
+    <string name="math_sum">Sumatoria</string>
+    <string name="math_integral">Integral</string>
+    <string name="math_pi">Pi</string>
+    <string name="math_infinity">Infinito</string>
+
+    <!-- Contextual Code Block Toolbar -->
+    <string name="code_indent">Sangría</string>
+    <string name="code_curly_braces">Llaves</string>
+    <string name="code_parentheses">Paréntesis</string>
+    <string name="code_brackets">Corchetes</string>
+    <string name="code_quotes">Comillas</string>
+    <string name="code_arrow">Flecha</string>
+
+    <!-- Contextual Table Toolbar -->
+    <string name="table_add_col">+ Col</string>
+    <string name="table_add_row">+ Fila</string>
+    <string name="table_del_col">- Col</string>
+    <string name="table_del_row">- Fila</string>
+
+    <!-- Editor Bottom Sheet -->
+    <string name="sheet_description">Descripción</string>
+    <string name="sheet_show_toggle">Mostrar</string>
+    <string name="sheet_icon">Icono</string>
+    <string name="sheet_cover">Portada</string>
+    <string name="sheet_properties">Propiedades</string>
+    <string name="sheet_undo">Deshacer</string>
+    <string name="sheet_redo">Rehacer</string>
+    <string name="sheet_add_cover">Añadir portada</string>
+    <string name="sheet_remove_cover">Eliminar portada</string>
+    <string name="sheet_change_icon">Cambiar icono</string>
+    <string name="sheet_properties_count">%1$d propiedades</string>
+    <string name="description_placeholder">Añadir una descripción...</string>
+    <string name="sheet_undo_tile">Deshacer / Rehacer</string>
+    <string name="sheet_select_emoji">Seleccionar emoji</string>
+
+    <!-- Properties & Custom Properties -->
+    <string name="untitled_object">Sin título</string>
+    <string name="properties_section_title">Propiedades</string>
+    <string name="action_add_property">Añadir propiedad</string>
+    <string name="property_empty">Vacío</string>
+    <string name="property_select_option">Seleccionar opción...</string>
+    <string name="property_rating_stars">%1$d estrellas</string>
+    <string name="property_number_zero">0</string>
+    <string name="property_date_placeholder">AAAA-MM-DD</string>
+    <string name="property_url_placeholder">https://...</string>
+    <string name="property_custom">Personalizado</string>
+    <string name="dialog_add_property_title">Añadir propiedad</string>
+    <string name="label_property_name">Nombre de la propiedad</string>
+    <string name="label_property_type">Tipo:</string>
+    <string name="action_add">Añadir</string>
+    <string name="property_kind_rich_text">Texto</string>
+    <string name="property_kind_select">Selección</string>
+    <string name="property_kind_number">Número</string>
+    <string name="property_kind_checkbox">Casilla</string>
+
+    <!-- Link Preview -->
+    <string name="link_preview_open">Abrir enlace</string>
+    <string name="link_preview_loading">Cargando vista previa…</string>
+    <string name="link_preview_image">Imagen de vista previa</string>
+    <string name="link_preview_favicon">Icono del sitio</string>
+
+    <!-- Media Blocks -->
+    <string name="media_loading">Cargando medio…</string>
+    <string name="media_stop">Detener</string>
+    <string name="media_tap_to_record">Tocar para grabar</string>
+    <string name="media_recording">Grabando</string>
+    <string name="media_pause">Pausar</string>
+    <string name="media_play">Reproducir</string>
+    <string name="media_pdf_pages">%1$d páginas</string>
+    <string name="media_audio_recording_name">Grabación de audio (%1$s)</string>
+    <string name="block_type_image">Imagen</string>
+    <string name="block_type_audio">Audio</string>
+    <string name="block_type_pdf">PDF</string>
+
+    <!-- Tasks -->
+    <string name="tasks_overdue">Vencidas</string>
+    <string name="tasks_upcoming">Próximas</string>
+    <string name="tasks_no_date">Sin fecha</string>
+    <string name="tasks_filter_todo">Pendientes</string>
+    <string name="tasks_filter_in_progress">En progreso</string>
+    <string name="tasks_filter_done">Completadas</string>
+    <string name="tasks_priority_low">Baja</string>
+    <string name="tasks_priority_medium">Media</string>
+    <string name="tasks_priority_high">Alta</string>
+    <string name="action_swipe_complete">Completar</string>
+    <string name="action_swipe_uncomplete">Pendiente</string>
+    <string name="action_swipe_priority">Prioridad</string>
+    <string name="action_swipe_indent">Sangrar</string>
+    <string name="action_swipe_outdent">Reducir sangría</string>
+    <string name="mention_recent">Recientes</string>
+    <string name="mention_types">Tipos de objeto</string>
+
+    <!-- New Editor v1 Strings (Block Types, Toolbar Modes, Colors, Previews) -->
+    <string name="block_type_alphabetic">Lista alfabética</string>
+    <string name="block_type_group">Grupo de bloques</string>
+    <string name="block_type_bookmark">Marcador web</string>
+    <string name="block_type_embed">Incrustar objeto</string>
+    <string name="placeholder_alphabetic">Elemento de lista alfabética&#8230;</string>
+    <string name="placeholder_group">Texto agrupado&#8230;</string>
+    <string name="placeholder_bookmark">https://&#8230;</string>
+    <string name="placeholder_caption">Añadir pie de foto&#8230;</string>
+    <string name="placeholder_url_input">Pegar URL o buscar enlaces&#8230;</string>
+    <string name="placeholder_filter_types">Filtrar tipos de objeto&#8230;</string>
+
+    <!-- Block Categories -->
+    <string name="block_category_text">Texto</string>
+    <string name="block_category_lists">Listas</string>
+    <string name="block_category_technical">Técnicos</string>
+    <string name="block_category_media">Medios</string>
+    <string name="block_category_objects">Objetos y web</string>
+
+    <!-- Dynamic Toolbar & Formatting -->
+    <string name="action_underline">Subrayado</string>
+    <string name="action_format_menu">Formato de texto</string>
+    <string name="action_color_menu">Colores</string>
+    <string name="action_text_color">Texto</string>
+    <string name="action_bg_color">Fondo</string>
+    <string name="action_clear_color">Quitar color</string>
+    <string name="action_link">Enlace</string>
+    <string name="action_insert_date">Insertar fecha</string>
+    <string name="action_exit_block">Salir ↓</string>
+    <string name="action_undo">Deshacer</string>
+    <string name="action_redo">Rehacer</string>
+    <string name="action_switch_to_keyboard">Teclado</string>
+    <string name="action_more_results">Ver más</string>
+    <string name="action_create_as_prefix">Crear \"%1$s\" como:</string>
+    <string name="action_create_tag_chip">+ Crear #%1$s</string>
+    <string name="action_other_type">Otro&#8230;</string>
+    <string name="action_use_url">Usar %1$s</string>
+    <string name="action_paste_as_bookmark">Marcador</string>
+    <string name="action_paste_as_link">Enlace</string>
+    <string name="action_paste_as_mention">Mención</string>
+    <string name="paste_url_prompt">URL pegada:</string>
+
+    <!-- Multi-Block Selection Mode -->
+    <string name="selection_count_badge">%1$d seleccionados</string>
+    <string name="action_move_up">Subir</string>
+    <string name="action_move_down">Bajar</string>
+    <string name="action_duplicate_block">Duplicar</string>
+    <string name="action_convert_block">Convertir</string>
+    <string name="action_group_blocks">Agrupar</string>
+    <string name="action_ungroup_blocks">Desagrupar</string>
+    <string name="action_block_color">Color de bloque</string>
+    <string name="action_copy_text">Copiar texto</string>
+    <string name="action_copy_markdown">Copiar Markdown</string>
+    <string name="blocks_deleted_notice">Bloques eliminados</string>
+    <string name="action_undo_delete">Deshacer</string>
+    <string name="action_edit_caption">Pie de foto</string>
+    <string name="image_width_25">25%</string>
+    <string name="image_width_50">50%</string>
+    <string name="image_width_75">75%</string>
+    <string name="image_width_100">100%</string>
+
+    <!-- Table Alignment -->
+    <string name="table_align_left">Alinear a la izquierda</string>
+    <string name="table_align_center">Centrar</string>
+    <string name="table_align_right">Alinear a la derecha</string>
+
+    <!-- Previews & Actions (Pattern F & E) -->
+    <string name="action_open_object">Abrir</string>
+    <string name="action_open_browser">Abrir en el navegador</string>
+    <string name="action_open_in_app">Abrir en YAOP</string>
+    <string name="action_edit_link">Editar enlace</string>
+    <string name="action_remove_link">Quitar enlace</string>
+    <string name="action_remove_mention_btn">Quitar mención</string>
+    <string name="selector_links_and_objects_title">Seleccionar enlace u objeto</string>
+    <string name="selector_filter_all">Todos</string>
+    <string name="selector_filter_links">Enlaces web</string>
+    <string name="toggle_hidden_items_badge">+%1$d</string>
+
+    <!-- Audio & Media Panel -->
+    <string name="action_discard">Descartar</string>
+    <string name="action_insert_audio">Insertar</string>
+    <string name="action_resume">Reanudar</string>
+    <string name="media_uploading_progress">Procesando (%1$d%%)&#8230;</string>
+
+    <!-- Inline Dates -->
+    <string name="date_today">Hoy</string>
+    <string name="date_tomorrow">Mañana</string>
+    <string name="date_yesterday">Ayer</string>
+    <string name="date_next_monday">Próximo lunes</string>
+    <string name="daily_tasks_and_events_header">Tareas y eventos del día (%1$d)</string>
+
+    <!-- Named Color Palette -->
+    <string name="color_default">Por defecto</string>
+    <string name="color_gray">Gris</string>
+    <string name="color_red">Rojo</string>
+    <string name="color_orange">Naranja</string>
+    <string name="color_yellow">Amarillo</string>
+    <string name="color_green">Verde</string>
+    <string name="color_blue">Azul</string>
+    <string name="color_purple">Morado</string>
+    <string name="color_pink">Rosa</string>
+
+    <!-- Daily Timeline & Created Tabs -->
+    <string name="timeline_header_count">%1$d eventos registrados</string>
+    <string name="timeline_header_count_one">1 evento registrado</string>
+    <string name="timeline_header_empty">Sin eventos registrados</string>
+    <string name="timeline_sort_asc">Más antiguos primero</string>
+    <string name="timeline_sort_desc">Más recientes primero</string>
+    <string name="timeline_empty_title">Sin actividad en la cronología</string>
+    <string name="timeline_empty_desc">No se crearon ni registraron notas o tareas en esta fecha.</string>
+    <string name="timeline_quick_log_hint">Registra una idea o tarea a esta hora&#8230;</string>
+    <string name="timeline_action_note">+ Nota</string>
+    <string name="timeline_action_task">+ Tarea</string>
+    <string name="timeline_period_morning">Mañana</string>
+    <string name="timeline_period_afternoon">Tarde</string>
+    <string name="timeline_period_night">Noche</string>
+    <string name="timeline_filter_notes">Notas</string>
+    <string name="timeline_filter_tasks">Tareas</string>
+    <string name="timeline_filter_other">Otros</string>
+
+    <string name="created_new_note">Crear nota</string>
+    <string name="created_new_task">Crear tarea</string>
+
+    <!-- Calendar Navigation & Header -->
+    <string name="action_previous_month">Mes anterior</string>
+    <string name="action_next_month">Mes siguiente</string>
+    <string name="action_previous_week">Semana anterior</string>
+    <string name="action_next_week">Semana siguiente</string>
+    <string name="action_collapse_calendar">Plegar calendario</string>
+    <string name="action_expand_calendar">Desplegar calendario</string>
+    <string name="action_collapse_cover">Plegar portada</string>
+    <string name="action_expand_cover">Desplegar portada</string>
+
+    <!-- Image Object Gallery & Detail -->
+    <string name="view_mode_gallery">Galería</string>
+    <string name="view_mode_list">Lista</string>
+    <string name="image_hero_zoom">Zoom</string>
+    <string name="image_replace">Reemplazar</string>
+    <string name="image_add_first">Seleccionar imagen</string>
+    <string name="image_tap_to_upload">Toca para elegir o tomar una foto</string>
+    <string name="image_format_resolution_4k">4K</string>
+    <string name="image_resolution_format">%1$d×%2$d px</string>
+    <string name="image_notes_header">Notas y contenido</string>
+    <string name="image_share">Compartir</string>
+    <string name="image_empty_gallery">No hay imágenes aún</string>
+
+    <!-- Daily References Tab Strings -->
+    <string name="references_title">Referencias del día (%1$d)</string>
+    <string name="references_filter_all">Todas (%1$d)</string>
+    <string name="references_filter_tasks">Tareas (%1$d)</string>
+    <string name="references_filter_mentions">Menciones (%1$d)</string>
+    <string name="references_filter_dates">Fechas (%1$d)</string>
+    <string name="references_empty_title">Sin referencias para esta fecha</string>
+    <string name="references_empty_desc">Menciona esta fecha usando @ o programa tareas para verlas conectadas aquí.</string>
+    <string name="references_section_tasks">Tareas vinculadas</string>
+    <string name="references_section_mentions">Menciones y enlaces entrantes</string>
+    <string name="references_section_dates">Objetos con fecha relacionada</string>
+
+    <!-- Daily Created Gallery Tab Strings -->
+    <string name="created_gallery_title">Creados en este día (%1$d)</string>
+    <string name="created_gallery_empty_title">No hay elementos creados en esta fecha</string>
+    <string name="created_gallery_empty_desc">Las notas, imágenes, tareas y documentos creados hoy se mostrarán en esta galería visual.</string>
+    <string name="created_filter_all_items">Todos (%1$d)</string>
+    <string name="created_filter_notes">Notas</string>
+    <string name="created_filter_media">Medios y Docs</string>
+    <string name="created_filter_tasks">Tareas</string>
+    <string name="created_filter_other">Otros</string>
+    <string name="action_add_image">Añadir imagen</string>
+
+    <!-- Bottom Dock & Quick Capture -->
+    <string name="dock_tab_home">Inicio</string>
+    <string name="dock_tab_daily">Diario</string>
+    <string name="dock_tab_tasks">Tareas</string>
+    <string name="dock_tab_search">Buscar</string>
+    <string name="dock_quick_capture">Captura rápida</string>
+    <string name="quick_action_note">Nota</string>
+    <string name="quick_action_task">Tarea</string>
+    <string name="quick_action_image">Imagen</string>
+    <string name="quick_action_link">Enlace Web</string>
+    <string name="quick_action_more">Más</string>
+    <string name="quick_capture_instant_note_created">Nota rápida creada</string>
+    <string name="create_object_action">Crear %1$s</string>
+    <string name="search_types_placeholder">Filtrar tipos...</string>
+
+    <!-- Date Objects & References -->
+    <string name="action_open_date">Abrir fecha</string>
+    <string name="action_remove_date">Quitar fecha</string>
+    <string name="date_mentions_count">%1$d mención(es)</string>
+    <string name="date_object_label">Fecha</string>
+    <string name="view_references_hint">Ver %1$d referencia(s) de esta fecha</string>
+
+    <!-- Audio Object Gallery & Detail -->
+    <string name="audio_replace">Reemplazar</string>
+    <string name="audio_add_first">Grabar o elegir audio</string>
+    <string name="audio_tap_to_record_or_upload">Toca para grabar o elegir un archivo de audio</string>
+    <string name="audio_empty_gallery">No hay audios aún</string>
+    <string name="audio_sheet_title">Audio</string>
+    <string name="audio_record_new">Empezar a grabar</string>
+    <string name="audio_pick_file">Elegir archivo de audio</string>
+    <string name="audio_save_recording">Guardar audio</string>
+    <string name="audio_placeholder_title">Nombre del audio (opcional)&#8230;</string>
+    <string name="audio_recorder_paused">Grabación en pausa</string>
+    <string name="audio_recorder_recording_audio">Grabando audio&#8230;</string>
+    <string name="quick_action_audio">Audio</string>
+
+    <!-- Share & Quick Capture Integration -->
+    <string name="share_receiver_title">Compartir en YAOP</string>
+    <string name="share_to_yaop">YAOP</string>
+    <string name="save_to_yaop">Guardar en YAOP</string>
+    <string name="share_type_weblink">Enlace Web</string>
+    <string name="share_type_image">Imagen</string>
+    <string name="share_type_pdf">Documento PDF</string>
+    <string name="share_type_audio">Audio</string>
+    <string name="share_type_note">Nota</string>
+    <string name="share_fetching_preview">Analizando enlace y metadatos&#8230;</string>
+    <string name="share_title_label">Título</string>
+    <string name="share_url_label">URL</string>
+    <string name="share_toggle_bookmark">Bookmark</string>
+    <string name="share_toggle_reviewed">Marcar como revisado</string>
+    <string name="share_save_button">Guardar</string>
+    <string name="share_save_and_open_button">Guardar y abrir</string>
+    <string name="share_saved_toast">Guardado en YAOP</string>
+    <string name="share_save_error_toast">No se pudo guardar el contenido</string>
+    <string name="quick_save_saved_toast">Guardado en YAOP</string>
+    <string name="quick_save_saved_no_image_toast">Guardado en YAOP (sin imagen)</string>
+    <string name="quick_save_error_toast">No se pudo guardar en YAOP</string>
+    <string name="quick_save_error_no_url">No se encontró ningún enlace para guardar</string>
+    <string name="share_file_size">Tamaño: %1$s</string>
+    <string name="share_audio_duration">Duración: %1$s</string>
+    <string name="share_extracting_content">Procesando contenido&#8230;</string>
+    <string name="share_note_content_label">Contenido de la nota</string>
+    <string name="share_toggle_save_image_object">Guardar portada como objeto Imagen</string>
+    <string name="share_toggle_save_image_object_hint">Crea un objeto Imagen permanente para evitar enlaces rotos</string>
+    <string name="share_toggle_save_image_object_named">Se creará \"%1$s\" en tu espacio</string>
+    <string name="share_media_youtube">Video de YouTube</string>
+    <string name="share_media_instagram_reel">Reel de Instagram</string>
+    <string name="share_media_instagram_post">Publicación de Instagram</string>
+    <string name="share_media_reddit">Publicación de Reddit</string>
+    <string name="share_media_reddit_video">Video de Reddit</string>
+    <string name="share_media_facebook">Publicación de Facebook</string>
+    <string name="share_media_facebook_video">Video de Facebook</string>
+    <string name="share_media_twitter">X / Twitter</string>
+    <string name="share_media_tiktok">Video de TikTok</string>
+    <string name="share_cover_badge">Portada guardada (%1$s)</string>
+    <string name="cover_of_title">Portada de %1$s</string>
+    <string name="property_reviewed">Revisado</string>
+    <string name="property_is_bookmark">Bookmark</string>
+    <string name="cover_image">Imagen de portada</string>
+    <string name="action_open_in_browser">Abrir en navegador</string>
+    <string name="badge_reviewed">Revisado</string>
+    <string name="badge_to_review">Por revisar</string>
+
+    <!-- Smart @type/query Mention & Visual Selector Previews -->
+    <string name="mention_open_gallery">Galería (%1$d)</string>
+    <string name="mention_open_list">Ver todos (%1$d)</string>
+    <string name="selector_preview_audio">Preescuchar audio</string>
+    <string name="selector_stop_preview">Detener vista previa</string>
+    <string name="selector_zoom_image">Ampliar vista previa</string>
+    <string name="selector_search_by_type_placeholder">Buscar %1$s por nombre, archivo o #etiqueta&#8230;</string>
+
+    <!-- Localized @type/ Mention Filter Aliases (comma-separated, translate when adding new languages) -->
+    <string name="mention_aliases_image">imagen,imagenes,img,foto,fotos,image</string>
+    <string name="mention_aliases_audio">audio,audios,voz,grabacion,grabaciones,sonido,rec</string>
+    <string name="mention_aliases_pdf">pdf,pdfs,doc,docs,documento,documentos</string>
+    <string name="mention_aliases_note">nota,notas,note</string>
+    <string name="mention_aliases_journal">diario,dia,journal,daily</string>
+    <string name="mention_aliases_book">libro,libros,book</string>
+    <string name="mention_aliases_task">tarea,tareas,todo,task</string>
+    <string name="mention_aliases_person">persona,personas,contacto,person</string>
+    <string name="mention_aliases_project">proyecto,proyectos,project</string>
+    <string name="mention_aliases_web">web,weblink,enlace,enlaces,link,url,marcador,bookmark</string>
+    <string name="mention_aliases_collection">coleccion,colecciones,collection</string>
+    <string name="mention_aliases_tag">etiqueta,etiquetas,tag</string>
+
+    <!-- Home & Object Types Catalog -->
+    <string name="home_tab_space">Recientes</string>
+    <string name="home_tab_sets">Sets</string>
+    <string name="home_tab_types">Tipos</string>
+    <string name="home_section_pinned">Fijados</string>
+    <string name="home_section_recent">Recientes en tu espacio</string>
+    <string name="home_section_primordial_types">Primordiales y Medios</string>
+    <string name="home_section_standard_types">Objetos de Conocimiento</string>
+    <string name="home_types_tap_hint">Toca para explorar • + para crear</string>
+    <string name="home_view_mosaic">Mosaico</string>
+    <string name="home_view_list">Lista</string>
+    <string name="home_objects_count">%1$d objetos</string>
+    <string name="home_clear_filter">Quitar filtro</string>
+
+    <!-- Settings: Network & Privacy (Link Resolvers) -->
+    <string name="settings_title">Ajustes</string>
+    <string name="pref_network_third_party_proxies_title">Permitir resolutores de enlaces de terceros</string>
+    <string name="pref_network_third_party_proxies_summary">Utiliza servicios auxiliares (como vxreddit, ddinstagram) para evitar muros de login. Si se desactiva, YAOP se conectará estricta y directamente al dominio original del sitio web.</string>
+    <!-- Home & radial quick capture -->
+    <string name="home_greeting_morning">Buenos días</string>
+    <string name="home_greeting_afternoon">Buenas tardes</string>
+    <string name="home_greeting_evening">Buenas noches</string>
+    <string name="home_today_journal">Diario de hoy</string>
+    <string name="home_journal_hint">¿Qué tienes en mente hoy?</string>
+    <string name="home_section_today">Hoy</string>
+    <string name="home_tasks_empty">Nada pendiente para hoy</string>
+    <string name="home_add_task_hint">Añadir tarea para hoy</string>
+    <string name="home_see_all">Ver todo</string>
+    <string name="home_tasks_more">+%1$d más</string>
+    <string name="home_section_continue">Continuar</string>
+    <string name="home_section_recent_created">Creados recientemente</string>
+    <string name="radial_hold_hint">Mantén y arrastra para ver todos los tipos</string>
+    <string name="radial_release_hint">Suelta para crear</string>
+    <string name="radial_cancel_hint">Suelta fuera para cancelar</string>
+    <string name="object_type_note">Nota</string>
+    <string name="object_type_journal">Nota diaria</string>
+    <string name="object_type_book">Libro</string>
+    <string name="object_type_task">Tarea</string>
+    <string name="object_type_person">Persona</string>
+    <string name="object_type_project">Proyecto</string>
+    <string name="object_type_web">Enlace Web</string>
+    <string name="object_type_image">Imagen</string>
+    <string name="object_type_pdf">PDF</string>
+    <string name="object_type_audio">Audio</string>
+    <string name="object_type_collection">Colección</string>
+    <string name="object_type_tag">Etiqueta</string>
+    <string name="home_section_images">Imágenes</string>
+    <string name="home_open_gallery">Ver galería</string>
+
+    <!-- WebLink creation and management -->
+    <string name="create_weblink_title">Nuevo Enlace Web</string>
+    <string name="weblink_url_label">URL web</string>
+    <string name="weblink_url_hint">https://ejemplo.com</string>
+    <string name="weblink_title_label">Título</string>
+    <string name="weblink_title_hint">Título de la página (opcional)</string>
+    <string name="weblink_paste_clipboard">Pegar enlace copiado</string>
+    <string name="weblink_url_required_error">Es obligatorio ingresar un enlace web (URL) válido</string>
+    <string name="weblink_cover_image">Imagen de portada</string>
+    <string name="weblink_change_image">Cambiar imagen</string>
+    <string name="weblink_add_image">Añadir imagen</string>
+    <string name="weblink_reset_image">Restablecer a miniatura web</string>
+    <string name="weblink_save_action">Crear Enlace Web</string>
+    <string name="weblink_copy_link">Copiar enlace</string>
+    <string name="weblink_link_copied">Enlace copiado al portapapeles</string>
+    <string name="weblink_edit_link">Editar enlace</string>
+    <string name="weblink_edit_dialog_title">Editar URL del enlace web</string>
+    <string name="weblink_update_action">Actualizar enlace</string>
+    <string name="weblink_no_url_warning">Este enlace web no tiene una URL asignada. Es obligatorio ingresar un link.</string>
+    <string name="weblink_set_url_action">Asignar enlace web ahora</string>
+    <string name="weblink_fetching_preview">Obteniendo vista previa de la página…</string>
+    <string name="weblink_toggle_bookmark">Guardar como marcador</string>
+    <string name="weblink_toggle_reviewed">Marcar como revisado</string>
+    <string name="weblink_open_in_browser">Abrir en navegador</string>
+
+    <!-- Whiteboard & Infinite Canvas -->
+    <string name="object_type_whiteboard">Pizarra</string>
+    <string name="block_type_canvas">Lienzo de Pizarra</string>
+    <string name="whiteboard_tool_select">Seleccionar</string>
+    <string name="whiteboard_tool_pan">Mover lienzo</string>
+    <string name="whiteboard_tool_card">Añadir objeto</string>
+    <string name="whiteboard_tool_sticky">Nota adhesiva</string>
+    <string name="whiteboard_tool_connector">Conector</string>
+    <string name="whiteboard_tool_pen">Lápiz</string>
+    <string name="whiteboard_tool_highlighter">Resaltador</string>
+    <string name="whiteboard_tool_section">Marco / Sección</string>
+    <string name="whiteboard_tool_eraser">Borrador</string>
+    <string name="whiteboard_zoom_in">Acercar</string>
+    <string name="whiteboard_zoom_out">Alejar</string>
+    <string name="whiteboard_reset_zoom">100%</string>
+    <string name="whiteboard_zoom_fit">Ajustar a pantalla</string>
+    <string name="whiteboard_open_side_by_side">Inspeccionar (lado a lado)</string>
+    <string name="whiteboard_open_fullscreen">Abrir objeto</string>
+    <string name="whiteboard_delete_element">Eliminar</string>
+    <string name="whiteboard_add_card_dialog_title">Añadir a la pizarra</string>
+    <string name="whiteboard_filter_all">Todos</string>
+    <string name="whiteboard_filter_notes">Notas</string>
+    <string name="whiteboard_filter_images">Imágenes</string>
+    <string name="whiteboard_filter_links">Enlaces</string>
+    <string name="whiteboard_filter_tasks">Tareas</string>
+    <string name="whiteboard_add_section_dialog_title">Crear marco / sección</string>
+    <string name="whiteboard_section_title_hint">Título de la sección (ej. Ideas, Investigación, Q1)</string>
+    <string name="whiteboard_empty_vault">No hay objetos en tu espacio para colocar</string>
+    <string name="whiteboard_tap_to_connect_hint">Toca otra tarjeta para crear una conexión</string>
+    <string name="whiteboard_connector_label_hint">Relación (ej. conduce a, referencia)</string>
+    <string name="whiteboard_exit_fullscreen">Salir de pantalla completa</string>
+    <string name="whiteboard_enter_fullscreen">Pantalla completa</string>
+    <string name="whiteboard_inline_canvas_badge">Pizarra infinita</string>
+    <string name="whiteboard_open_canvas_button">Abrir pizarra infinita</string>
+    <string name="whiteboard_sticky_placeholder">Escribe una nota…</string>
+    <string name="whiteboard_default_text_label">Texto</string>
+    <string name="whiteboard_default_section_title">Sección</string>
+    <string name="whiteboard_empty_note_content">Esta nota aún no tiene contenido escrito.</string>
+    <string name="whiteboard_delete_section">Eliminar sección</string>
+    <string name="whiteboard_stroke_thin">S</string>
+    <string name="whiteboard_stroke_medium">M</string>
+    <string name="whiteboard_stroke_thick">L</string>
+    <string name="whiteboard_nodes_and_strokes_badge">%1$d objetos • %2$d trazos</string>
+    <string name="whiteboard_action_connect">Conectar</string>
+    <string name="whiteboard_action_mode">Modo tarjeta</string>
+    <string name="whiteboard_convert_to_note">Convertir en nota</string>
+    <string name="whiteboard_converted_note_default_title">Nota de la pizarra</string>
+
+    <!-- Tablet Adaptations & Features -->
+    <string name="tablet_nav_home">Inicio</string>
+    <string name="tablet_nav_daily">Diario</string>
+    <string name="tablet_nav_tasks">Tareas</string>
+    <string name="tablet_nav_search">Búsqueda y Espacios</string>
+    <string name="tablet_nav_new">Nuevo</string>
+    <string name="tablet_nav_new_drawing">Lienzo de dibujo</string>
+    <string name="tablet_quick_sketch">Boceto rápido</string>
+    <string name="tablet_focus_mode">Modo enfoque</string>
+    <string name="tablet_split_mode">Vista dividida</string>
+    <string name="tablet_inspector">Propiedades e inspector</string>
+    <string name="tablet_no_selection_title">Selecciona un elemento para ver</string>
+    <string name="tablet_no_selection_subtitle">Elige una nota, tarea o página de la lista para comenzar a editar</string>
+    <string name="tablet_action_new_note">Nueva Nota</string>
+    <string name="tablet_action_new_drawing">Nuevo Dibujo</string>
+    <string name="tablet_action_new_task">Nueva Tarea</string>
+    <string name="tablet_close_pane">Cerrar panel</string>
+    <string name="tablet_fullscreen">Pantalla completa</string>
+    <string name="tablet_exit_fullscreen">Salir de pantalla completa</string>
+    <string name="tablet_outline_title">Esquema</string>
+    <string name="tablet_outline_empty">Sin encabezados en el documento</string>
+    <string name="tablet_properties_title">Propiedades</string>
+    <string name="tablet_backlinks_title">Enlaces entrantes</string>
+    <string name="tablet_backlinks_empty">Sin referencias entrantes</string>
+    <string name="tablet_brush_mode_title">Dedo como pincel</string>
+    <string name="tablet_brush_mode_desc">Dibuja con un dedo, pellizca para zoom</string>
+    <string name="tablet_stylus_mode_title">Modo Stylus</string>
+    <string name="tablet_stylus_mode_desc">Dibuja con stylus, desplaza con el dedo</string>
+    <string name="tablet_search_hint">Buscar en la bóveda (Ctrl+K)…</string>
+    <string name="tablet_badge_objects">%1$d objetos</string>
+    <string name="sync_status_connected">Sincronizado</string>
+    <string name="sync_status_syncing">Sincronizando…</string>
+    <string name="sync_status_offline">Sin conexión</string>
+    <string name="sync_status_error">Error de sync</string>
+    <string name="sync_status_no_token">Configurar sync</string>
+    <string name="sync_settings_title">Servidor de sync</string>
+    <string name="sync_settings_url">URL del servidor</string>
+    <string name="sync_settings_token">Token</string>
+    <string name="sync_settings_save">Probar y guardar</string>
+    <string name="sync_settings_sync_now">Sincronizar ahora</string>
+    <string name="sync_settings_close">Cerrar</string>
+    <string name="sync_settings_ok">Conectado. Guardado.</string>
+    <string name="sync_settings_bad_token">El servidor rechazó el token.</string>
+    <string name="sync_settings_unreachable">No se puede contactar con el servidor.</string>
+    <string name="sync_settings_last_sync">Último sync: %1$s</string>
+    <string name="sync_settings_never">nunca</string>
+    <string name="sync_settings_last_error">Último error: %1$s</string>
+    <string name="trash_title">Papelera</string>
+    <string name="trash_restore">Restaurar</string>
+    <string name="trash_restored">Restaurado de la papelera</string>
+    <string name="trash_empty">La papelera está vacía</string>
+    <string name="trash_hint">Lo que está aquí se borra del todo a los 30 días de enviarlo a la papelera. Restaurar lo recupera en todos tus dispositivos.</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">Queda %d día</item>
+        <item quantity="other">Quedan %d días</item>
+    </plurals>
+    <string name="set_new">Nuevo set</string>
+    <string name="set_new_name">Nuevo set</string>
+    <string name="set_empty_title">Los sets son búsquedas guardadas</string>
+    <string name="set_empty_hint">Elige tipos, filtros y un orden; míralos en galería, tabla o lista.</string>
+    <string name="set_all_types">todos los tipos</string>
+    <string name="set_edit_query">Editar query</string>
+    <string name="set_view_gallery">Galería</string>
+    <string name="set_view_table">Tabla</string>
+    <string name="set_view_list">Lista</string>
+    <string name="set_no_results">Ningún objeto cumple este set</string>
+    <string name="set_query_error">Error en la query: %1$s</string>
+    <string name="set_filters">Filtros</string>
+    <string name="set_add_filter">Filtro</string>
+    <string name="set_sort">Orden</string>
+    <string name="set_delete">Eliminar set</string>
+    <string name="set_value">valor</string>
+    <string name="set_col_name">Nombre</string>
+    <string name="set_col_type">Tipo</string>
+    <string name="set_col_edited">Editado</string>
+    <string name="set_op_eq">es</string>
+    <string name="set_op_neq">no es</string>
+    <string name="set_op_contains">contiene</string>
+    <string name="set_op_not_contains">no contiene</string>
+    <string name="set_op_has_any">tiene alguno de</string>
+    <string name="set_op_has_none">no tiene ninguno de</string>
+    <string name="set_op_gte">≥</string>
+    <string name="set_op_lte">≤</string>
+    <string name="set_op_before">antes de</string>
+    <string name="set_op_after">después de</string>
+    <string name="set_op_on">el día</string>
+    <string name="set_op_empty">está vacío</string>
+    <string name="set_op_not_empty">no está vacío</string>
+    <string name="set_op_is_true">está marcado</string>
+    <plurals name="set_n_filters">
+        <item quantity="one">%d filtro</item>
+        <item quantity="other">%d filtros</item>
+    </plurals>
+    <plurals name="set_n_objects">
+        <item quantity="one">%d objeto</item>
+        <item quantity="other">%d objetos</item>
+    </plurals>
+    <string name="home_today_journal_short">Diario · hoy</string>
+    <string name="home_write">Escribir →</string>
+    <string name="home_customize">Personalizar inicio</string>
+    <string name="home_settings_title">Inicio</string>
+    <string name="tasks_show">Mostrar</string>
+    <string name="search_filters">Filtros</string>
+    <string name="capture_text_hint">Escribe algo…</string>
+    <string name="capture_to_daily">Al Diario</string>
+    <string name="capture_as_note">Por revisar</string>
+    <string name="habits_today">Hábitos de hoy</string>
+    <string name="habits_title">Hábitos</string>
+    <string name="habits_empty">Aún no hay hábitos. Crea uno con el botón +.</string>
+    <string name="habit_slot_morning">Mañana</string>
+    <string name="habit_slot_afternoon">Tarde</string>
+    <string name="habit_slot_evening">Noche</string>
+    <string name="habit_slot_any">Cuando sea</string>
+    <string name="habit_days">días</string>
+    <string name="habit_best">Mejor</string>
+    <string name="habit_rate30">30 días</string>
+    <string name="habit_total">Total</string>
+    <string name="quick_action_habit">Hábito</string>
+    <string name="home_habits">Hábitos</string>
+    <string name="new_type">Nuevo tipo</string>
+    <string name="new_type_hint">Nombre del tipo (p. ej. Receta)</string>
+    <string name="inbox_title">Por revisar</string>
+    <string name="inbox_mark">Marcar revisado</string>
+    <string name="inbox_empty">Nada por revisar</string>
+    <string name="habit_amount">Cantidad</string>
+    <string name="habit_skip">Día de descanso</string>
+    <string name="habit_clear">Borrar</string>
+    <string name="habit_save">Guardar</string>
+</resources>

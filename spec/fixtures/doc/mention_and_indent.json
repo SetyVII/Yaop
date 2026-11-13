@@ -1,0 +1,115 @@
+{
+  "name": "paragraph with a mention; the next block is a child (indented) and the third leaves it (input: mention with an href)",
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "paragraph",
+      "text": "hola esta nota es para @qwe mañana",
+      "runs": [
+        {
+          "text": "hola esta nota es para "
+        },
+        {
+          "text": "qwe",
+          "object_id": "obj-qwe"
+        },
+        {
+          "text": " mañana"
+        }
+      ]
+    },
+    {
+      "id": "b2",
+      "indent": 2,
+      "type": "paragraph",
+      "text": "hijo de b1 que habla de @Proyecto Y",
+      "runs": [
+        {
+          "text": "hijo de b1 que habla de "
+        },
+        {
+          "text": "Proyecto Y",
+          "object_id": "obj-proy"
+        }
+      ]
+    },
+    {
+      "id": "b3",
+      "indent": 3,
+      "type": "paragraph",
+      "text": "nieto",
+      "runs": [
+        {
+          "text": "nieto"
+        }
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "paragraph",
+      "text": "de vuelta al nivel 0",
+      "runs": [
+        {
+          "text": "de vuelta al nivel 0"
+        }
+      ]
+    }
+  ],
+  "input": [
+    {
+      "id": "b1",
+      "type": "paragraph",
+      "text": "hola esta nota es para @qwe mañana",
+      "runs": [
+        {
+          "text": "hola esta nota es para "
+        },
+        {
+          "text": "qwe",
+          "href": "lumen://object/obj-qwe",
+          "object_id": "obj-qwe"
+        },
+        {
+          "text": " mañana"
+        }
+      ]
+    },
+    {
+      "id": "b2",
+      "indent": 2,
+      "type": "paragraph",
+      "text": "hijo de b1 que habla de @Proyecto Y",
+      "runs": [
+        {
+          "text": "hijo de b1 que habla de "
+        },
+        {
+          "text": "Proyecto Y",
+          "href": "lumen://object/obj-proy",
+          "object_id": "obj-proy"
+        }
+      ]
+    },
+    {
+      "id": "b3",
+      "indent": 3,
+      "type": "paragraph",
+      "text": "nieto",
+      "runs": [
+        {
+          "text": "nieto"
+        }
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "paragraph",
+      "text": "de vuelta al nivel 0",
+      "runs": [
+        {
+          "text": "de vuelta al nivel 0"
+        }
+      ]
+    }
+  ]
+}

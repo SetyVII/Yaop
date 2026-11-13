@@ -1,0 +1,119 @@
+{
+  "name": "checked/unchecked todos with indent and a closed toggle with children (input: markers inside text)",
+  "blocks": [
+    {
+      "id": "t1",
+      "type": "todo",
+      "checked": false,
+      "text": "pagar luz",
+      "runs": [
+        {
+          "text": "pagar luz"
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "indent": 2,
+      "type": "todo",
+      "checked": true,
+      "text": "hecha",
+      "runs": [
+        {
+          "text": "hecha"
+        }
+      ]
+    },
+    {
+      "id": "g1",
+      "type": "toggle",
+      "expanded": false,
+      "text": "detalles",
+      "runs": [
+        {
+          "text": "detalles"
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "indent": 2,
+      "type": "paragraph",
+      "text": "oculto dentro del toggle",
+      "runs": [
+        {
+          "text": "oculto dentro del toggle"
+        }
+      ]
+    },
+    {
+      "id": "g3",
+      "type": "toggle",
+      "expanded": true,
+      "text": "abierto",
+      "runs": [
+        {
+          "text": "abierto"
+        }
+      ]
+    }
+  ],
+  "input": [
+    {
+      "id": "t1",
+      "type": "todo",
+      "checked": false,
+      "text": "○ pagar luz",
+      "runs": [
+        {
+          "text": "pagar luz"
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "indent": 2,
+      "type": "todo",
+      "checked": true,
+      "text": "✔ hecha",
+      "runs": [
+        {
+          "text": "hecha"
+        }
+      ]
+    },
+    {
+      "id": "g1",
+      "type": "toggle",
+      "expanded": false,
+      "text": "▶ detalles",
+      "runs": [
+        {
+          "text": "detalles"
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "indent": 2,
+      "type": "paragraph",
+      "text": "oculto dentro del toggle",
+      "runs": [
+        {
+          "text": "oculto dentro del toggle"
+        }
+      ]
+    },
+    {
+      "id": "g3",
+      "type": "toggle",
+      "expanded": true,
+      "text": "▼ abierto",
+      "runs": [
+        {
+          "text": "abierto"
+        }
+      ]
+    }
+  ]
+}

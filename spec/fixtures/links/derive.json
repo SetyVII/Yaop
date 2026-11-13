@@ -1,0 +1,129 @@
+{
+  "name": "links derived from content (title, blocks, groups, tags, dates, embeds, media); never the object's own id nor stale ones",
+  "object": {
+    "id": "o1",
+    "type_id": "note",
+    "title": "Reunión con Marcos",
+    "hlc": "0000000000001-0000-aaaaaaaa",
+    "title_runs": [
+      {
+        "text": "Reunión con "
+      },
+      {
+        "text": "Marcos",
+        "href": "lumen://object/p-marcos",
+        "object_id": "p-marcos"
+      }
+    ],
+    "properties": {
+      "author": [
+        "p-ana"
+      ],
+      "blocks": [
+        {
+          "id": "b1",
+          "type": "paragraph",
+          "text": "",
+          "runs": [
+            {
+              "text": "hablar a "
+            },
+            {
+              "text": "marcos",
+              "object_id": "p-marcos"
+            },
+            {
+              "text": " #trabajo",
+              "tag_id": "tag_trabajo",
+              "tag_name": "trabajo"
+            },
+            {
+              "text": "x",
+              "tag_name": "Ideas"
+            },
+            {
+              "text": "2026-11-11T10:00",
+              "date": "2026-11-11T10:00",
+              "has_time": true
+            }
+          ]
+        },
+        {
+          "id": "g1",
+          "type": "group",
+          "text": "",
+          "runs": [],
+          "children": [
+            {
+              "id": "c1",
+              "type": "bullet_list",
+              "text": "",
+              "runs": [
+                {
+                  "text": "proy",
+                  "object_id": "proj-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "e1",
+          "type": "embed",
+          "object_id": "note-z",
+          "text": "",
+          "runs": []
+        },
+        {
+          "id": "w1",
+          "type": "bookmark",
+          "object_id": "web-1",
+          "url": "https://x",
+          "text": "",
+          "runs": []
+        },
+        {
+          "id": "i1",
+          "type": "image",
+          "asset_id": "a1",
+          "text": "",
+          "runs": []
+        },
+        {
+          "id": "s1",
+          "type": "paragraph",
+          "text": "",
+          "runs": [
+            {
+              "text": "yo mismo",
+              "object_id": "o1"
+            }
+          ]
+        }
+      ],
+      "due_date": "2026-12-01"
+    },
+    "links": [
+      "stale-should-vanish"
+    ],
+    "property_links": [
+      "p-ana",
+      "p-borrado",
+      "daily-2026-12-01"
+    ]
+  },
+  "expect_links": [
+    "daily-2026-11-11",
+    "media_a1",
+    "note-z",
+    "p-marcos",
+    "proj-y",
+    "tag_ideas",
+    "tag_trabajo",
+    "web-1"
+  ],
+  "expect_property_links": [
+    "daily-2026-12-01",
+    "p-ana"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "canonical tag key: tag_ + lowercase, spaces→_, only letters/digits/_",
+  "cases": [
+    {
+      "name": "trabajo",
+      "key": "tag_trabajo"
+    },
+    {
+      "name": "Mi Tema",
+      "key": "tag_mi_tema"
+    },
+    {
+      "name": "#IA",
+      "key": "tag_ia"
+    },
+    {
+      "name": "  café con leche ",
+      "key": "tag_café_con_leche"
+    },
+    {
+      "name": "C++ / Rust!",
+      "key": "tag_c__rust"
+    },
+    {
+      "name": "año2026",
+      "key": "tag_año2026"
+    }
+  ]
+}

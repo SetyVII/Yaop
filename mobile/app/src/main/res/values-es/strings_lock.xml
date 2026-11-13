@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">YAOP está bloqueada</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_prompt_title">Desbloquear YAOP</string>
+    <string name="lock_prompt_subtitle">Usa tu huella, tu cara o el bloqueo de pantalla</string>
+    <string name="lock_unavailable">Configura un bloqueo de pantalla en este dispositivo para usar el bloqueo de la app.</string>
+    <string name="lock_section">Bloqueo de la app</string>
+    <string name="lock_enable">Bloquear la app</string>
+    <string name="lock_timeout">Bloquear al salir de la app</string>
+    <string name="lock_timeout_now">Inmediatamente</string>
+    <string name="lock_timeout_minutes">%1$d min</string>
+    <string name="lock_secure_screen">Ocultar el contenido en capturas y recientes</string>
+    <string name="backup_section">Copia de seguridad</string>
+    <string name="backup_hint">Un único archivo cifrado con todo tu vault y sus archivos. Se abre con tus 24 palabras, sin servidor.</string>
+    <string name="backup_export">Exportar copia</string>
+    <string name="backup_restore">Restaurar desde una copia</string>
+    <string name="backup_working">Trabajando…</string>
+    <string name="backup_done_export">Copia guardada: %1$d objetos, %2$d archivos.</string>
+    <string name="backup_done_restore">Restaurados %1$d objetos y %2$d archivos.</string>
+    <string name="backup_failed">No se pudo procesar la copia: %1$s</string>
+    <string name="capture_title">Capturar</string>
+    <string name="capture_style_title">Estilo de captura</string>
+    <string name="capture_style_cards">Tarjetas</string>
+    <string name="capture_style_radial">Radial</string>
+</resources>

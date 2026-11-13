@@ -1,0 +1,10 @@
+# gitleaks config: default rules, minus known false positives.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Crypto test vectors derived from fixed, fake keys; the cipher name in prose"
+paths = [
+  '''spec/fixtures/crypto/.*\.json''',
+]
+regexes = ['''XChaCha20-Poly1305''']

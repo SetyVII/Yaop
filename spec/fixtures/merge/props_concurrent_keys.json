@@ -1,0 +1,54 @@
+{
+  "name": "different properties edited at the same time: both are kept",
+  "a": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "rating": 5,
+      "url": "https://old",
+      "blocks": []
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000300-0000-aaaaaaaa",
+    "field_hlc": {
+      "title": "0000000000100-0000-aaaaaaaa",
+      "type_id": "0000000000100-0000-aaaaaaaa",
+      "order": "0000000000100-0000-aaaaaaaa",
+      "p:rating": "0000000000300-0000-aaaaaaaa",
+      "p:url": "0000000000100-0000-aaaaaaaa"
+    }
+  },
+  "b": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "rating": 1,
+      "url": "https://new",
+      "blocks": []
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000200-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000100-0000-aaaaaaaa",
+      "type_id": "0000000000100-0000-aaaaaaaa",
+      "order": "0000000000100-0000-aaaaaaaa",
+      "p:rating": "0000000000100-0000-aaaaaaaa",
+      "p:url": "0000000000200-0000-bbbbbbbb"
+    }
+  },
+  "expect": {
+    "properties": {
+      "rating": 5,
+      "url": "https://new",
+      "blocks": []
+    }
+  }
+}

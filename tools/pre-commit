@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Optional git hook. Install: cp tools/pre-commit .git/hooks/pre-commit
+# Runs the fast suites; run `tools/check.sh` (with mobile) before bigger changes.
+exec "$(git rev-parse --show-toplevel)/tools/check.sh" server core desktop

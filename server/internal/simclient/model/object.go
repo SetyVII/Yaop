@@ -1,0 +1,272 @@
+package model
+
+import (
+	"sync"
+	"time"
+)
+
+// Canonical Type IDs.
+const (
+	CanonicalTypeNote       = "note"
+	CanonicalTypeJournal    = "journal"
+	CanonicalTypeBook       = "book"
+	CanonicalTypeTask       = "task"
+	CanonicalTypePerson     = "person"
+	CanonicalTypeProject    = "project"
+	CanonicalTypeWeb        = "web"
+	CanonicalTypeImage      = "image"
+	CanonicalTypePdf        = "pdf"
+	CanonicalTypeAudio      = "audio"
+	CanonicalTypeCollection = "collection"
+	CanonicalTypeTag        = "tag"
+	CanonicalTypeWhiteboard = "whiteboard"
+)
+
+// Canonical Property Keys.
+const (
+	PropStatus        = "status"
+	PropDueDate       = "due_date"
+	PropPriority      = "priority"
+	PropDate          = "date"
+	PropTags          = "tags"
+	PropAuthor        = "author"
+	PropMedium        = "medium"
+	PropRating        = "rating"
+	PropRecommendedBy = "recommended_by"
+	PropEmail         = "email"
+	PropOrganization  = "organization"
+	PropURL           = "url"
+	PropSiteName      = "site_name"
+	PropReviewed      = "reviewed"
+	PropIsBookmark    = "is_bookmark"
+	PropAssetID       = "asset_id"
+	PropFileName      = "file_name"
+	PropMIME          = "mime"
+	PropSize          = "size"
+	PropDuration      = "duration"
+	PropItemTypeID    = "item_type_id"
+	PropItems         = "items"
+	PropSummary       = "summary"
+	PropAliases       = "aliases"
+	PropIsTemplate    = "is_template"
+	PropPinned        = "pinned"
+	PropBlocks        = "blocks"
+	PropIcon          = "icon"
+	PropCover         = "cover"
+)
+
+type ObjectIcon struct {
+	Emoji    string `json:"emoji,omitempty"`
+	IconName string `json:"icon_name,omitempty"`
+	ColorHex string `json:"color_hex,omitempty"`
+}
+
+// BlockAnchor records where a top-level block sits relative to its
+// predecessor: "after" is the id of the block it follows in the layout its
+// author last knew ("" = start of the document), "hlc" stamps the anchoring
+// event (creation or any save that changed its predecessor). spec/merge.md
+// uses these to render the merged order as an RGA forest, which makes the
+// merge associative (yaop-sync/1).
+type BlockAnchor struct {
+	After string `json:"after"`
+	HLC   string `json:"hlc"`
+}
+
+type CoverSpec struct {
+	AssetID     string  `json:"asset_id"`
+	CropOffsetY float64 `json:"crop_offset_y,omitempty"`
+	IsFit       bool    `json:"is_fit,omitempty"`
+}
+
+// Object represents a full first-class entity in YAOP.
+type Object struct {
+	ID            string         `json:"id"`
+	TypeID        string         `json:"type_id"`
+	Title         string         `json:"title"`
+	TitleRuns     []any          `json:"title_runs,omitempty"` // rich title (spec/object.md); merged together with Title
+	Content       string         `json:"content,omitempty"`    // RETIRED from the contract (spec/text.md): passthrough only
+	Properties    map[string]any `json:"properties"`
+	Links         []string       `json:"links"`
+	PropertyLinks []string       `json:"property_links,omitempty"`
+	CreatedAt     string         `json:"created_at"`
+	UpdatedAt     string         `json:"updated_at"`
+	SyncStatus    string         `json:"sync_status,omitempty"`
+	SyncError     string         `json:"sync_error,omitempty"`
+	Revision      uint64         `json:"revision,omitempty"`
+	Incarnation   string         `json:"incarnation,omitempty"`
+	HLC           string         `json:"hlc,omitempty"`
+	TrashedAt     string         `json:"trashed_at,omitempty"`
+	// SchemaVersion marks the wire schema of the object (spec/object.md):
+	// 1 = doc/3 with block_anchor (yaop-sync/1); 0/absent = pre-E2EE data.
+	// Clients must refuse schemas greater than the one they know.
+	SchemaVersion int `json:"schema_version,omitempty"`
+
+	// Per-field / per-block causal stamps (protocol yaop-sync/1, spec/merge.md).
+	// FieldHLC keys: "title", "type_id", "order", "p:<property key>".
+	FieldHLC      map[string]string `json:"field_hlc,omitempty"`
+	BlockHLC      map[string]string `json:"block_hlc,omitempty"`
+	DeletedBlocks map[string]string `json:"deleted_blocks,omitempty"`
+	// BlockAnchor keys are top-level block ids (yaop-sync/1, spec/merge.md).
+	// Deleted blocks keep their entry: a tombstone still anchors its followers.
+	BlockAnchor map[string]*BlockAnchor `json:"block_anchor,omitempty"`
+}
+
+// ObjectType represents schema definition for a type.
+type ObjectType struct {
+	ID                string `json:"id"`
+	Name              string `json:"name"`
+	Icon              string `json:"icon"`
+	Color             string `json:"color"`
+	Properties        []any  `json:"properties"`
+	DefaultTemplateID string `json:"default_template_id,omitempty"`
+}
+
+// HybridLogicalClock generates strictly monotonic causal timestamps:
+// <13-digit wall millis>-<4 hex counter>-<8 hex node>. See spec/merge.md.
+type HybridLogicalClock struct {
+	mu             sync.Mutex
+	node           string
+	lastWallMillis int64
+	counter        int
+}
+
+var globalHLC = &HybridLogicalClock{node: ServerHLCNode}
+
+// ServerHLCNode identifies stamps generated by the server itself (only for ops that lack one).
+const ServerHLCNode = "00000000"
+
+func NowHLC() string {
+	return globalHLC.Now()
+}
+
+func NewHLC() string {
+	return globalHLC.Now()
+}
+
+func NextHLC(current string) string {
+	if current == "" {
+		return globalHLC.Now()
+	}
+	return globalHLC.Receive(current)
+}
+
+func (h *HybridLogicalClock) Now() string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	current := time.Now().UnixMilli()
+	if current > h.lastWallMillis {
+		h.lastWallMillis = current
+		h.counter = 0
+	} else {
+		if h.counter < 0xFFFF {
+			h.counter++
+		}
+	}
+	return FormatHLC(h.lastWallMillis, h.counter, h.node)
+}
+
+func (h *HybridLogicalClock) Receive(remoteHLC string) string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	var remoteWall int64
+	var remoteCounter int
+	remoteWall, remoteCounter, _ = ParseHLC(remoteHLC)
+
+	current := time.Now().UnixMilli()
+	if current > h.lastWallMillis && current > remoteWall {
+		h.lastWallMillis = current
+		h.counter = 0
+	} else if h.lastWallMillis == remoteWall {
+		maxCnt := h.counter
+		if remoteCounter > maxCnt {
+			maxCnt = remoteCounter
+		}
+		if maxCnt < 0xFFFF {
+			h.counter = maxCnt + 1
+		}
+	} else if remoteWall > h.lastWallMillis {
+		h.lastWallMillis = remoteWall
+		if remoteCounter < 0xFFFF {
+			h.counter = remoteCounter + 1
+		}
+	} else {
+		if h.counter < 0xFFFF {
+			h.counter++
+		}
+	}
+	return FormatHLC(h.lastWallMillis, h.counter, h.node)
+}
+
+// Built-in primordial and standard default types matching YAOP.
+var DefaultTypes = []ObjectType{
+	{ID: CanonicalTypeJournal, Name: "Diario", Icon: "view-calendar-day", Color: "#5DD400", Properties: []any{
+		map[string]any{"key": PropDate, "name": "Fecha", "type": "date"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeWeb, Name: "Enlace web", Icon: "web-browser", Color: "#0FC8BA", Properties: []any{
+		map[string]any{"key": PropURL, "name": "URL", "type": "text"},
+		map[string]any{"key": PropSiteName, "name": "Sitio", "type": "text"},
+		map[string]any{"key": PropReviewed, "name": "Revisado", "type": "boolean"},
+		map[string]any{"key": PropIsBookmark, "name": "Marcador", "type": "boolean"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeImage, Name: "Imagen", Icon: "image-x-generic", Color: "#AB50CC", Properties: []any{
+		map[string]any{"key": PropAssetID, "name": "Asset ID", "type": "text"},
+		map[string]any{"key": PropFileName, "name": "Nombre", "type": "text"},
+		map[string]any{"key": PropMIME, "name": "MIME", "type": "text"},
+		map[string]any{"key": PropSize, "name": "Size", "type": "number"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypePdf, Name: "PDF", Icon: "application-pdf", Color: "#ECD91B", Properties: []any{
+		map[string]any{"key": PropAssetID, "name": "Asset ID", "type": "text"},
+		map[string]any{"key": PropFileName, "name": "Nombre", "type": "text"},
+		map[string]any{"key": PropMIME, "name": "MIME", "type": "text"},
+		map[string]any{"key": PropSize, "name": "Size", "type": "number"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeAudio, Name: "Audio", Icon: "music", Color: "#E51CA0", Properties: []any{
+		map[string]any{"key": PropAssetID, "name": "Asset ID", "type": "text"},
+		map[string]any{"key": PropFileName, "name": "Nombre", "type": "text"},
+		map[string]any{"key": PropMIME, "name": "MIME", "type": "text"},
+		map[string]any{"key": PropDuration, "name": "Duration", "type": "number"},
+		map[string]any{"key": PropSize, "name": "Size", "type": "number"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeTag, Name: "Etiqueta", Icon: "tag", Color: "#0FC8BA", Properties: []any{}},
+	{ID: CanonicalTypeNote, Name: "Nota", Icon: "text-x-generic", Color: "#2AA7EE", Properties: []any{
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeBook, Name: "Libro", Icon: "accessories-dictionary", Color: "#FFB522", Properties: []any{
+		map[string]any{"key": PropAuthor, "name": "Autor", "type": "text"},
+		map[string]any{"key": PropStatus, "name": "Estado", "type": "select", "options": []any{"to_read", "reading", "finished"}},
+		map[string]any{"key": PropMedium, "name": "Formato", "type": "select", "options": []any{"paperback", "hardcover", "ebook", "audiobook"}},
+		map[string]any{"key": PropRating, "name": "Rating", "type": "number"},
+		map[string]any{"key": PropRecommendedBy, "name": "Recomendado por", "type": "text"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeTask, Name: "Tarea", Icon: "circle-check", Color: "#F55522", Properties: []any{
+		map[string]any{"key": PropStatus, "name": "Estado", "type": "select", "options": []any{"todo", "in_progress", "done"}},
+		map[string]any{"key": PropDueDate, "name": "Due date", "type": "date"},
+		map[string]any{"key": PropPriority, "name": "Prioridad", "type": "select", "options": []any{"low", "medium", "high"}},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypePerson, Name: "Persona", Icon: "avatar-default", Color: "#E51CA0", Properties: []any{
+		map[string]any{"key": PropEmail, "name": "Email", "type": "text"},
+		map[string]any{"key": PropOrganization, "name": "Organization", "type": "text"},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeProject, Name: "Proyecto", Icon: "folder", Color: "#3E58EB", Properties: []any{
+		map[string]any{"key": PropStatus, "name": "Estado", "type": "select", "options": []any{"active", "on_hold", "completed"}},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeCollection, Name: "Collection", Icon: "view-list-details", Color: "#3E58EB", Properties: []any{
+		map[string]any{"key": PropItemTypeID, "name": "Tipo de elemento", "type": "text"},
+		map[string]any{"key": PropItems, "name": "Elementos", "type": "object", "multiple": true},
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+	{ID: CanonicalTypeWhiteboard, Name: "Pizarra", Icon: "canvas", Color: "#3E58EB", Properties: []any{
+		map[string]any{"key": PropTags, "name": "Etiquetas", "type": "object", "target_type": CanonicalTypeTag, "multiple": true},
+	}},
+}

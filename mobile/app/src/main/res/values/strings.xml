@@ -1,0 +1,814 @@
+<resources>
+    <string name="app_name">YAOP</string>
+
+    <!-- Navigation & Common -->
+    <string name="tab_journal">Write</string>
+    <string name="tab_timeline">Timeline</string>
+    <string name="tab_created">Timeline</string>
+    <string name="today">Today</string>
+    <string name="week_number">Week %1$d</string>
+    <string name="daily_note">Daily note</string>
+    <string name="references_for_this_day">References for this Day</string>
+    <string name="related_tasks">Related Tasks</string>
+    <string name="related_dates">Related Dates</string>
+    <string name="objects_and_tags">Objects &amp; Tags</string>
+    <string name="references_count">References (%1$d)</string>
+
+    <!-- Actions & Common Buttons -->
+    <string name="action_add_block">Add Block</string>
+    <string name="action_delete_block">Delete Block</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="back">Back</string>
+    <string name="options">Options</string>
+    <string name="toggle_calendar">Toggle Calendar</string>
+
+    <!-- Block Placeholders -->
+    <string name="placeholder_default">Type \'/\' for commands or \'@\' to link...</string>
+    <string name="placeholder_heading">Heading %1$s</string>
+    <string name="placeholder_todo">To-do task...</string>
+    <string name="placeholder_bullet">List item...</string>
+    <string name="placeholder_numbered">Numbered list...</string>
+    <string name="placeholder_roman">Roman list item...</string>
+    <string name="placeholder_quote">Quote...</string>
+    <string name="placeholder_callout">Callout note...</string>
+    <string name="placeholder_code">// Code here...</string>
+    <string name="placeholder_toggle">Collapsible heading...</string>
+    <string name="placeholder_toggle_child">Text inside toggle...</string>
+    <string name="placeholder_math">TeX formula...</string>
+    <string name="placeholder_cell">Cell</string>
+    <string name="linked_object_prefix">Linked object: %1$s</string>
+
+    <!-- Block Types -->
+    <string name="block_type_paragraph">Text (Paragraph)</string>
+    <string name="block_type_h1">Heading 1 (H1)</string>
+    <string name="block_type_h2">Heading 2 (H2)</string>
+    <string name="block_type_h3">Heading 3 (H3)</string>
+    <string name="block_type_h4">Heading 4 (H4)</string>
+    <string name="block_type_todo">To-Do Task</string>
+    <string name="block_type_bullet">Bullet List</string>
+    <string name="block_type_numbered">Numbered List</string>
+    <string name="block_type_roman">Roman List</string>
+    <string name="block_type_quote">Quote</string>
+    <string name="block_type_callout">Callout Note</string>
+    <string name="block_type_code">Code Block</string>
+    <string name="block_type_divider">Divider</string>
+    <string name="block_type_toggle">Collapsible (Toggle)</string>
+    <string name="block_type_math">TeX / Math</string>
+    <string name="block_type_table">Table</string>
+
+    <!-- TeX / Math Block -->
+    <string name="tex_preview_button">TeX</string>
+    <string name="tex_badge">TeX</string>
+    <string name="tex_code_title">TeX-Code</string>
+    <string name="tex_preview_title">Preview</string>
+    <string name="action_done">Done</string>
+    <string name="action_collapse_math">Collapse editor</string>
+    <string name="empty_math_formula">Empty formula — tap to edit</string>
+    <string name="learn_more">Learn more</string>
+
+    <!-- Table Block Actions -->
+    <string name="action_add_column">Add column</string>
+    <string name="action_add_row">Add row</string>
+    <string name="action_delete_column">Delete column</string>
+    <string name="action_delete_row">Delete row</string>
+    <string name="action_clear_table">Clear table</string>
+    <string name="table_options">Table options</string>
+
+    <!-- Code Block Actions & Languages -->
+    <string name="copy_code">Copy code</string>
+    <string name="code_copied">Code copied to clipboard</string>
+    <string name="code_options">Code options</string>
+    <string name="action_clear_code">Clear code</string>
+    <string name="language_javascript">JavaScript</string>
+    <string name="language_typescript">TypeScript</string>
+    <string name="language_kotlin">Kotlin</string>
+    <string name="language_python">Python</string>
+    <string name="language_java">Java</string>
+    <string name="language_cpp">C++</string>
+    <string name="language_html">HTML</string>
+    <string name="language_css">CSS</string>
+    <string name="language_json">JSON</string>
+    <string name="language_sql">SQL</string>
+    <string name="language_markdown">Markdown</string>
+    <string name="language_shell">Shell</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_insert_block_title">Insert block</string>
+    <string name="dialog_link_object_title">Link object</string>
+    <string name="search_objects_placeholder">Search notes, tasks, books...</string>
+    <string name="no_objects_found">No objects found</string>
+    <string name="create_object_with_name">Create \"%1$s\"</string>
+    <string name="create_new_object">Create new object</string>
+    <string name="create_object_subtitle">Create and link a new object</string>
+    <string name="dialog_create_object_title">Create New Object</string>
+    <string name="label_select_type">Select Type:</string>
+    <string name="label_title">Title</string>
+    <string name="placeholder_title_example">e.g. Designing Data-Intensive Applications</string>
+    <string name="action_create">Create</string>
+
+    <!-- Editor Accessory Keyboard Bar -->
+    <string name="kb_action_outdent">Outdent / Paragraph</string>
+    <string name="kb_action_indent">Indent / Bullet</string>
+    <string name="kb_action_toggle_heading">Heading H1/H2/H3</string>
+    <string name="kb_action_insert_block">Insert block (Slash / +)</string>
+    <string name="kb_action_mention_object">Link object (@)</string>
+    <string name="kb_action_tag">Tag (#)</string>
+    <string name="kb_action_toggle_todo">To-Do Task</string>
+    <string name="kb_action_toggle_quote">Quote</string>
+    <string name="kb_action_toggle_code">Code</string>
+    <string name="kb_action_hide_keyboard">Hide keyboard</string>
+    <string name="action_line_break">Line break</string>
+
+    <!-- Editor Toolbar (rail above the IME) -->
+    <string name="toolbar_overflow">More tools</string>
+    <string name="toolbar_section_style">Style</string>
+    <string name="toolbar_section_lists">Lists</string>
+    <string name="toolbar_section_objects">Objects &amp; tags</string>
+    <string name="toolbar_section_blocks">Blocks</string>
+    <string name="toolbar_section_math">Math</string>
+    <string name="toolbar_section_code">Code</string>
+    <string name="toolbar_section_table">Table</string>
+    <string name="action_strikethrough">Strikethrough</string>
+    <string name="action_highlight">Highlight</string>
+    <string name="action_wikilink">Wiki link ([[object]])</string>
+    <string name="action_paragraph">Paragraph</string>
+
+    <!-- Tags Bottom Sheet -->
+    <string name="search_or_create_placeholder">Search or create</string>
+    <string name="new_tag_action">+ New Tag</string>
+    <string name="tags_badge">Tags</string>
+    <string name="no_tags_found">No tags found</string>
+    <string name="action_remove_tag">Remove tag %1$s</string>
+
+    <!-- Slash & Mention Bottom Sheets -->
+    <string name="search_block_type_placeholder">Search block type…</string>
+    <string name="new_object_action">+ New Object</string>
+    <string name="objects_badge">Objects</string>
+    <string name="badge_block_types">Blocks</string>
+    <string name="action_remove_mention">Remove mention %1$s</string>
+
+    <!-- Object Detail Tabs & References -->
+    <string name="tab_content">Content</string>
+    <string name="tab_properties">Properties</string>
+    <string name="tab_references">Links</string>
+    <string name="section_outgoing_references">Links to (%1$d)</string>
+    <string name="section_incoming_references">Linked by / Backlinks (%1$d)</string>
+    <string name="section_attachments">Attachments (%1$d)</string>
+    <string name="no_outgoing_references">This object does not link to any other objects yet</string>
+    <string name="no_incoming_references">No objects reference this object yet</string>
+    <string name="no_attachments">No attachments found</string>
+    <string name="pin_to_top">Pin to Top</string>
+    <string name="unpin_from_top">Unpin from Top</string>
+    <string name="move_to_trash">Move to Trash</string>
+    <string name="title_placeholder">Title</string>
+
+    <!-- Spaces Screen -->
+    <string name="spaces_title">Spaces</string>
+    <string name="search_spaces_placeholder">Search objects, tags, notes...</string>
+    <string name="filter_all">All</string>
+    <string name="no_matches_found">No matches found</string>
+    <string name="no_objects_yet">No objects yet</string>
+    <string name="tap_to_create_hint">Tap the + button to create a note, tag, or object</string>
+    <string name="create_object_fab">Create Object</string>
+    <string name="search_action">Search</string>
+
+    <!-- Contextual Type Selector Bar -->
+    <string name="hide_types">Hide types ▾</string>
+    <string name="show_types">Show types ▴</string>
+    <string name="type_search">Search</string>
+    <string name="type_note">Note</string>
+    <string name="type_tasks">Tasks</string>
+    <string name="type_bookmark">Bookmark</string>
+    <string name="type_project">Project</string>
+
+    <!-- Rich Text Formatting Actions -->
+    <string name="action_bold">Bold</string>
+    <string name="action_italic">Italic</string>
+    <string name="action_inline_code">Inline Code</string>
+    <string name="action_bullet_list">Bullet list</string>
+    <string name="action_numbered_list">Numbered list</string>
+    <string name="action_roman_list">Roman list</string>
+
+    <!-- Contextual TeX Math Toolbar -->
+    <string name="math_fraction">Fraction</string>
+    <string name="math_exponent">Exponent</string>
+    <string name="math_subscript">Subscript</string>
+    <string name="math_sqrt">Square root</string>
+    <string name="math_sum">Summation</string>
+    <string name="math_integral">Integral</string>
+    <string name="math_pi">Pi</string>
+    <string name="math_infinity">Infinity</string>
+
+    <!-- Contextual Code Block Toolbar -->
+    <string name="code_indent">Indent</string>
+    <string name="code_curly_braces">Braces</string>
+    <string name="code_parentheses">Parentheses</string>
+    <string name="code_brackets">Brackets</string>
+    <string name="code_quotes">Quotes</string>
+    <string name="code_arrow">Arrow</string>
+
+    <!-- Contextual Table Toolbar -->
+    <string name="table_add_col">+ Col</string>
+    <string name="table_add_row">+ Row</string>
+    <string name="table_del_col">- Col</string>
+    <string name="table_del_row">- Row</string>
+
+    <!-- Editor Bottom Sheet -->
+    <string name="sheet_description">Description</string>
+    <string name="sheet_show_toggle">Show</string>
+    <string name="sheet_icon">Icon</string>
+    <string name="sheet_cover">Cover</string>
+    <string name="sheet_properties">Properties</string>
+    <string name="sheet_undo">Undo</string>
+    <string name="sheet_redo">Redo</string>
+    <string name="sheet_add_cover">Add cover</string>
+    <string name="sheet_remove_cover">Remove cover</string>
+    <string name="sheet_change_icon">Change icon</string>
+    <string name="sheet_properties_count">%1$d properties</string>
+    <string name="description_placeholder">Add a description...</string>
+    <string name="sheet_undo_tile">Undo / Redo</string>
+    <string name="sheet_select_emoji">Select emoji</string>
+
+    <!-- Properties & Custom Properties -->
+    <string name="untitled_object">Untitled</string>
+    <string name="properties_section_title">Properties</string>
+    <string name="action_add_property">Add Property</string>
+    <string name="property_empty">Empty</string>
+    <string name="property_select_option">Select option...</string>
+    <string name="property_rating_stars">%1$d stars</string>
+    <string name="property_number_zero">0</string>
+    <string name="property_date_placeholder">YYYY-MM-DD</string>
+    <string name="property_url_placeholder">https://...</string>
+    <string name="property_custom">Custom</string>
+    <string name="dialog_add_property_title">Add Property</string>
+    <string name="label_property_name">Property Name</string>
+    <string name="label_property_type">Type:</string>
+    <string name="action_add">Add</string>
+    <string name="property_kind_rich_text">Text</string>
+    <string name="property_kind_select">Select</string>
+    <string name="property_kind_number">Number</string>
+    <string name="property_kind_checkbox">Checkbox</string>
+
+    <!-- Link Preview -->
+    <string name="link_preview_open">Open link</string>
+    <string name="link_preview_loading">Loading preview…</string>
+    <string name="link_preview_image">Link preview image</string>
+    <string name="link_preview_favicon">Site icon</string>
+
+    <!-- Media Blocks -->
+    <string name="media_loading">Loading media…</string>
+    <string name="media_stop">Stop</string>
+    <string name="media_tap_to_record">Tap to record</string>
+    <string name="media_recording">Recording</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_play">Play</string>
+    <string name="media_pdf_pages">%1$d pages</string>
+    <string name="media_audio_recording_name">Audio recording (%1$s)</string>
+    <string name="block_type_image">Image</string>
+    <string name="block_type_audio">Audio</string>
+    <string name="block_type_pdf">PDF</string>
+
+    <!-- Tasks -->
+    <string name="tasks_overdue">Overdue</string>
+    <string name="tasks_upcoming">Upcoming</string>
+    <string name="tasks_no_date">No date</string>
+    <string name="tasks_filter_todo">To Do</string>
+    <string name="tasks_filter_in_progress">In Progress</string>
+    <string name="tasks_filter_done">Done</string>
+    <string name="tasks_priority_low">Low</string>
+    <string name="tasks_priority_medium">Medium</string>
+    <string name="tasks_priority_high">High</string>
+    <string name="action_swipe_complete">Complete</string>
+    <string name="action_swipe_uncomplete">To Do</string>
+    <string name="action_swipe_priority">Priority</string>
+    <string name="action_swipe_indent">Indent</string>
+    <string name="action_swipe_outdent">Outdent</string>
+    <string name="mention_recent">Recent</string>
+    <string name="mention_types">Object types</string>
+
+    <!-- New Editor v1 Strings (Block Types, Toolbar Modes, Colors, Previews) -->
+    <string name="block_type_alphabetic">Alphabetic List</string>
+    <string name="block_type_group">Block Group</string>
+    <string name="block_type_bookmark">Web Bookmark</string>
+    <string name="block_type_embed">Object Embed</string>
+    <string name="placeholder_alphabetic">Alphabetic list item…</string>
+    <string name="placeholder_group">Grouped text…</string>
+    <string name="placeholder_bookmark">https://…</string>
+    <string name="placeholder_caption">Add a caption…</string>
+    <string name="placeholder_url_input">Paste or type URL or search links…</string>
+    <string name="placeholder_filter_types">Filter object types…</string>
+
+    <!-- Block Categories -->
+    <string name="block_category_text">Text</string>
+    <string name="block_category_lists">Lists</string>
+    <string name="block_category_technical">Technical</string>
+    <string name="block_category_media">Media</string>
+    <string name="block_category_objects">Objects &amp; Web</string>
+
+    <!-- Dynamic Toolbar & Formatting -->
+    <string name="action_underline">Underline</string>
+    <string name="action_format_menu">Text format</string>
+    <string name="action_color_menu">Colors</string>
+    <string name="action_text_color">Text</string>
+    <string name="action_bg_color">Background</string>
+    <string name="action_clear_color">Clear color</string>
+    <string name="action_link">Link</string>
+    <string name="action_insert_date">Insert date</string>
+    <string name="action_exit_block">Exit ↓</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_redo">Redo</string>
+    <string name="action_switch_to_keyboard">Keyboard</string>
+    <string name="action_more_results">More results</string>
+    <string name="action_create_as_prefix">Create \"%1$s\" as:</string>
+    <string name="action_create_tag_chip">+ Create #%1$s</string>
+    <string name="action_other_type">Other…</string>
+    <string name="action_use_url">Use %1$s</string>
+    <string name="action_paste_as_bookmark">Bookmark</string>
+    <string name="action_paste_as_link">Link</string>
+    <string name="action_paste_as_mention">Mention</string>
+    <string name="paste_url_prompt">URL pasted:</string>
+
+    <!-- Multi-Block Selection Mode -->
+    <string name="selection_count_badge">%1$d selected</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_duplicate_block">Duplicate</string>
+    <string name="action_convert_block">Convert</string>
+    <string name="action_group_blocks">Group</string>
+    <string name="action_ungroup_blocks">Ungroup</string>
+    <string name="action_block_color">Block color</string>
+    <string name="action_copy_text">Copy text</string>
+    <string name="action_copy_markdown">Copy Markdown</string>
+    <string name="blocks_deleted_notice">Blocks deleted</string>
+    <string name="action_undo_delete">Undo</string>
+    <string name="action_edit_caption">Caption</string>
+    <string name="image_width_25">25%</string>
+    <string name="image_width_50">50%</string>
+    <string name="image_width_75">75%</string>
+    <string name="image_width_100">100%</string>
+
+    <!-- Table Alignment -->
+    <string name="table_align_left">Align left</string>
+    <string name="table_align_center">Align center</string>
+    <string name="table_align_right">Align right</string>
+
+    <!-- Previews & Actions (Pattern F & E) -->
+    <string name="action_open_object">Open</string>
+    <string name="action_open_browser">Open in browser</string>
+    <string name="action_open_in_app">Open in YAOP</string>
+    <string name="action_edit_link">Edit link</string>
+    <string name="action_remove_link">Remove link</string>
+    <string name="action_remove_mention_btn">Remove mention</string>
+    <string name="selector_links_and_objects_title">Select link or object</string>
+    <string name="selector_filter_all">All</string>
+    <string name="selector_filter_links">Web links</string>
+    <string name="toggle_hidden_items_badge">+%1$d</string>
+
+    <!-- Audio & Media Panel -->
+    <string name="action_discard">Discard</string>
+    <string name="action_insert_audio">Insert</string>
+    <string name="action_resume">Resume</string>
+    <string name="media_uploading_progress">Processing (%1$d%%)…</string>
+
+    <!-- Inline Dates -->
+    <string name="date_today">Today</string>
+    <string name="date_tomorrow">Tomorrow</string>
+    <string name="date_yesterday">Yesterday</string>
+    <string name="date_next_monday">Next Monday</string>
+    <string name="daily_tasks_and_events_header">Today\'s tasks &amp; events (%1$d)</string>
+
+    <!-- Named Color Palette -->
+    <string name="color_default">Default</string>
+    <string name="color_gray">Gray</string>
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_green">Green</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_pink">Pink</string>
+
+    <!-- Daily Timeline & Created Tabs -->
+    <string name="timeline_header_count">%1$d logged events</string>
+    <string name="timeline_header_count_one">1 logged event</string>
+    <string name="timeline_header_empty">No events logged</string>
+    <string name="timeline_sort_asc">Earliest first</string>
+    <string name="timeline_sort_desc">Latest first</string>
+    <string name="timeline_empty_title">No timeline activity</string>
+    <string name="timeline_empty_desc">No objects or thoughts were recorded on this date.</string>
+    <string name="timeline_quick_log_hint">Log a thought or task at this hour…</string>
+    <string name="timeline_action_note">+ Note</string>
+    <string name="timeline_action_task">+ Task</string>
+    <string name="timeline_period_morning">Morning</string>
+    <string name="timeline_period_afternoon">Afternoon</string>
+    <string name="timeline_period_night">Evening &amp; Night</string>
+    <string name="timeline_filter_notes">Notes</string>
+    <string name="timeline_filter_tasks">Tasks</string>
+    <string name="timeline_filter_other">Other</string>
+
+    <string name="created_new_note">Create note</string>
+    <string name="created_new_task">Create task</string>
+
+    <!-- Calendar Navigation & Header -->
+    <string name="action_previous_month">Previous month</string>
+    <string name="action_next_month">Next month</string>
+    <string name="action_previous_week">Previous week</string>
+    <string name="action_next_week">Next week</string>
+    <string name="action_collapse_calendar">Collapse calendar</string>
+    <string name="action_expand_calendar">Expand calendar</string>
+    <string name="action_collapse_cover">Collapse cover</string>
+    <string name="action_expand_cover">Expand cover</string>
+
+    <!-- Image Object Gallery & Detail -->
+    <string name="view_mode_gallery">Gallery</string>
+    <string name="view_mode_list">List</string>
+    <string name="image_hero_zoom">Zoom</string>
+    <string name="image_replace">Replace</string>
+    <string name="image_add_first">Select image</string>
+    <string name="image_tap_to_upload">Tap to choose or take a photo</string>
+    <string name="image_format_resolution_4k">4K</string>
+    <string name="image_resolution_format">%1$d×%2$d px</string>
+    <string name="image_notes_header">Notes &amp; Content</string>
+    <string name="image_share">Share</string>
+    <string name="image_empty_gallery">No images yet</string>
+
+    <!-- Daily References Tab Strings -->
+    <string name="references_title">Date references (%1$d)</string>
+    <string name="references_filter_all">All (%1$d)</string>
+    <string name="references_filter_tasks">Tasks (%1$d)</string>
+    <string name="references_filter_mentions">Mentions (%1$d)</string>
+    <string name="references_filter_dates">Dates (%1$d)</string>
+    <string name="references_empty_title">No references for this date</string>
+    <string name="references_empty_desc">Mention this date using @ or schedule tasks to see them connected here.</string>
+    <string name="references_section_tasks">Linked tasks</string>
+    <string name="references_section_mentions">Mentions &amp; backlinks</string>
+    <string name="references_section_dates">Related date objects</string>
+
+    <!-- Daily Created Gallery Tab Strings -->
+    <string name="created_gallery_title">Created on this date (%1$d)</string>
+    <string name="created_gallery_empty_title">Nothing created on this date</string>
+    <string name="created_gallery_empty_desc">Notes, images, tasks, and documents created today will be displayed in this visual gallery.</string>
+    <string name="created_filter_all_items">All (%1$d)</string>
+    <string name="created_filter_notes">Notes</string>
+    <string name="created_filter_media">Media &amp; Docs</string>
+    <string name="created_filter_tasks">Tasks</string>
+    <string name="created_filter_other">Other</string>
+    <string name="action_add_image">Add image</string>
+
+    <!-- Bottom Dock & Quick Capture -->
+    <string name="dock_tab_home">Spaces</string>
+    <string name="dock_tab_daily">Daily</string>
+    <string name="dock_tab_tasks">Tasks</string>
+    <string name="dock_tab_search">Search</string>
+    <string name="dock_quick_capture">Quick capture</string>
+    <string name="quick_action_note">Note</string>
+    <string name="quick_action_task">Task</string>
+    <string name="quick_action_image">Image</string>
+    <string name="quick_action_link">Web Link</string>
+    <string name="quick_action_more">More</string>
+    <string name="quick_capture_instant_note_created">Quick note created</string>
+    <string name="create_object_action">Create %1$s</string>
+    <string name="search_types_placeholder">Filter types...</string>
+
+    <!-- Date Objects & References -->
+    <string name="action_open_date">Open date</string>
+    <string name="action_remove_date">Remove date</string>
+    <string name="date_mentions_count">%1$d mention(s)</string>
+    <string name="date_object_label">Date</string>
+    <string name="view_references_hint">View %1$d reference(s) for this date</string>
+
+    <!-- Audio Object Gallery & Detail -->
+    <string name="audio_replace">Replace</string>
+    <string name="audio_add_first">Record or select audio</string>
+    <string name="audio_tap_to_record_or_upload">Tap to record or choose an audio file</string>
+    <string name="audio_empty_gallery">No audios yet</string>
+    <string name="audio_sheet_title">Audio</string>
+    <string name="audio_record_new">Start recording</string>
+    <string name="audio_pick_file">Choose audio file</string>
+    <string name="audio_save_recording">Save audio</string>
+    <string name="audio_placeholder_title">Audio title (optional)…</string>
+    <string name="audio_recorder_paused">Recording paused</string>
+    <string name="audio_recorder_recording_audio">Recording audio…</string>
+    <string name="quick_action_audio">Audio</string>
+
+    <!-- Share & Quick Capture Integration -->
+    <string name="share_receiver_title">Share to YAOP</string>
+    <string name="share_to_yaop">YAOP</string>
+    <string name="save_to_yaop">Save to YAOP</string>
+    <string name="share_type_weblink">Web Link</string>
+    <string name="share_type_image">Image</string>
+    <string name="share_type_pdf">PDF Document</string>
+    <string name="share_type_audio">Audio</string>
+    <string name="share_type_note">Note</string>
+    <string name="share_fetching_preview">Analyzing link &amp; metadata…</string>
+    <string name="share_title_label">Title</string>
+    <string name="share_url_label">URL</string>
+    <string name="share_toggle_bookmark">Bookmark</string>
+    <string name="share_toggle_reviewed">Mark as reviewed</string>
+    <string name="share_save_button">Save</string>
+    <string name="share_save_and_open_button">Save &amp; open</string>
+    <string name="share_saved_toast">Saved to YAOP</string>
+    <string name="share_save_error_toast">Could not save content</string>
+    <string name="quick_save_saved_toast">Saved to YAOP</string>
+    <string name="quick_save_saved_no_image_toast">Saved to YAOP (without image)</string>
+    <string name="quick_save_error_toast">Could not save to YAOP</string>
+    <string name="quick_save_error_no_url">No URL found to save</string>
+    <string name="share_file_size">Size: %1$s</string>
+    <string name="share_audio_duration">Duration: %1$s</string>
+    <string name="share_extracting_content">Processing content…</string>
+    <string name="share_note_content_label">Note content</string>
+    <string name="share_toggle_save_image_object">Save cover as Image object</string>
+    <string name="share_toggle_save_image_object_hint">Creates a permanent Image object to prevent broken links</string>
+    <string name="share_toggle_save_image_object_named">Will create \"%1$s\" in your space</string>
+    <string name="share_media_youtube">YouTube Video</string>
+    <string name="share_media_instagram_reel">Instagram Reel</string>
+    <string name="share_media_instagram_post">Instagram Post</string>
+    <string name="share_media_reddit">Reddit Post</string>
+    <string name="share_media_reddit_video">Reddit Video</string>
+    <string name="share_media_facebook">Facebook Post</string>
+    <string name="share_media_facebook_video">Facebook Video</string>
+    <string name="share_media_twitter">X / Twitter</string>
+    <string name="share_media_tiktok">TikTok Video</string>
+    <string name="share_cover_badge">Cover stored (%1$s)</string>
+    <string name="cover_of_title">Cover of %1$s</string>
+    <string name="property_reviewed">Reviewed</string>
+    <string name="property_is_bookmark">Bookmark</string>
+    <string name="cover_image">Cover image</string>
+    <string name="action_open_in_browser">Open in browser</string>
+    <string name="badge_reviewed">Reviewed</string>
+    <string name="badge_to_review">To review</string>
+
+    <!-- Smart @type/query Mention & Visual Selector Previews -->
+    <string name="mention_open_gallery">Gallery (%1$d)</string>
+    <string name="mention_open_list">View all (%1$d)</string>
+    <string name="selector_preview_audio">Preview audio</string>
+    <string name="selector_stop_preview">Stop preview</string>
+    <string name="selector_zoom_image">Zoom preview</string>
+    <string name="selector_search_by_type_placeholder">Search %1$s by title, file, or #tag…</string>
+
+    <!-- Localized @type/ Mention Filter Aliases (comma-separated, translate when adding new languages) -->
+    <string name="mention_aliases_image">image,images,img,photo,photos,pic</string>
+    <string name="mention_aliases_audio">audio,audios,voice,rec,sound</string>
+    <string name="mention_aliases_pdf">pdf,pdfs,doc,docs,document,documents</string>
+    <string name="mention_aliases_note">note,notes</string>
+    <string name="mention_aliases_journal">journal,daily,day</string>
+    <string name="mention_aliases_book">book,books</string>
+    <string name="mention_aliases_task">task,tasks,todo</string>
+    <string name="mention_aliases_person">person,people,contact</string>
+    <string name="mention_aliases_project">project,projects</string>
+    <string name="mention_aliases_web">web,weblink,link,links,url,bookmark</string>
+    <string name="mention_aliases_collection">collection,collections</string>
+    <string name="mention_aliases_tag">tag,tags</string>
+
+    <!-- Home & Object Types Catalog -->
+    <string name="home_tab_space">Recent</string>
+    <string name="home_tab_sets">Sets</string>
+    <string name="home_tab_types">Types</string>
+    <string name="home_section_pinned">Pinned</string>
+    <string name="home_section_recent">Recent in your space</string>
+    <string name="home_section_primordial_types">Primordial &amp; Media</string>
+    <string name="home_section_standard_types">Knowledge Objects</string>
+    <string name="home_types_tap_hint">Tap to explore • + to create</string>
+    <string name="home_view_mosaic">Mosaic</string>
+    <string name="home_view_list">List</string>
+    <string name="home_objects_count">%1$d objects</string>
+    <string name="home_clear_filter">Clear filter</string>
+
+    <!-- Settings: Network & Privacy (Link Resolvers) -->
+    <string name="settings_title">Settings</string>
+    <string name="pref_network_third_party_proxies_title">Allow third-party link resolvers</string>
+    <string name="pref_network_third_party_proxies_summary">Uses helper services (e.g. vxreddit, ddinstagram) to bypass login walls. If disabled, YAOP connects strictly and directly to the original website domain.</string>
+    <!-- Home & radial quick capture -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_today_journal">Today\'s journal</string>
+    <string name="home_journal_hint">What\'s on your mind today?</string>
+    <string name="home_section_today">Today</string>
+    <string name="home_tasks_empty">Nothing pending for today</string>
+    <string name="home_add_task_hint">Add a task for today</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_tasks_more">+%1$d more</string>
+    <string name="home_section_continue">Continue</string>
+    <string name="home_section_recent_created">Recently created</string>
+    <string name="radial_hold_hint">Hold and drag to see all types</string>
+    <string name="radial_release_hint">Release to create</string>
+    <string name="radial_cancel_hint">Release outside to cancel</string>
+    <string name="object_type_note">Note</string>
+    <string name="object_type_journal">Daily Note</string>
+    <string name="object_type_book">Book</string>
+    <string name="object_type_task">Task</string>
+    <string name="object_type_person">Person</string>
+    <string name="object_type_project">Project</string>
+    <string name="object_type_web">Web Link</string>
+    <string name="object_type_image">Image</string>
+    <string name="object_type_pdf">PDF</string>
+    <string name="object_type_audio">Audio</string>
+    <string name="object_type_collection">Collection</string>
+    <string name="object_type_tag">Tag</string>
+    <string name="object_type_whiteboard">Whiteboard</string>
+    <string name="block_type_canvas">Whiteboard Canvas</string>
+
+    <!-- Whiteboard & Infinite Canvas -->
+    <string name="whiteboard_tool_select">Select</string>
+    <string name="whiteboard_tool_pan">Pan Canvas</string>
+    <string name="whiteboard_tool_card">Add Card</string>
+    <string name="whiteboard_tool_sticky">Sticky Note</string>
+    <string name="whiteboard_tool_connector">Connector</string>
+    <string name="whiteboard_tool_pen">Pen</string>
+    <string name="whiteboard_tool_highlighter">Highlighter</string>
+    <string name="whiteboard_tool_section">Frame / Section</string>
+    <string name="whiteboard_tool_eraser">Eraser</string>
+    <string name="whiteboard_zoom_in">Zoom In</string>
+    <string name="whiteboard_zoom_out">Zoom Out</string>
+    <string name="whiteboard_reset_zoom">100%</string>
+    <string name="whiteboard_zoom_fit">Zoom to Fit</string>
+    <string name="whiteboard_open_side_by_side">Inspect (Side-by-Side)</string>
+    <string name="whiteboard_open_fullscreen">Open Note</string>
+    <string name="whiteboard_delete_element">Delete</string>
+    <string name="whiteboard_add_card_dialog_title">Place Object on Whiteboard</string>
+    <string name="whiteboard_filter_all">All</string>
+    <string name="whiteboard_filter_notes">Notes</string>
+    <string name="whiteboard_filter_images">Images</string>
+    <string name="whiteboard_filter_links">Links</string>
+    <string name="whiteboard_filter_tasks">Tasks</string>
+    <string name="whiteboard_add_section_dialog_title">Create Frame / Section</string>
+    <string name="whiteboard_section_title_hint">Section title (e.g., Ideas, Research, Q1)</string>
+    <string name="whiteboard_empty_vault">No notes found in vault to place</string>
+    <string name="whiteboard_tap_to_connect_hint">Tap another card to create a connection</string>
+    <string name="whiteboard_connector_label_hint">Relationship (e.g. leads to, references)</string>
+    <string name="whiteboard_exit_fullscreen">Exit Fullscreen</string>
+    <string name="whiteboard_enter_fullscreen">Fullscreen Canvas</string>
+    <string name="whiteboard_inline_canvas_badge">Whiteboard Canvas</string>
+    <string name="whiteboard_open_canvas_button">Open Infinite Canvas</string>
+    <string name="whiteboard_sticky_placeholder">Take a note…</string>
+    <string name="whiteboard_default_text_label">Text</string>
+    <string name="whiteboard_default_section_title">Section</string>
+    <string name="whiteboard_empty_note_content">No content written yet in this note.</string>
+    <string name="whiteboard_delete_section">Delete Section</string>
+    <string name="whiteboard_stroke_thin">S</string>
+    <string name="whiteboard_stroke_medium">M</string>
+    <string name="whiteboard_stroke_thick">L</string>
+    <string name="whiteboard_nodes_and_strokes_badge">%1$d nodes • %2$d strokes</string>
+    <string name="whiteboard_action_connect">Connect</string>
+    <string name="whiteboard_action_mode">Card Mode</string>
+    <string name="whiteboard_convert_to_note">Convert to Note</string>
+    <string name="whiteboard_converted_note_default_title">Note from Whiteboard</string>
+    <string name="home_section_images">Images</string>
+    <string name="home_open_gallery">Open gallery</string>
+
+    <!-- WebLink creation and management -->
+    <string name="create_weblink_title">New Web Link</string>
+    <string name="weblink_url_label">Web URL</string>
+    <string name="weblink_url_hint">https://example.com</string>
+    <string name="weblink_title_label">Title</string>
+    <string name="weblink_title_hint">Page title (optional)</string>
+    <string name="weblink_paste_clipboard">Paste copied link</string>
+    <string name="weblink_url_required_error">A valid web link (URL) is required</string>
+    <string name="weblink_cover_image">Cover image</string>
+    <string name="weblink_change_image">Change image</string>
+    <string name="weblink_add_image">Add image</string>
+    <string name="weblink_reset_image">Reset to web thumbnail</string>
+    <string name="weblink_save_action">Create Web Link</string>
+    <string name="weblink_copy_link">Copy link</string>
+    <string name="weblink_link_copied">Link copied to clipboard</string>
+    <string name="weblink_edit_link">Edit link</string>
+    <string name="weblink_edit_dialog_title">Edit Web Link URL</string>
+    <string name="weblink_update_action">Update link</string>
+    <string name="weblink_no_url_warning">This web link does not have a URL assigned. A link is mandatory.</string>
+    <string name="weblink_set_url_action">Set URL now</string>
+    <string name="weblink_fetching_preview">Fetching web page preview…</string>
+    <string name="weblink_toggle_bookmark">Save as bookmark</string>
+    <string name="weblink_toggle_reviewed">Mark as reviewed</string>
+    <string name="weblink_open_in_browser">Open in browser</string>
+
+    <!-- Tablet Adaptations & Features -->
+    <string name="tablet_nav_home">Home</string>
+    <string name="tablet_nav_daily">Daily</string>
+    <string name="tablet_nav_tasks">Tasks</string>
+    <string name="tablet_nav_search">Search &amp; Spaces</string>
+    <string name="tablet_nav_new">New</string>
+    <string name="tablet_nav_new_drawing">Drawing &amp; Canvas</string>
+    <string name="tablet_quick_sketch">Quick Sketch</string>
+    <string name="tablet_focus_mode">Focus Mode</string>
+    <string name="tablet_split_mode">Split View</string>
+    <string name="tablet_inspector">Properties &amp; Inspector</string>
+    <string name="tablet_no_selection_title">Select an item to view</string>
+    <string name="tablet_no_selection_subtitle">Choose a note, task, or page from the list to start editing</string>
+    <string name="tablet_action_new_note">New Note</string>
+    <string name="tablet_action_new_drawing">New Drawing</string>
+    <string name="tablet_action_new_task">New Task</string>
+    <string name="tablet_close_pane">Close pane</string>
+    <string name="tablet_fullscreen">Fullscreen</string>
+    <string name="tablet_exit_fullscreen">Exit fullscreen</string>
+    <string name="tablet_outline_title">Outline</string>
+    <string name="tablet_outline_empty">No headings in document</string>
+    <string name="tablet_properties_title">Properties</string>
+    <string name="tablet_backlinks_title">Backlinks</string>
+    <string name="tablet_backlinks_empty">No incoming references</string>
+    <string name="tablet_brush_mode_title">Finger as Brush</string>
+    <string name="tablet_brush_mode_desc">Draw with one finger, pinch to zoom</string>
+    <string name="tablet_stylus_mode_title">Stylus Mode</string>
+    <string name="tablet_stylus_mode_desc">Draw with stylus, pan with finger</string>
+    <string name="tablet_search_hint">Search in vault (Ctrl+K)…</string>
+    <string name="tablet_badge_objects">%1$d objects</string>
+    <string name="sync_status_connected">Synced</string>
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_status_offline">Offline</string>
+    <string name="sync_status_error">Sync error</string>
+    <string name="sync_status_no_token">Set up sync</string>
+    <string name="sync_settings_title">Sync server</string>
+    <string name="sync_settings_url">Server URL</string>
+    <string name="sync_settings_token">Token</string>
+    <string name="sync_settings_save">Test and save</string>
+    <string name="sync_settings_sync_now">Sync now</string>
+    <string name="sync_settings_close">Close</string>
+    <string name="sync_settings_ok">Connected. Saved.</string>
+    <string name="sync_settings_bad_token">The server rejected the token.</string>
+    <string name="sync_settings_unreachable">Cannot reach the server.</string>
+    <string name="sync_settings_last_sync">Last sync: %1$s</string>
+    <string name="sync_settings_never">never</string>
+    <string name="sync_settings_last_error">Last error: %1$s</string>
+    <string name="trash_title">Trash</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_restored">Restored from the trash</string>
+    <string name="trash_empty">The trash is empty</string>
+    <string name="trash_hint">Objects here are deleted for good 30 days after being trashed. Restoring brings them back on every device.</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <string name="set_new">New set</string>
+    <string name="set_new_name">New set</string>
+    <string name="set_empty_title">Sets are saved queries</string>
+    <string name="set_empty_hint">Pick types, filters and a sort; see them as a gallery, table or list.</string>
+    <string name="set_all_types">all types</string>
+    <string name="set_edit_query">Edit query</string>
+    <string name="set_view_gallery">Gallery</string>
+    <string name="set_view_table">Table</string>
+    <string name="set_view_list">List</string>
+    <string name="set_no_results">No objects match this set</string>
+    <string name="set_query_error">Query error: %1$s</string>
+    <string name="set_filters">Filters</string>
+    <string name="set_add_filter">Filter</string>
+    <string name="set_sort">Sort</string>
+    <string name="set_delete">Delete set</string>
+    <string name="set_value">value</string>
+    <string name="set_col_name">Name</string>
+    <string name="set_col_type">Type</string>
+    <string name="set_col_edited">Edited</string>
+    <string name="set_op_eq">is</string>
+    <string name="set_op_neq">is not</string>
+    <string name="set_op_contains">contains</string>
+    <string name="set_op_not_contains">does not contain</string>
+    <string name="set_op_has_any">has any of</string>
+    <string name="set_op_has_none">has none of</string>
+    <string name="set_op_gte">≥</string>
+    <string name="set_op_lte">≤</string>
+    <string name="set_op_before">before</string>
+    <string name="set_op_after">after</string>
+    <string name="set_op_on">on</string>
+    <string name="set_op_empty">is empty</string>
+    <string name="set_op_not_empty">is not empty</string>
+    <string name="set_op_is_true">is checked</string>
+    <plurals name="set_n_filters">
+        <item quantity="one">%d filter</item>
+        <item quantity="other">%d filters</item>
+    </plurals>
+    <plurals name="set_n_objects">
+        <item quantity="one">%d object</item>
+        <item quantity="other">%d objects</item>
+    </plurals>
+    <string name="home_today_journal_short">Journal · today</string>
+    <string name="home_write">Write →</string>
+    <string name="home_customize">Customize home</string>
+    <string name="home_settings_title">Home</string>
+    <string name="tasks_show">Show</string>
+    <string name="search_filters">Filters</string>
+    <string name="capture_text_hint">Write something…</string>
+    <string name="capture_to_daily">To Journal</string>
+    <string name="capture_as_note">To review</string>
+    <string name="habits_today">Habits today</string>
+    <string name="habits_title">Habits</string>
+    <string name="habits_empty">No habits yet. Create one with the + button.</string>
+    <string name="habit_slot_morning">Morning</string>
+    <string name="habit_slot_afternoon">Afternoon</string>
+    <string name="habit_slot_evening">Evening</string>
+    <string name="habit_slot_any">Any time</string>
+    <string name="habit_days">days</string>
+    <string name="habit_best">Best</string>
+    <string name="habit_rate30">30 days</string>
+    <string name="habit_total">Total</string>
+    <string name="quick_action_habit">Habit</string>
+    <string name="home_habits">Habits</string>
+    <string name="new_type">New type</string>
+    <string name="new_type_hint">Type name (e.g. Recipe)</string>
+    <string name="inbox_title">To review</string>
+    <string name="inbox_mark">Mark reviewed</string>
+    <string name="inbox_empty">Nothing to review</string>
+    <string name="habit_amount">Amount</string>
+    <string name="habit_skip">Rest day</string>
+    <string name="habit_clear">Clear</string>
+    <string name="habit_save">Save</string>
+</resources>

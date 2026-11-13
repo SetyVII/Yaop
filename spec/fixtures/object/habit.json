@@ -1,0 +1,26 @@
+{
+  "name": "habit with a goal and daily records",
+  "object": {
+    "id": "h1",
+    "type_id": "habit",
+    "title": "Beber agua",
+    "properties": {
+      "habit_kind": "count",
+      "habit_goal": 8,
+      "habit_unit": "vasos",
+      "habit_freq": "daily",
+      "habit_slot": "any",
+      "habit_start": "2026-11-01",
+      "habit_state": "active",
+      "d:2026-11-12": 8,
+      "d:2026-11-13": 3,
+      "d:2026-11-10": "skip",
+      "blocks": []
+    },
+    "property_links": [
+      "daily-2026-11-01"
+    ],
+    "links": [],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}

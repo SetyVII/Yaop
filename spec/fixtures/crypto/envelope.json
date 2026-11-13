@@ -1,0 +1,41 @@
+{
+  "cases": [
+    {
+      "aad": "objects/deadbeefcafe0011",
+      "domain": "objects",
+      "envelope_hex": "0100000001000102030405060708090a0b0c0d0e0f1011121314151617a4f0bb495b5b55292df08e73bde46ba99dc52e785fedf06616868f69361b846c747219be8635eb6a3116f1a03dd8ebeee6a7c96afd67768d2fafd6fb6514af4ff8ed69596cc9673e0af1ba2523488cfbe23a2e1ebe8b845199a5e925f82c8e772405c5f00ee0c012db39818e84475576e1fcdb0fda6aad4878404ec5ffe7085e434bc63a",
+      "key": "aa20fc1871e09a6a38c12d2cfdbf67368deff009e09ad5c8f7d9e3af00182b81",
+      "key_epoch": 1,
+      "name": "JSON object, version 1, epoch 1",
+      "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
+      "payload": "{\"id\":\"obj1\",\"title\":\"Notas del proyecto\",\"properties\":{\"blocks\":[{\"id\":\"b1\",\"type\":\"paragraph\",\"text\":\"Secreto\"}]}}",
+      "wire_id": "deadbeefcafe0011"
+    },
+    {
+      "aad": "assets/9988776655aa/chunk/7",
+      "chunk_index": 7,
+      "domain": "assets",
+      "envelope_hex": "0100000002f0e0d0c0b0a0908070605040302010001f1e1d1c1b1a1918191e5bda4ea52b780335e3616509b558b974d1ee54e9c25a416a2f4688eb3ecc",
+      "key": "419235d55dce7d3b2a19a8a9cc1ca1547cd27a71fc1b84be5697f5be0d6269a5",
+      "key_epoch": 2,
+      "name": "binary asset chunk, version 1, epoch 2",
+      "nonce": "f0e0d0c0b0a0908070605040302010001f1e1d1c1b1a1918",
+      "payload_hex": "000102fffefd807f000102fffefd807f",
+      "wire_id": "9988776655aa"
+    },
+    {
+      "aad": "ops/a1b2c3d4e5f60718",
+      "domain": "ops",
+      "envelope_hex": "0100000002f0e0d0c0b0a0908070605040302010001f1e1d1c1b1a1918beb39b99fcd9226f7536098166ae76d767884b324de374b03894c1cbd0f9f60cc8b01562085f2987d35beae3bfa6ee861486693f32b6",
+      "key": "dbe4c3699aaaa792f5da5e631cfa518d627fcdd9bb584e1897177b6a2f1e57a9",
+      "key_epoch": 2,
+      "name": "snapshot op, version 1, epoch 2",
+      "nonce": "f0e0d0c0b0a0908070605040302010001f1e1d1c1b1a1918",
+      "payload": "{\"bootstrap\":true,\"snapshot_seq\":5000}",
+      "wire_id": "a1b2c3d4e5f60718"
+    }
+  ],
+  "name": "sobre: version(1)|key_epoch(u32 BE)|nonce(24)|ct+tag; AAD=<domain>/<wire_id>",
+  "vk": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff",
+  "zstd_note": "los sobres versión 0x02 (payload zstd nivel 3 antes de cifrar) no son byte-deterministas entre versiones de zstd: las fixtures verifican roundtrip, no bytes exactos; ver envelope_zstd_roundtrip.json"
+}

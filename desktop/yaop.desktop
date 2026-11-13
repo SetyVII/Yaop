@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=YAOP
+Comment=A quiet place to think
+Exec=yaop
+Icon=yaop
+Terminal=false
+Categories=Office;Utility;
+StartupWMClass=yaop
+Keywords=notes;knowledge;tasks;whiteboard;pkm;

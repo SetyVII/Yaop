@@ -1,0 +1,33 @@
+{
+  "name": "table with alignments",
+  "blocks": [
+    {
+      "id": "tb1",
+      "type": "table",
+      "text": "",
+      "runs": [],
+      "align": [
+        "left",
+        "right"
+      ],
+      "rows": [
+        [
+          {
+            "text": "Nombre"
+          },
+          {
+            "text": "Total"
+          }
+        ],
+        [
+          {
+            "text": "luz"
+          },
+          {
+            "text": "42"
+          }
+        ]
+      ]
+    }
+  ]
+}

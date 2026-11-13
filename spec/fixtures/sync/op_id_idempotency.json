@@ -1,0 +1,117 @@
+{
+  "name": "idempotency by op_id: retrying the push after losing Wi-Fi returns the SAME seq and does not duplicate the log",
+  "initial": {
+    "head_seq": 0
+  },
+  "steps": [
+    {
+      "action": "push",
+      "ops": [
+        {
+          "op_id": "cc000000000000000000000000000001",
+          "device_id": "dev_tablet",
+          "kind": "obj",
+          "wire_id": "6f85020f85506181e573ce22c245d578",
+          "key_epoch": 1,
+          "blob": "PGVudmVsb3BlIDE+"
+        }
+      ],
+      "expect": {
+        "results": [
+          {
+            "op_id": "cc000000000000000000000000000001",
+            "seq": 1
+          }
+        ],
+        "head_seq": 1
+      }
+    },
+    {
+      "action": "push",
+      "comment": "same op_id: retry after a network loss; the seq is the original one",
+      "ops": [
+        {
+          "op_id": "cc000000000000000000000000000001",
+          "device_id": "dev_tablet",
+          "kind": "obj",
+          "wire_id": "6f85020f85506181e573ce22c245d578",
+          "key_epoch": 1,
+          "blob": "PGVudmVsb3BlIDE+"
+        }
+      ],
+      "expect": {
+        "results": [
+          {
+            "op_id": "cc000000000000000000000000000001",
+            "seq": 1
+          }
+        ],
+        "head_seq": 1
+      }
+    },
+    {
+      "action": "pull",
+      "since_seq": 0,
+      "expect": {
+        "seqs": [
+          1
+        ],
+        "op_ids": [
+          "cc000000000000000000000000000001"
+        ],
+        "head_seq": 1,
+        "has_more": false,
+        "note": "a single op in the log despite the two pushes"
+      }
+    },
+    {
+      "action": "push",
+      "comment": "a push mixing retries and new ops: each op_id keeps its seq",
+      "ops": [
+        {
+          "op_id": "cc000000000000000000000000000001",
+          "device_id": "dev_tablet",
+          "kind": "obj",
+          "wire_id": "6f85020f85506181e573ce22c245d578",
+          "key_epoch": 1,
+          "blob": "PGVudmVsb3BlIDE+"
+        },
+        {
+          "op_id": "cc000000000000000000000000000002",
+          "device_id": "dev_tablet",
+          "kind": "obj",
+          "wire_id": "a872162d777ca2d56908fffe5773a781",
+          "key_epoch": 1,
+          "blob": "PGVudmVsb3BlIDI+"
+        }
+      ],
+      "expect": {
+        "results": [
+          {
+            "op_id": "cc000000000000000000000000000001",
+            "seq": 1
+          },
+          {
+            "op_id": "cc000000000000000000000000000002",
+            "seq": 2
+          }
+        ],
+        "head_seq": 2
+      }
+    },
+    {
+      "action": "pull",
+      "since_seq": 1,
+      "expect": {
+        "seqs": [
+          2
+        ],
+        "op_ids": [
+          "cc000000000000000000000000000002"
+        ],
+        "head_seq": 2,
+        "has_more": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "name": "the four list kinds nested and back to level 0",
+  "blocks": [
+    {
+      "id": "l1",
+      "type": "bullet_list",
+      "text": "viñeta",
+      "runs": [
+        {
+          "text": "viñeta"
+        }
+      ]
+    },
+    {
+      "id": "l2",
+      "indent": 2,
+      "type": "bullet_list",
+      "text": "viñeta hija",
+      "runs": [
+        {
+          "text": "viñeta hija"
+        }
+      ]
+    },
+    {
+      "id": "l3",
+      "indent": 2,
+      "type": "numbered_list",
+      "number": 1,
+      "text": "uno",
+      "runs": [
+        {
+          "text": "uno"
+        }
+      ]
+    },
+    {
+      "id": "l4",
+      "indent": 2,
+      "type": "numbered_list",
+      "number": 2,
+      "text": "dos",
+      "runs": [
+        {
+          "text": "dos"
+        }
+      ]
+    },
+    {
+      "id": "l5",
+      "indent": 3,
+      "type": "alphabetic_list",
+      "number": 1,
+      "text": "a",
+      "runs": [
+        {
+          "text": "a"
+        }
+      ]
+    },
+    {
+      "id": "l6",
+      "indent": 4,
+      "type": "roman_list",
+      "number": 1,
+      "text": "i",
+      "runs": [
+        {
+          "text": "i"
+        }
+      ]
+    },
+    {
+      "id": "l7",
+      "indent": 7,
+      "type": "bullet_list",
+      "text": "profundo",
+      "runs": [
+        {
+          "text": "profundo"
+        }
+      ]
+    },
+    {
+      "id": "l8",
+      "type": "bullet_list",
+      "text": "otra vez arriba",
+      "runs": [
+        {
+          "text": "otra vez arriba"
+        }
+      ]
+    }
+  ]
+}

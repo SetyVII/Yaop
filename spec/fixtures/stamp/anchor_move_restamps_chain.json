@@ -1,0 +1,121 @@
+{
+  "name": "moving re-anchors the moved block and those whose predecessor changed",
+  "prev": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "a1",
+          "type": "paragraph",
+          "text": "A"
+        },
+        {
+          "id": "b1",
+          "type": "paragraph",
+          "text": "B"
+        },
+        {
+          "id": "c1",
+          "type": "paragraph",
+          "text": "C"
+        },
+        {
+          "id": "d1",
+          "type": "paragraph",
+          "text": "D"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000001-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000001-0000-bbbbbbbb",
+      "type_id": "0000000000001-0000-bbbbbbbb",
+      "order": "0000000000001-0000-bbbbbbbb"
+    },
+    "block_hlc": {
+      "a1": "0000000000001-0000-bbbbbbbb",
+      "b1": "0000000000001-0000-bbbbbbbb",
+      "c1": "0000000000001-0000-bbbbbbbb",
+      "d1": "0000000000001-0000-bbbbbbbb"
+    },
+    "block_anchor": {
+      "a1": { "after": "", "hlc": "0000000000001-0000-bbbbbbbb" },
+      "b1": { "after": "a1", "hlc": "0000000000001-0000-bbbbbbbb" },
+      "c1": { "after": "b1", "hlc": "0000000000001-0000-bbbbbbbb" },
+      "d1": { "after": "c1", "hlc": "0000000000001-0000-bbbbbbbb" }
+    }
+  },
+  "next": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "a1",
+          "type": "paragraph",
+          "text": "A"
+        },
+        {
+          "id": "c1",
+          "type": "paragraph",
+          "text": "C"
+        },
+        {
+          "id": "b1",
+          "type": "paragraph",
+          "text": "B"
+        },
+        {
+          "id": "d1",
+          "type": "paragraph",
+          "text": "D"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000001-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000001-0000-bbbbbbbb",
+      "type_id": "0000000000001-0000-bbbbbbbb",
+      "order": "0000000000001-0000-bbbbbbbb"
+    },
+    "block_hlc": {
+      "a1": "0000000000001-0000-bbbbbbbb",
+      "b1": "0000000000001-0000-bbbbbbbb",
+      "c1": "0000000000001-0000-bbbbbbbb",
+      "d1": "0000000000001-0000-bbbbbbbb"
+    }
+  },
+  "now": "0000000000900-0000-aaaaaaaa",
+  "expect_meta": {
+    "field_hlc": {
+      "title": "0000000000001-0000-bbbbbbbb",
+      "type_id": "0000000000001-0000-bbbbbbbb",
+      "order": "0000000000900-0000-aaaaaaaa"
+    },
+    "block_hlc": {
+      "a1": "0000000000001-0000-bbbbbbbb",
+      "b1": "0000000000001-0000-bbbbbbbb",
+      "c1": "0000000000001-0000-bbbbbbbb",
+      "d1": "0000000000001-0000-bbbbbbbb"
+    },
+    "deleted_blocks": {},
+    "block_anchor": {
+      "a1": { "after": "", "hlc": "0000000000001-0000-bbbbbbbb" },
+      "c1": { "after": "a1", "hlc": "0000000000900-0000-aaaaaaaa" },
+      "b1": { "after": "c1", "hlc": "0000000000900-0000-aaaaaaaa" },
+      "d1": { "after": "b1", "hlc": "0000000000900-0000-aaaaaaaa" }
+    }
+  },
+  "expect_hlc": "0000000000900-0000-aaaaaaaa"
+}

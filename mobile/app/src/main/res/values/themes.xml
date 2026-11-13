@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="yaop_window_bg">#050A26</color>
+    <style name="Theme.YAOP" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/yaop_window_bg</item>
+        <item name="android:colorBackground">@color/yaop_window_bg</item>
+    </style>
+
+    <style name="Theme.YAOP.TransparentDialog" parent="Theme.YAOP">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.5</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

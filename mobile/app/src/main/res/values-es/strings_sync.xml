@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sync states of the status chip (spec §22.6) -->
+    <string name="sync_status_no_vault">Vault sin configurar</string>
+    <string name="sync_status_protocol_mismatch">Servidor desactualizado</string>
+    <string name="sync_status_pending_n">%1$d pendientes</string>
+</resources>

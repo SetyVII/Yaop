@@ -1,0 +1,30 @@
+{
+  "name": "schema_version merges by maximum (associative and commutative, spec/object.md)",
+  "a": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota nueva",
+    "schema_version": 1,
+    "content": "",
+    "properties": {},
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000200-0000-aaaaaaaa"
+  },
+  "b": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota vieja",
+    "content": "",
+    "properties": {},
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000300-0000-bbbbbbbb"
+  },
+  "expect": {
+    "title": "Nota vieja",
+    "schema_version": 1
+  }
+}

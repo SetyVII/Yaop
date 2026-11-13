@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "id": "daily-2026-11-09",
+      "name": "diario",
+      "wire_id": "6f85020f85506181e573ce22c245d578"
+    },
+    {
+      "id": "tag_mi_tema",
+      "name": "etiqueta",
+      "wire_id": "417794695851bd508d25f135e539b56a"
+    },
+    {
+      "id": "media_0ea49d0a5e704e39a189a809cb60962f",
+      "name": "media",
+      "wire_id": "a872162d777ca2d56908fffe5773a781"
+    },
+    {
+      "id": "tag_mi_tema",
+      "name": "deterministic: the same id on two devices gives the same wire_id",
+      "wire_id": "417794695851bd508d25f135e539b56a"
+    }
+  ],
+  "derived_cases": [
+    {
+      "input": "derived/pdf_1a2b3c/pdf.text",
+      "kind": "pdf.text",
+      "name": "pdf text",
+      "object_id": "pdf_1a2b3c",
+      "wire_id": "b1c5888d203e5e6ecf29789ff56d6d47"
+    },
+    {
+      "input": "derived/img_00ff/thumb.grid",
+      "kind": "thumb.grid",
+      "name": "grid thumbnail: a different kind of the same object gives a different wire_id",
+      "object_id": "img_00ff",
+      "wire_id": "a9578c8af4a3bb2306099a079f85b0da"
+    },
+    {
+      "input": "derived/img_00ff/thumb.hero",
+      "kind": "thumb.hero",
+      "name": "miniatura hero",
+      "object_id": "img_00ff",
+      "wire_id": "2cdf27a57327173478eed719c011c43e"
+    }
+  ],
+  "ids_subkey": "67cbffa2e689458cda231cda487691fa12d39e49490813b16af61cb46c68703d",
+  "name": "blind ids: wire_id = hex(HMAC-SHA256(ids, id_utf8))[0:32] (16 bytes in lowercase hex)",
+  "vk": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff"
+}

@@ -1,0 +1,28 @@
+# Build output
+build/
+.build/
+server/bin/
+.gradle/
+.kotlin/
+.cxx/
+.externalNativeBuild/
+mobile/captures/
+
+# Local machine / IDE
+local.properties
+.idea/
+.vscode/
+*.iml
+*.user
+.DS_Store
+
+# Runtime data and secrets — never commit
+server/data/
+*.db
+*.db-wal
+*.db-shm
+master.key
+bearer.token
+*.keystore
+*.jks
+.env

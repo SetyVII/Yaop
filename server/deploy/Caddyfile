@@ -1,0 +1,16 @@
+# Example: Caddy in front of yaop-server for automatic HTTPS.
+# Replace sync.example.com with your own domain.
+sync.example.com {
+	encode zstd gzip
+	request_body {
+		max_size 60MB
+	}
+	reverse_proxy 127.0.0.1:8765 {
+		flush_interval -1 # live stream (SSE): do not buffer
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+}

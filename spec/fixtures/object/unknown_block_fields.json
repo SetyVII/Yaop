@@ -1,0 +1,41 @@
+{
+  "name": "block fields and values a platform does not know survive the round trip",
+  "object": {
+    "id": "o5",
+    "type_id": "note",
+    "title": "Futuro",
+    "properties": {
+      "blocks": [
+        {
+          "id": "u1",
+          "type": "paragraph",
+          "text": "hola",
+          "runs": [
+            {
+              "text": "hola"
+            }
+          ],
+          "x_future": {
+            "mode": "beta",
+            "n": 2
+          },
+          "x_flag": true
+        },
+        {
+          "id": "u2",
+          "type": "code",
+          "language": "go",
+          "text": "x := 1",
+          "runs": [
+            {
+              "text": "x := 1"
+            }
+          ],
+          "x_theme": "dracula"
+        }
+      ]
+    },
+    "links": [],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}

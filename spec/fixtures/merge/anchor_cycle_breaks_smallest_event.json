@@ -1,0 +1,122 @@
+{
+  "name": "cycle of concurrent moves: re-roots the oldest anchoring event",
+  "a": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "Q",
+          "type": "paragraph",
+          "text": "q"
+        },
+        {
+          "id": "P",
+          "type": "paragraph",
+          "text": "p"
+        },
+        {
+          "id": "R",
+          "type": "paragraph",
+          "text": "r"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000200-0000-aaaaaaaa",
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000200-0000-aaaaaaaa"
+    },
+    "block_hlc": {
+      "P": "0000000000100-0000-dddddddd",
+      "Q": "0000000000100-0000-dddddddd",
+      "R": "0000000000100-0000-dddddddd"
+    },
+    "block_anchor": {
+      "P": { "after": "Q", "hlc": "0000000000200-0000-aaaaaaaa" },
+      "Q": { "after": "", "hlc": "0000000000200-0000-aaaaaaaa" },
+      "R": { "after": "P", "hlc": "0000000000200-0000-aaaaaaaa" }
+    }
+  },
+  "b": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "R",
+          "type": "paragraph",
+          "text": "r"
+        },
+        {
+          "id": "Q",
+          "type": "paragraph",
+          "text": "q"
+        },
+        {
+          "id": "P",
+          "type": "paragraph",
+          "text": "p"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000300-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000300-0000-bbbbbbbb"
+    },
+    "block_hlc": {
+      "P": "0000000000100-0000-dddddddd",
+      "Q": "0000000000100-0000-dddddddd",
+      "R": "0000000000100-0000-dddddddd"
+    },
+    "block_anchor": {
+      "P": { "after": "", "hlc": "0000000000100-0000-dddddddd" },
+      "Q": { "after": "R", "hlc": "0000000000300-0000-bbbbbbbb" },
+      "R": { "after": "P", "hlc": "0000000000300-0000-bbbbbbbb" }
+    }
+  },
+  "expect": {
+    "properties": {
+      "blocks": [
+        {
+          "id": "P",
+          "type": "paragraph",
+          "text": "p"
+        },
+        {
+          "id": "R",
+          "type": "paragraph",
+          "text": "r"
+        },
+        {
+          "id": "Q",
+          "type": "paragraph",
+          "text": "q"
+        }
+      ]
+    },
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000300-0000-bbbbbbbb"
+    },
+    "block_anchor": {
+      "P": { "after": "Q", "hlc": "0000000000200-0000-aaaaaaaa" },
+      "Q": { "after": "R", "hlc": "0000000000300-0000-bbbbbbbb" },
+      "R": { "after": "P", "hlc": "0000000000300-0000-bbbbbbbb" }
+    }
+  }
+}

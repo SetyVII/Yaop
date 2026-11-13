@@ -1,0 +1,35 @@
+{
+  "name": "pure black/white are editor artifacts: dropped on every platform",
+  "input": [
+    {
+      "id": "c1",
+      "type": "paragraph",
+      "text": "negro y blanco",
+      "runs": [
+        {
+          "text": "negro",
+          "text_color": "#000000"
+        },
+        {
+          "text": " y "
+        },
+        {
+          "text": "blanco",
+          "bg_color": "#FFFFFF"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "c1",
+      "type": "paragraph",
+      "text": "negro y blanco",
+      "runs": [
+        {
+          "text": "negro y blanco"
+        }
+      ]
+    }
+  ]
+}

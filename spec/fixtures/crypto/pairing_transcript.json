@@ -1,0 +1,47 @@
+{
+  "name": "full pairing transcript with fixed test keys",
+  "note": "all values are test values (made up); never real keys",
+  "steps": [
+    {
+      "desc": "device A generates the ephemeral X25519 key",
+      "n": 1,
+      "priv_a": "a546e36bf0527c9df6313218952860a4c2e8de38a27bdac9cf2f7b7f6e36ad57",
+      "pub_a": "786cfe2ffd7a13c65c2305110131f715886fb29580d8e8e29a576b87aae6ff4c",
+      "pub_a_b64url": "eGz-L_16E8ZcIwURATH3FYhvspWA2Ojimldrh6rm_0w"
+    },
+    {
+      "desc": "A builds the QR (compact JSON)",
+      "n": 2,
+      "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"eph_pub\":\"eGz-L_16E8ZcIwURATH3FYhvspWA2Ojimldrh6rm_0w\",\"pairing_id\":\"8f14e45fceea167a5a36dedd4bea2543\"}",
+      "tls_fp_sha256_of_spki_der": "abababababababababababababababababababababababababababababababab"
+    },
+    {
+      "desc": "device B scans and generates its own ephemeral key",
+      "n": 3,
+      "priv_b": "4b1cdeb5b0ac1f2d3e4f5061728394a5b6c7d8e9f0011223344556677889901f",
+      "pub_b": "05a1b72cfe02fc264cb5b3c8a383205556ced4126d4aff230cebb6ffe50b0966",
+      "pub_b_b64url": "BaG3LP4C_CZMtbPIo4MgVVbO1BJtSv8jDOu2_-ULCWY"
+    },
+    {
+      "desc": "both compute the X25519 shared secret",
+      "n": 4,
+      "shared_hex": "e5c74e20a92bbe6612dbe7582ab7f8980e6681dceb701169c9ad8a35fa74103a"
+    },
+    {
+      "desc": "both derive and show the 6-digit short code",
+      "n": 5,
+      "short_code": "230346"
+    },
+    {
+      "aad": "pairing/8f14e45fceea167a5a36dedd4bea2543",
+      "desc": "A wraps the VK with the transfer key and sends it",
+      "envelope_v1_hex": "0100000001505152535455565758595a5b5c5d5e5f6061626364656667805aa52f4e1370c8f64b2b92289e49f23d34b6e5ac061780e7de0e9e27474b101d601bf61912d6b58e43183440eb318a",
+      "key_epoch": 1,
+      "n": 6,
+      "nonce": "505152535455565758595a5b5c5d5e5f6061626364656667",
+      "pairing_id": "8f14e45fceea167a5a36dedd4bea2543",
+      "vk": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff",
+      "vk_transfer_key": "b842440ffd5f02c8cc779753918a4c937bb9caa4eebfbcd598543a8d00d99032"
+    }
+  ]
+}

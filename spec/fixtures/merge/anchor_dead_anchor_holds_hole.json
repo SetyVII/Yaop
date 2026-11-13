@@ -1,0 +1,137 @@
+{
+  "name": "the gap of a deleted anchor keeps the position of what was inserted after it",
+  "a": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "A",
+          "type": "paragraph",
+          "text": "alpha"
+        },
+        {
+          "id": "B",
+          "type": "paragraph",
+          "text": "beta"
+        },
+        {
+          "id": "X",
+          "type": "paragraph",
+          "text": "insertado tras beta"
+        },
+        {
+          "id": "C",
+          "type": "paragraph",
+          "text": "gamma"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000300-0000-aaaaaaaa",
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000300-0000-aaaaaaaa"
+    },
+    "block_hlc": {
+      "A": "0000000000100-0000-dddddddd",
+      "B": "0000000000100-0000-dddddddd",
+      "C": "0000000000100-0000-dddddddd",
+      "X": "0000000000300-0000-aaaaaaaa"
+    },
+    "deleted_blocks": {},
+    "block_anchor": {
+      "A": { "after": "", "hlc": "0000000000100-0000-dddddddd" },
+      "B": { "after": "A", "hlc": "0000000000100-0000-dddddddd" },
+      "X": { "after": "B", "hlc": "0000000000300-0000-aaaaaaaa" },
+      "C": { "after": "X", "hlc": "0000000000300-0000-aaaaaaaa" }
+    }
+  },
+  "b": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": [
+        {
+          "id": "A",
+          "type": "paragraph",
+          "text": "alpha"
+        },
+        {
+          "id": "C",
+          "type": "paragraph",
+          "text": "gamma"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000200-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000200-0000-bbbbbbbb"
+    },
+    "block_hlc": {
+      "A": "0000000000100-0000-dddddddd",
+      "B": "0000000000100-0000-dddddddd",
+      "C": "0000000000100-0000-dddddddd"
+    },
+    "deleted_blocks": {
+      "B": "0000000000200-0000-bbbbbbbb"
+    },
+    "block_anchor": {
+      "A": { "after": "", "hlc": "0000000000100-0000-dddddddd" },
+      "B": { "after": "A", "hlc": "0000000000100-0000-dddddddd" },
+      "C": { "after": "A", "hlc": "0000000000200-0000-bbbbbbbb" }
+    }
+  },
+  "expect": {
+    "properties": {
+      "blocks": [
+        {
+          "id": "A",
+          "type": "paragraph",
+          "text": "alpha"
+        },
+        {
+          "id": "X",
+          "type": "paragraph",
+          "text": "insertado tras beta"
+        },
+        {
+          "id": "C",
+          "type": "paragraph",
+          "text": "gamma"
+        }
+      ]
+    },
+    "field_hlc": {
+      "title": "0000000000100-0000-dddddddd",
+      "type_id": "0000000000100-0000-dddddddd",
+      "order": "0000000000300-0000-aaaaaaaa"
+    },
+    "block_hlc": {
+      "A": "0000000000100-0000-dddddddd",
+      "C": "0000000000100-0000-dddddddd",
+      "X": "0000000000300-0000-aaaaaaaa"
+    },
+    "deleted_blocks": {
+      "B": "0000000000200-0000-bbbbbbbb"
+    },
+    "block_anchor": {
+      "A": { "after": "", "hlc": "0000000000100-0000-dddddddd" },
+      "B": { "after": "A", "hlc": "0000000000100-0000-dddddddd" },
+      "X": { "after": "B", "hlc": "0000000000300-0000-aaaaaaaa" },
+      "C": { "after": "X", "hlc": "0000000000300-0000-aaaaaaaa" }
+    }
+  }
+}

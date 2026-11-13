@@ -1,0 +1,19 @@
+{
+  "name": "task with status, priority and due date",
+  "object": {
+    "id": "o4",
+    "type_id": "task",
+    "title": "Pagar luz",
+    "properties": {
+      "status": "done",
+      "priority": "high",
+      "due_date": "2026-11-20",
+      "blocks": []
+    },
+    "property_links": [
+      "daily-2026-11-20"
+    ],
+    "links": [],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}

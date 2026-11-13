@@ -1,0 +1,15 @@
+{
+  "len": 32,
+  "name": "per-domain subkeys: HKDF-SHA256(ikm=VK, salt=yaop-vault/1, info=domain) → 32 bytes",
+  "salt": "yaop-vault/1",
+  "subkeys": {
+    "assets": "419235d55dce7d3b2a19a8a9cc1ca1547cd27a71fc1b84be5697f5be0d6269a5",
+    "derived": "b46f41956c2e7ce3dcb7f97bae54ef26b1c4f9bc3f8721ebdf11442819dc697e",
+    "ids": "67cbffa2e689458cda231cda487691fa12d39e49490813b16af61cb46c68703d",
+    "objects": "aa20fc1871e09a6a38c12d2cfdbf67368deff009e09ad5c8f7d9e3af00182b81",
+    "ops": "dbe4c3699aaaa792f5da5e631cfa518d627fcdd9bb584e1897177b6a2f1e57a9",
+    "snapshots": "4473bc7f2b7ce55aa42f91d5c1fbdac22ab826044f327867e5a306ed4067e6cf",
+    "thumbs": "2517c01b2b30254f1c2dba92a14dde0f72e82ed286697a80c33ef5d471888afe"
+  },
+  "vk": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff"
+}

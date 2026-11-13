@@ -1,0 +1,79 @@
+{
+  "name": "group with children (one indented) followed by a paragraph outside (output: flat with group_id; input: nested shape)",
+  "blocks": [
+    {
+      "id": "gc1",
+      "type": "paragraph",
+      "text": "dentro del grupo",
+      "runs": [
+        {
+          "text": "dentro del grupo"
+        }
+      ],
+      "group_id": "grp1"
+    },
+    {
+      "id": "gc2",
+      "indent": 2,
+      "type": "bullet_list",
+      "text": "lista en el grupo",
+      "runs": [
+        {
+          "text": "lista en el grupo"
+        }
+      ],
+      "group_id": "grp1"
+    },
+    {
+      "id": "out1",
+      "type": "paragraph",
+      "text": "fuera del grupo",
+      "runs": [
+        {
+          "text": "fuera del grupo"
+        }
+      ]
+    }
+  ],
+  "input": [
+    {
+      "id": "grp1",
+      "type": "group",
+      "text": "",
+      "runs": [],
+      "children": [
+        {
+          "id": "gc1",
+          "type": "paragraph",
+          "text": "dentro del grupo",
+          "runs": [
+            {
+              "text": "dentro del grupo"
+            }
+          ]
+        },
+        {
+          "id": "gc2",
+          "indent": 2,
+          "type": "bullet_list",
+          "text": "lista en el grupo",
+          "runs": [
+            {
+              "text": "lista en el grupo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "out1",
+      "type": "paragraph",
+      "text": "fuera del grupo",
+      "runs": [
+        {
+          "text": "fuera del grupo"
+        }
+      ]
+    }
+  ]
+}

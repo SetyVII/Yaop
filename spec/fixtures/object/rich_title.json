@@ -1,0 +1,44 @@
+{
+  "name": "title with bold and a mention; the title mention counts as a reference",
+  "object": {
+    "id": "o1",
+    "type_id": "note",
+    "title": "Reunión con @Marcos",
+    "title_runs": [
+      {
+        "text": "Reunión",
+        "bold": true
+      },
+      {
+        "text": " con "
+      },
+      {
+        "text": "Marcos",
+        "object_id": "p-marcos"
+      }
+    ],
+    "properties": {
+      "blocks": [
+        {
+          "id": "b1",
+          "type": "paragraph",
+          "text": "ver @Ana",
+          "runs": [
+            {
+              "text": "ver "
+            },
+            {
+              "text": "Ana",
+              "object_id": "p-ana"
+            }
+          ]
+        }
+      ]
+    },
+    "links": [
+      "p-ana",
+      "p-marcos"
+    ],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}

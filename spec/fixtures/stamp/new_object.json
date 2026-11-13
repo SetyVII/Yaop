@@ -1,0 +1,38 @@
+{
+  "name": "a new object stamps everything",
+  "prev": null,
+  "next": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "url": "https://x",
+      "blocks": [
+        {
+          "id": "b1",
+          "type": "paragraph",
+          "text": "uno"
+        }
+      ]
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": ""
+  },
+  "now": "0000000000900-0000-aaaaaaaa",
+  "expect_meta": {
+    "field_hlc": {
+      "title": "0000000000900-0000-aaaaaaaa",
+      "type_id": "0000000000900-0000-aaaaaaaa",
+      "p:url": "0000000000900-0000-aaaaaaaa",
+      "order": "0000000000900-0000-aaaaaaaa"
+    },
+    "block_hlc": {
+      "b1": "0000000000900-0000-aaaaaaaa"
+    },
+    "deleted_blocks": {}
+  },
+  "expect_hlc": "0000000000900-0000-aaaaaaaa"
+}

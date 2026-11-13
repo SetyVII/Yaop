@@ -1,0 +1,45 @@
+{
+  "name": "editing without knowing about the trash does not revive the object",
+  "a": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota",
+    "content": "",
+    "properties": {
+      "blocks": []
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000200-0000-aaaaaaaa",
+    "field_hlc": {
+      "title": "0000000000100-0000-aaaaaaaa",
+      "type_id": "0000000000100-0000-aaaaaaaa",
+      "order": "0000000000100-0000-aaaaaaaa",
+      "trashed_at": "0000000000200-0000-aaaaaaaa"
+    },
+    "trashed_at": "2026-11-02T10:00:00Z"
+  },
+  "b": {
+    "id": "obj1",
+    "type_id": "note",
+    "title": "Nota editada",
+    "content": "",
+    "properties": {
+      "blocks": []
+    },
+    "links": [],
+    "created_at": "2026-11-01T00:00:00Z",
+    "updated_at": "2026-11-01T00:00:00Z",
+    "hlc": "0000000000500-0000-bbbbbbbb",
+    "field_hlc": {
+      "title": "0000000000500-0000-bbbbbbbb",
+      "type_id": "0000000000100-0000-aaaaaaaa",
+      "order": "0000000000100-0000-aaaaaaaa"
+    }
+  },
+  "expect": {
+    "trashed_at": "2026-11-02T10:00:00Z",
+    "title": "Nota editada"
+  }
+}

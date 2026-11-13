@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "name": "wall decides",
+      "a": "0000000000200-0000-aaaaaaaa",
+      "b": "0000000000100-0000-bbbbbbbb",
+      "cmp": 1
+    },
+    {
+      "name": "counter decides",
+      "a": "0000000000100-0002-aaaaaaaa",
+      "b": "0000000000100-0001-bbbbbbbb",
+      "cmp": 1
+    },
+    {
+      "name": "node breaks ties (B6)",
+      "a": "0000000000100-0000-aaaaaaaa",
+      "b": "0000000000100-0000-bbbbbbbb",
+      "cmp": -1
+    },
+    {
+      "name": "legacy sorts before noded",
+      "a": "0000000000100-0000",
+      "b": "0000000000100-0000-aaaaaaaa",
+      "cmp": -1
+    },
+    {
+      "name": "empty is lowest",
+      "a": "",
+      "b": "0000000000001-0000-aaaaaaaa",
+      "cmp": -1
+    },
+    {
+      "name": "equal",
+      "a": "0000000000005-0000-aaaaaaaa",
+      "b": "0000000000005-0000-aaaaaaaa",
+      "cmp": 0
+    },
+    {
+      "name": "numeric not lexicographic on counter",
+      "a": "0000000000100-000a-aaaaaaaa",
+      "b": "0000000000100-0009-aaaaaaaa",
+      "cmp": 1
+    }
+  ],
+  "nodes": [
+    {
+      "device_id": "pc",
+      "node": "d8463bd3"
+    },
+    {
+      "device_id": "desktop-1a2b3c4d",
+      "node": "d8ffaee6"
+    },
+    {
+      "device_id": "3f0c9b1e-7d2a-4c55-9a10-2b7c8e5f6a01",
+      "node": "63727f96"
+    },
+    {
+      "device_id": "teléfono",
+      "node": "c368f6c7"
+    }
+  ]
+}

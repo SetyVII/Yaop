@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="thumb_toggle">Show or hide images</string>
+    <string name="thumb_mode_show">Show</string>
+    <string name="thumb_mode_blur">Blur</string>
+    <string name="thumb_mode_hide">Hide</string>
+    <string name="thumb_settings_title">Images</string>
+    <string name="thumb_settings_mode">Current mode</string>
+    <string name="thumb_settings_discrete">Discreet mode for the eye button</string>
+    <string name="thumb_settings_scope">Applies to</string>
+    <string name="thumb_scope_all">Everything</string>
+    <string name="thumb_scope_lists">Lists only</string>
+    <string name="thumb_settings_reset">Back to Show when closing the app</string>
+    <string name="thumb_settings_hint">Two-finger swipe down toggles it. Hold a blurred image to peek. Not synced.</string>
+    <string name="thumb_note_reveal">Show images in this note</string>
+    <string name="thumb_note_conceal">Hide images in this note</string>
+</resources>

@@ -1,0 +1,29 @@
+{
+  "name": "icon, cover, aliases, summary, pin and template",
+  "object": {
+    "id": "o3",
+    "type_id": "project",
+    "title": "Proyecto Y",
+    "properties": {
+      "icon": {
+        "emoji": "🚀",
+        "color_hex": "#5DD400"
+      },
+      "cover": {
+        "asset_id": "asset-cover",
+        "crop_offset_y": 0.3,
+        "fit": true
+      },
+      "aliases": [
+        "proy-y",
+        "PY"
+      ],
+      "summary": "un resumen",
+      "pinned": true,
+      "is_template": true,
+      "blocks": []
+    },
+    "links": [],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}

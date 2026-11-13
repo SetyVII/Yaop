@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_title">YAOP is locked</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_prompt_title">Unlock YAOP</string>
+    <string name="lock_prompt_subtitle">Use your fingerprint, face or screen lock</string>
+    <string name="lock_unavailable">Set a screen lock on this device to use the app lock.</string>
+    <string name="lock_section">App lock</string>
+    <string name="lock_enable">Lock the app</string>
+    <string name="lock_timeout">Lock after leaving the app</string>
+    <string name="lock_timeout_now">Immediately</string>
+    <string name="lock_timeout_minutes">%1$d min</string>
+    <string name="lock_secure_screen">Hide content in screenshots and recents</string>
+    <string name="backup_section">Backup</string>
+    <string name="backup_hint">One encrypted file with your whole vault and its media. It opens with your 24 words, no server needed.</string>
+    <string name="backup_export">Export backup</string>
+    <string name="backup_restore">Restore from backup</string>
+    <string name="backup_working">Working…</string>
+    <string name="backup_done_export">Backup saved: %1$d objects, %2$d files.</string>
+    <string name="backup_done_restore">Restored %1$d objects and %2$d files.</string>
+    <string name="backup_failed">The backup could not be processed: %1$s</string>
+    <string name="capture_title">Capture</string>
+    <string name="capture_style_title">Capture style</string>
+    <string name="capture_style_cards">Cards</string>
+    <string name="capture_style_radial">Radial</string>
+</resources>

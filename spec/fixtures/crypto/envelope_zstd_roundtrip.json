@@ -1,0 +1,30 @@
+{
+  "name": "envelope version 0x02: JSON payload compressed with zstd (level 3) BEFORE encrypting — integrity checked by round trip, NEVER exact bytes",
+  "warning": "zstd no es byte-determinista entre versiones/plataformas: ningún impl de este vector compara el ciphertext; produce el suyo, abre el sobre y compara el payload",
+  "vk_hex": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff",
+  "cases": [
+    {
+      "name": "large JSON object compressed and opened again",
+      "domain": "objects",
+      "key_subkey": "objects",
+      "key_epoch": 3,
+      "wire_id": "a71a97b1c5d3111300eb1767c2b766c9",
+      "nonce_hex": "101112131415161718191a1b1c1d1e1f2021222324252627",
+      "payload": "{\"id\":\"obj1\",\"type_id\":\"note\",\"title\":\"Diario con bloques\",\"schema_version\":1,\"properties\":{\"blocks\":[{\"id\":\"b1\",\"type\":\"paragraph\",\"text\":\"uno\"},{\"id\":\"b2\",\"type\":\"paragraph\",\"text\":\"dos\"},{\"id\":\"b3\",\"type\":\"paragraph\",\"text\":\"tres\"},{\"id\":\"b4\",\"type\":\"todo\",\"text\":\"cuatro\"},{\"id\":\"b5\",\"type\":\"heading\",\"level\":1,\"text\":\"cinco\"},{\"id\":\"b6\",\"type\":\"bullet_list\",\"text\":\"seis\"}]}}",
+      "expected_payload_after_roundtrip": "same"
+    },
+    {
+      "name": "compressed bootstrap snapshot",
+      "domain": "snapshots",
+      "key_subkey": "snapshots",
+      "key_epoch": 1,
+      "wire_id": "00000000000000000000000000000021",
+      "nonce_hex": "313233343536373839303132333435363738393031323334",
+      "payload": "{\"v\":1,\"covered_seq\":5000,\"objects\":139}",
+      "expected_payload_after_roundtrip": "same"
+    }
+  ],
+  "produccion": {
+    "regla": "los blobs JSON de kind obj|type|asset_meta|derived|snapshot se envuelven SIEMPRE en versión 0x02 (zstd nivel 3); los chunks de media binarios en versión 0x01. La versión 0x01 es siempre válida para cualquier dominio y es la que debe producir un cliente sin zstd disponible."
+  }
+}

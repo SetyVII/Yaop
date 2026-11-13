@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="thumb_toggle">Mostrar u ocultar imágenes</string>
+    <string name="thumb_mode_show">Ver</string>
+    <string name="thumb_mode_blur">Difuminar</string>
+    <string name="thumb_mode_hide">Ocultar</string>
+    <string name="thumb_settings_title">Imágenes</string>
+    <string name="thumb_settings_mode">Modo actual</string>
+    <string name="thumb_settings_discrete">Modo discreto del botón de ojo</string>
+    <string name="thumb_settings_scope">Se aplica a</string>
+    <string name="thumb_scope_all">Todo</string>
+    <string name="thumb_scope_lists">Solo listas</string>
+    <string name="thumb_settings_reset">Volver a Ver al cerrar la app</string>
+    <string name="thumb_settings_hint">Deslizar con dos dedos hacia abajo lo alterna. Mantén pulsada una imagen difuminada para asomarte. No se sincroniza.</string>
+    <string name="thumb_note_reveal">Mostrar imágenes de esta nota</string>
+    <string name="thumb_note_conceal">Ocultar imágenes de esta nota</string>
+</resources>

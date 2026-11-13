@@ -1,0 +1,96 @@
+{
+  "name": "all marks, colors, link, tag, date and inline math",
+  "blocks": [
+    {
+      "id": "m1",
+      "type": "paragraph",
+      "text": "negrita cursiva sub tachado code resaltado enlace rojo fondo #trabajo 2026-11-11 y ￼",
+      "runs": [
+        {
+          "text": "negrita",
+          "bold": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "cursiva",
+          "italic": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "sub",
+          "underline": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "tachado",
+          "strike": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "code",
+          "code": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "resaltado",
+          "highlight": true
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "enlace",
+          "href": "https://example.org"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "rojo",
+          "text_color": "red"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "fondo",
+          "bg_color": "yellow"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "#trabajo",
+          "tag_id": "tag-1",
+          "tag_name": "trabajo"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "2026-11-11",
+          "date": "2026-11-11",
+          "has_time": true
+        },
+        {
+          "text": " y "
+        },
+        {
+          "text": "￼",
+          "type": "math",
+          "latex": "\\frac{a}{b}"
+        }
+      ]
+    }
+  ]
+}

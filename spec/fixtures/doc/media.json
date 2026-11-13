@@ -1,0 +1,53 @@
+{
+  "name": "image with caption, audio, pdf with page, embed, bookmark",
+  "blocks": [
+    {
+      "id": "i1",
+      "type": "image",
+      "asset_id": "asset-img",
+      "width_percent": 0.6,
+      "text": "pie de foto",
+      "runs": [
+        {
+          "text": "pie de foto"
+        }
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "audio",
+      "asset_id": "asset-aud",
+      "duration_seconds": 42,
+      "text": "",
+      "runs": []
+    },
+    {
+      "id": "f1",
+      "type": "pdf",
+      "asset_id": "asset-pdf",
+      "page_count": 12,
+      "last_read_page": 7,
+      "file_name": "libro.pdf",
+      "text": "libro.pdf",
+      "runs": []
+    },
+    {
+      "id": "e1",
+      "type": "embed",
+      "object_id": "obj-qwe",
+      "view_mode": "compact",
+      "text": "obj-qwe",
+      "runs": []
+    },
+    {
+      "id": "w1",
+      "type": "bookmark",
+      "url": "https://example.org/a",
+      "title": "Artículo",
+      "description": "desc",
+      "domain": "example.org",
+      "text": "Artículo",
+      "runs": []
+    }
+  ]
+}

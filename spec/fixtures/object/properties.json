@@ -1,0 +1,48 @@
+{
+  "name": "properties of every kind, including those mobile does not model (passthrough)",
+  "object": {
+    "id": "o2",
+    "type_id": "book",
+    "title": "El libro",
+    "properties": {
+      "author": [
+        "p-ana"
+      ],
+      "tags": [
+        "trabajo"
+      ],
+      "rating": 4,
+      "pages": 321.5,
+      "read": true,
+      "url": "https://example.org/libro",
+      "date": "2026-12-01",
+      "medium": "article",
+      "email": "ana@example.org",
+      "phone": "+34 600 000 000",
+      "notes": "texto libre",
+      "period": {
+        "start": "2026-11-01",
+        "end": "2026-11-30"
+      },
+      "custom": {
+        "nested": {
+          "x": 1
+        }
+      },
+      "choices": [
+        "opt_a",
+        "opt_b"
+      ],
+      "blocks": []
+    },
+    "property_links": [
+      "daily-2026-12-01",
+      "opt_a",
+      "opt_b",
+      "p-ana",
+      "tag_trabajo"
+    ],
+    "links": [],
+    "hlc": "0000000000001-0000-aaaaaaaa"
+  }
+}
