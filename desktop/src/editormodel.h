@@ -159,6 +159,9 @@ public:
     Q_INVOKABLE void insertDivider(int row) { insertDividerAfter(row); }
 
     // Mention / tag / date / link inserts into the live document.
+    // Where the object mentions sit in a live block document: [{start, length}] in characters,
+    // for the pill drawn behind each one (a QTextDocument cannot draw rounded backgrounds).
+    Q_INVOKABLE QVariantList mentionRanges(QQuickTextDocument *doc) const;
     Q_INVOKABLE void insertMentionAt(int row, int caret, QQuickTextDocument *doc,
                                      const QString &objectId, const QString &label);
     Q_INVOKABLE void insertTagAt(int row, int caret, QQuickTextDocument *doc,

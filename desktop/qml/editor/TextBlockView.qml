@@ -28,17 +28,46 @@ Item {
 
     implicitHeight: edit.implicitHeight + 2
 
+    // Object mentions get a pill behind them so they read as references, not text.
+    property var pills: []
+    function refreshPills() {
+        pills = view.session ? view.session.mentionRanges(edit.textDocument) : []
+    }
+    Timer { id: pillTimer; interval: 60; onTriggered: tb.refreshPills() }
+
+    Repeater {
+        model: tb.pills
+        delegate: Rectangle {
+            required property var modelData
+            // depends on width/height so pills follow re-wraps
+            readonly property rect a: (edit.width, edit.contentHeight, edit.positionToRectangle(modelData.start))
+            readonly property rect b: (edit.width, edit.contentHeight,
+                                       edit.positionToRectangle(modelData.start + modelData.length))
+            visible: a.y === b.y && b.x > a.x // a chip wrapped over two lines gets no pill
+            x: a.x - 4
+            y: a.y
+            width: b.x - a.x + 8
+            height: a.height
+            radius: height / 2
+            color: Theme.mentionPill
+            border.width: 1
+            border.color: Theme.mentionPillLine
+        }
+    }
+
     onContentChanged: {
         if (loading)
             return
         // External content refresh: only apply when block is not focused.
         if (!edit.activeFocus)
             edit.text = content
+        pillTimer.restart()
     }
 
     Component.onCompleted: {
         edit.text = content
         loading = false
+        pillTimer.restart()
         if (!!view.session && view.session.focusBlockId === tb.blockId
                 && view.session.focusBlockId.length > 0) {
             edit.forceActiveFocus()
@@ -65,6 +94,7 @@ Item {
                 tb.loading = true
                 edit.text = tb.content
                 tb.loading = false
+                pillTimer.restart()
             }
         }
     }
@@ -169,6 +199,7 @@ Item {
             commitTimer.restart()
             markdownProbe.restart()
             inlineProbe.restart()
+            pillTimer.restart()
         }
 
         // ------------------- structure keys -------------------

@@ -30,6 +30,8 @@ QtObject {
     readonly property color accentInk: "#0B1F5C"
     readonly property color accentDim: Qt.rgba(1, 1, 1, 0.14)
     readonly property color ice: "#BFE3FF"
+    readonly property color mentionPill: Qt.rgba(0.75, 0.89, 1, 0.12)     // @mention pill fill
+    readonly property color mentionPillLine: Qt.rgba(0.75, 0.89, 1, 0.38) // @mention pill border
     readonly property color violet: "#8F7CFF"
     readonly property color ok: "#86E8A8"
     readonly property color late: "#FF8A7A"

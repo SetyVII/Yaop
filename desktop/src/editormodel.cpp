@@ -1660,6 +1660,40 @@ void EditorModel::insertAnchorText(QQuickTextDocument *doc, int caretEnd, const 
     c.insertText(visible, f);
 }
 
+QVariantList EditorModel::mentionRanges(QQuickTextDocument *doc) const
+{
+    QVariantList out;
+    if (!doc || !doc->textDocument())
+        return out;
+    int start = -1, end = -1;
+    QString href;
+    auto flush = [&]() {
+        if (start >= 0)
+            out.append(QVariantMap{ { QStringLiteral("start"), start }, { QStringLiteral("length"), end - start } });
+        start = -1;
+    };
+    for (QTextBlock b = doc->textDocument()->begin(); b.isValid(); b = b.next()) {
+        for (auto it = b.begin(); !it.atEnd(); ++it) {
+            const QTextFragment f = it.fragment();
+            const QString h = f.charFormat().anchorHref();
+            if (!h.startsWith(QLatin1String("yaop://object/"))) {
+                flush();
+                continue;
+            }
+            if (start >= 0 && h == href && f.position() == end) { // one mention split in fragments
+                end = f.position() + f.length();
+                continue;
+            }
+            flush();
+            start = f.position();
+            end = f.position() + f.length();
+            href = h;
+        }
+        flush();
+    }
+    return out;
+}
+
 void EditorModel::insertMentionAt(int row, int caret, QQuickTextDocument *doc,
                                   const QString &objectIdIn, const QString &labelIn)
 {
