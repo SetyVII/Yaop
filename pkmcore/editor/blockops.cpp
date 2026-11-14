@@ -155,6 +155,23 @@ struct ListCounters {
     QHash<QPair<QString, int>, int> counters;
 };
 
+bool refreshMentionLabels(Blocks &blocks, const std::function<QString(const QString &)> &titleOf)
+{
+    bool changed = false;
+    for (Block &b : blocks) {
+        for (Run &r : b.runs) {
+            if (r.objectId.isEmpty())
+                continue;
+            const QString title = titleOf(r.objectId).trimmed();
+            if (!title.isEmpty() && title != r.text) {
+                r.text = title;
+                changed = true;
+            }
+        }
+    }
+    return changed;
+}
+
 Blocks renumberLists(const Blocks &blocks)
 {
     ListCounters st;

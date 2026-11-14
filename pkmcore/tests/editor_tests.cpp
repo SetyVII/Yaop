@@ -1,5 +1,6 @@
 #include "testing.h"
 #include "blockops.h"
+#include "mentionquery.h"
 #include "merge.h"
 #include "model.h"
 #include "query.h"
@@ -186,6 +187,54 @@ static void testGroupWire()
     CHECK(back.size() == 3, "group unpacked flat");
     CHECK(back.at(0).groupId == "group-x" && back.at(1).groupId == "group-x", "group ids shared");
     CHECK(back.at(2).groupId.isEmpty(), "third block ungrouped");
+}
+
+static void testMentionTypeQuery()
+{
+    auto type = [](const QString &id, const QString &name) {
+        ObjectType t;
+        t.id = id;
+        t.name = name;
+        return t;
+    };
+    const QList<ObjectType> types = { type("web", "Web Links"), type("custom_ai", "Modelos de IA"),
+                                      type("custom_ref", "Modelos de referencia"), type("note", "Note") };
+    const QHash<QString, QString> aliases = { { "nota", "note" }, { "enlace", "web" } };
+    CHECK(mention::typeSlug("Web Links") == "web-links", "mention: slug hyphenates spaces");
+    CHECK(mention::typeSlug("Canciones  rápidas") == "canciones-rapidas", "mention: slug folds accents");
+    for (const char *q : { "web-links", "weblinks", "web links", "web_links", "Web-Links" })
+        CHECK(mention::resolveTypeToken(q, types, aliases) == "web", "mention: any separator resolves the type");
+    CHECK(mention::resolveTypeToken("modelos-de-ia", types, aliases) == "custom_ai", "mention: user type by slug");
+    CHECK(mention::resolveTypeToken("nota", types, aliases) == "note", "mention: alias resolves");
+    CHECK(mention::resolveTypeToken("zz", types, aliases).isEmpty(), "mention: unknown token");
+    const auto mode = mention::matchingTypes("mode", types, aliases, {});
+    CHECK(mode.size() == 2 && mode[0].id == "custom_ai" && mode[1].id == "custom_ref",
+          "mention: prefix suggests every matching type");
+    const auto refe = mention::matchingTypes("refe", types, aliases, {});
+    CHECK(refe.size() == 1 && refe[0].id == "custom_ref", "mention: a word of the name matches");
+    const auto recent = mention::matchingTypes("", types, aliases, { "note", "custom_ref" });
+    CHECK(recent.size() == 4 && recent[0].id == "note" && recent[1].id == "custom_ref",
+          "mention: recently used types first");
+}
+
+static void testMentionLabelRefresh()
+{
+    Run text;
+    text.text = "ver ";
+    Run mention;
+    mention.text = "hydroge";
+    mention.objectId = "obj-1";
+    Run gone;
+    gone.text = "old";
+    gone.objectId = "missing";
+    Blocks blocks = { Block::makeParagraph("b1", { text, mention, gone }) };
+    auto titleOf = [](const QString &id) { return id == "obj-1" ? QString("hydrogen") : QString(); };
+    CHECK(blockops::refreshMentionLabels(blocks, titleOf), "mention label: rename detected");
+    CHECK(blocks[0].runs[1].text == "hydrogen" && blocks[0].runs[1].objectId == "obj-1",
+          "mention label: follows the current title");
+    CHECK(blocks[0].runs[2].text == "old", "mention label: unknown target keeps its label");
+    CHECK(blocks[0].plainText() == "ver @hydrogen@old", "mention label: derived text updated");
+    CHECK(!blockops::refreshMentionLabels(blocks, titleOf), "mention label: no change the second time");
 }
 
 static void testSplitMerge()
@@ -812,6 +861,8 @@ int runEditorTests()
     testGroupWire();
     testSplitMerge();
     testBackspaceRules();
+    testMentionLabelRefresh();
+    testMentionTypeQuery();
     testMarkdownPrefixes();
     testCodecLiveEditRoundTrip();
     testMarkdownImport();

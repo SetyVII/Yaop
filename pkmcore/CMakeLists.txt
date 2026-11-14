@@ -23,6 +23,7 @@ add_library(pkmcore STATIC
     editor/blockops.h editor/blockops.cpp
     editor/spancodec.h editor/spancodec.cpp
     editor/query.h editor/query.cpp
+    editor/mentionquery.h editor/mentionquery.cpp
 )
 target_include_directories(pkmcore PUBLIC editor)
 target_link_libraries(pkmcore PUBLIC Qt6::Core Qt6::Gui)

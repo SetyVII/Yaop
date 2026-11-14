@@ -6,6 +6,7 @@
 #include "model.h"
 
 #include <QSet>
+#include <functional>
 #include <QStringList>
 
 namespace pkm::blockops {
@@ -30,6 +31,11 @@ struct BackspaceResult {
 BackspaceResult handleBackspaceAtStart(const Blocks &blocks, int currentIndex);
 
 Blocks renumberLists(const Blocks &blocks);
+
+// A mention run keeps its target's title as `text` from the moment it was inserted, so after a
+// rename it would still read "@hydroge". Sets every mention label to titleOf(objectId); an empty
+// result (unknown or untitled target) keeps the label. Returns true when a label changed.
+bool refreshMentionLabels(Blocks &blocks, const std::function<QString(const QString &)> &titleOf);
 
 int renumberOneAt(Blocks &blocks, int index);
 
