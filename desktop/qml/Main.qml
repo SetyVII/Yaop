@@ -45,6 +45,12 @@ ApplicationWindow {
         page = "library"
     }
 
+    // Quick capture with a type already chosen (e.g. "+ NEW BOOK" in the library).
+    function openCaptureFor(typeId) {
+        capture.selectedTypeId = typeId
+        captureOpen = true
+    }
+
     function showToast(text) {
         toast.show(text)
     }

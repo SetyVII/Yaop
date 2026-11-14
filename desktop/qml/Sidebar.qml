@@ -83,7 +83,7 @@ Rectangle {
             }
             NavItem {
                 visible: !sidebar.compact
-                label: qsTr("+ New type")
+                label: qsTr("New type")
                 icon: "plus"
                 onClicked: sidebar.newTypeRequested()
             }

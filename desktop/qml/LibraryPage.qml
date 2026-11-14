@@ -100,6 +100,18 @@ Item {
                 }
             }
 
+            // Filtered by one type: create an object of that type (through quick capture, so
+            // images still get their file picker).
+            Button {
+                readonly property var filteredType: (dataRev >= 0 && ws && library.filterType !== "all"
+                                                     && library.filterType !== "trash")
+                                                    ? ws.allTypes().find(t => t.id === library.filterType) : undefined
+                visible: filteredType !== undefined
+                text: filteredType ? qsTr("+ NEW %1").arg(String(filteredType.name).toUpperCase()) : ""
+                primary: true
+                onClicked: if (library.appWindow) library.appWindow.openCaptureFor(library.filterType)
+            }
+
             Button {
                 text: qsTr("TYPES")
                 onClicked: typeManagerPopup.open()
