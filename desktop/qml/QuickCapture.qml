@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import "."
 
-// Quick capture (Ctrl+N): create note / task / book / journal entry.
+// Quick capture (Ctrl+N, CAPTURE): pick any type — everything is an object, user types included —
+// and type a title. Image opens a file picker instead (an image object needs its file).
 
 Popup {
     id: capture
@@ -22,27 +24,22 @@ Popup {
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property string selectedTypeId: "note"
-    readonly property var kinds: {
+    readonly property bool mediaSelected: selectedTypeId === "image"
+    // Re-read on every open and whenever a type is created: a binding over ws.allTypes() is
+    // evaluated once, which hid the types created after start-up.
+    property var kinds: []
+    function refreshKinds() {
         const list = (typeof ws !== "undefined" && ws) ? ws.allTypes() : []
-        const out = []
-        for (let i = 0; i < list.length; ++i) {
-            const t = list[i]
-            if (t.id === "image" || t.id === "audio" || t.id === "pdf")
-                continue
-            out.push({ type: t.id, label: String(t.name || t.id).toUpperCase() })
-        }
-        if (out.length > 0)
-            return out
-        return [
-            { type: "note", label: qsTr("NOTE") },
-            { type: "task", label: qsTr("TASK") },
-            { type: "journal", label: qsTr("JOURNAL") },
-            { type: "book", label: qsTr("BOOK") }
-        ]
+        kinds = list.map(t => ({ type: t.id, label: String(t.name || t.id).toUpperCase() }))
+    }
+    Connections {
+        target: typeof ws !== "undefined" ? ws : null
+        function onTypesChanged() { capture.refreshKinds() }
     }
 
     onVisibleChanged: {
         if (visible) {
+            refreshKinds()
             if (kinds.length > 0 && !kinds.some(k => k.type === selectedTypeId))
                 selectedTypeId = kinds[0].type
             input.text = ""
@@ -62,6 +59,7 @@ Popup {
 
     ColumnLayout {
         id: contentBox
+        width: capture.availableWidth // without it the column shrinks to its content (narrow chips, title)
         spacing: 16
 
         RowLayout {
@@ -77,7 +75,7 @@ Popup {
 
                     delegate: Rectangle {
                         required property var modelData
-                        width: 26 + modelData.label.length * 7.5
+                        width: chipLabel.implicitWidth + 26
                         height: 28
                         radius: 14
                         color: Theme.panel
@@ -85,6 +83,7 @@ Popup {
                         border.width: 1
 
                         Text {
+                            id: chipLabel
                             anchors.centerIn: parent
                             text: modelData.label
                             color: capture.selectedTypeId === modelData.type ? Theme.ice : Theme.dim
@@ -146,15 +145,37 @@ Popup {
                 onClicked: requestClose()
             }
             Button {
-                text: qsTr("CREATE")
                 small: true
-                enabled: input.text.trim().length > 0
+                text: capture.mediaSelected ? qsTr("PICK FILE") : qsTr("CREATE")
+                enabled: capture.mediaSelected || input.text.trim().length > 0
                 onClicked: submit()
             }
         }
     }
 
+    FileDialog {
+        id: mediaPicker
+        title: qsTr("Pick a file")
+        nameFilters: [qsTr("Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)")]
+        onAccepted: {
+            const assetId = ws.importFileAsAsset(selectedFile.toString().replace("file://", ""))
+            const id = assetId.length > 0 ? ws.ensureMediaObject(assetId) : ""
+            if (id.length === 0) {
+                appWindow.showToast(qsTr("Could not import file"))
+                return
+            }
+            if (input.text.trim().length > 0)
+                ws.renameObject(id, input.text.trim())
+            requestClose()
+            objectCreated(id)
+        }
+    }
+
     function submit() {
+        if (mediaSelected) {
+            mediaPicker.open()
+            return
+        }
         const title = input.text.trim()
         if (title.length === 0)
             return
