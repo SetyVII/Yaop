@@ -53,6 +53,14 @@ void EditorModel::load(const Object &object)
     beginResetModel();
     m_object = object;
     m_blocks = object.blocks;
+    // Mentions read their target's current title, so a rename shows here too; the refreshed
+    // labels are saved with the next flush of this object.
+    if (m_ws) {
+        blockops::refreshMentionLabels(m_blocks, [this](const QString &id) {
+            const Object *target = m_ws->objectPtr(id);
+            return target ? target->title : QString();
+        });
+    }
     m_title = object.title;
     m_collapsed.clear();
     m_selected.clear();

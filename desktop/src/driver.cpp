@@ -303,6 +303,57 @@ void mentionScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
+// Bug repro: "@hydroge" → create → open it → rename to "hydrogen" → back to the note.
+// The note's mention must read "hydrogen" and the object must keep the new title.
+void renameScenario(QQuickWindow *window, Workspace *ws)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) {
+        dlog(QStringLiteral("DRIVE FAIL: no editor session"));
+        QCoreApplication::exit(4);
+        return;
+    }
+    const QString noteId = model->objectId();
+    model->forceFocus(firstBlockId(window), 0);
+    QTimer::singleShot(350, window, [window, ws, noteId]() {
+        typeText(window, QStringLiteral("@hydroge"));
+        QTimer::singleShot(550, window, [window, ws, noteId]() {
+            dumpState(window, QStringLiteral("rename-typed"));
+            shot(window, shotPath(QStringLiteral("drive_rename_popup.png")));
+            QQuickItem *blocks = blocksViewOf(window);
+            QMetaObject::invokeMethod(blocks, "applyMentionCreate", Q_ARG(QVariant, QStringLiteral("note")),
+                                      Q_ARG(QVariant, QStringLiteral("hydroge")));
+            QTimer::singleShot(600, window, [window, ws, noteId]() {
+                QString targetId;
+                for (const QVariant &v : ws->recentObjects(10)) {
+                    const QVariantMap m = v.toMap();
+                    if (m.value(QStringLiteral("title")).toString() == QLatin1String("hydroge"))
+                        targetId = m.value(QStringLiteral("id")).toString();
+                }
+                dlog(QStringLiteral("DRIVE rename target=%1").arg(targetId));
+                QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, targetId));
+                QTimer::singleShot(800, window, [window, ws, noteId, targetId]() {
+                    if (EditorModel *target = sessionOf(window))
+                        target->setTitle(QStringLiteral("hydrogen")); // what the title field does
+                    // leave before the 1.2 s save debounce, like a quick click back
+                    QTimer::singleShot(200, window, [window, ws, noteId, targetId]() {
+                        QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, noteId));
+                        QTimer::singleShot(800, window, [window, ws, noteId, targetId]() {
+                            const QString snap = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
+                            const bool labelOk = snap.contains(QLatin1String("hydrogen\""));
+                            const QString title = ws->objectSummary(targetId).value(QStringLiteral("title")).toString();
+                            dlog(QStringLiteral("DRIVE rename label-updated=%1 target-title=%2")
+                                     .arg(labelOk ? 1 : 0).arg(title));
+                            shot(window, shotPath(QStringLiteral("drive_rename_back.png")));
+                            QCoreApplication::exit(labelOk && title == QLatin1String("hydrogen") ? 0 : 6);
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 void dndScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -392,6 +443,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
             dlog(QStringLiteral("DRIVE begin %1").arg(scenario));
             if (scenario == QLatin1String("mention"))
                 mentionScenario(window, ws);
+            else if (scenario == QLatin1String("rename"))
+                renameScenario(window, ws);
             else if (scenario == QLatin1String("dnd"))
                 dndScenario(window);
             else
