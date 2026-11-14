@@ -116,6 +116,7 @@ import org.yaop.core.model.ObjectIcon
 import org.yaop.core.model.ObjectType
 import org.yaop.core.model.PropertyValue
 import org.yaop.core.model.RichSpanEngine
+import org.yaop.core.model.refreshMentionLabels
 import org.yaop.core.model.SpanColorPalette
 import org.yaop.core.model.SpannedBlock
 import org.yaop.core.model.toPlainText
@@ -1508,6 +1509,19 @@ fun BlockListEditor(
             }
         if (changed) {
             stableEnvObjects = allActiveObjects
+        }
+    }
+
+    // Mention pills show the target's current title after a rename (see refreshMentionLabels).
+    // Display only: the refreshed label is persisted with the next edit of this object.
+    LaunchedEffect(stableEnvObjects, blocks) {
+        if (pendingBlocksChangeJob?.isActive == true || pendingLocalSyncJob?.isActive == true) return@LaunchedEffect
+        val live = liveBlocksRef[0]
+        val refreshed = refreshMentionLabels(live) { id -> stableEnvObjects.find { it.id == id }?.plainTitle }
+        if (refreshed !== live) {
+            liveBlocksRef[0] = refreshed
+            currentBlocks = refreshed
+            textSyncRevision++
         }
     }
 
