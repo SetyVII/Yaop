@@ -348,6 +348,23 @@ ListView {
         triggerQuery = ""
     }
 
+    // Picking a type in the "@" popup rewrites the token to `@type-slug/` so the list narrows to it.
+    function applyMentionTypePrefix(slug) {
+        if (!triggerEditor || triggerKind !== "object")
+            return
+        const plain = triggerEditor.getText(0, triggerEditor.length)
+        const caret = triggerEditor.cursorPosition
+        let start = caret - 1
+        while (start >= 0 && plain[start] !== "@")
+            --start
+        if (start < 0)
+            return
+        const token = "@" + slug + "/"
+        triggerEditor.remove(start, caret)
+        triggerEditor.insert(start, token)
+        triggerEditor.cursorPosition = start + token.length
+    }
+
     function applyMentionCreate(typeId, title) {
         if (!session || triggerKind !== "object" || !triggerEditor || typeof ws === "undefined" || !ws)
             return
@@ -721,6 +738,9 @@ ListView {
         onHeightChanged: if (visible) blocksView.placePopup(mentionPopup)
         onPickedObject: function(objectId, label) {
             blocksView.applyMentionSelection(objectId, label)
+        }
+        onPickedType: function(slug) {
+            blocksView.applyMentionTypePrefix(slug)
         }
         onPickedCreateObject: function(typeId, title) {
             blocksView.applyMentionCreate(typeId, title)

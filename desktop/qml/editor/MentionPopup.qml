@@ -6,6 +6,8 @@ import "../"
 // Mention / tag / date picker ("@", "#" triggers). Like the slash menu it never takes keyboard
 // focus: the editor keeps the caret and drives it through move()/accept(). Object rows show a
 // thumbnail when the referenced object is an image (or has a cover), so references are recognisable.
+// Object mode lists matching types first (picking one writes `@type-slug/` and narrows the list to
+// that type), then up to 10 objects, then "+ Create "x" in <Type>" (first when nothing matches).
 
 Popup {
     id: mp
@@ -16,6 +18,7 @@ Popup {
     property real maxListHeight: 360
     property int currentIndex: 0
     signal pickedObject(string objectId, string label)
+    signal pickedType(string slug)
     signal pickedCreateObject(string typeId, string title)
     signal pickedTag(string tagName)
     signal pickedDate(string isoDate)
@@ -28,7 +31,7 @@ Popup {
         if (mode === "object") {
             if (!workspace)
                 return []
-            return workspace.mentionSearch(query, 14)
+            return workspace.mentionSearch(query, 10)
         }
         if (mode === "tag") {
             if (workspace)
@@ -61,6 +64,10 @@ Popup {
 
     function activate(e) {
         if (mode === "object") {
+            if (e.kind === "type") {
+                pickedType(e.slug) // the popup stays open on the narrowed query
+                return
+            }
             if (e.createNew)
                 pickedCreateObject(e.typeId, e.title)
             else
@@ -175,14 +182,17 @@ Popup {
                     horizontalAlignment: Text.AlignLeft
                     text: mp.mode === "object"
                               ? (row.modelData.createNew
-                                 ? qsTr("+ Create \"%1\"").arg(row.modelData.title !== undefined ? row.modelData.title : "")
+                                 ? qsTr("+ Create \"%1\" in %2").arg(row.modelData.title !== undefined ? row.modelData.title : "")
+                                       .arg(row.modelData.typeName !== undefined ? row.modelData.typeName : "")
+                                 : row.modelData.kind === "type"
+                                 ? "@" + row.modelData.slug + "/"
                                  : (row.modelData.title !== undefined ? row.modelData.title : ""))
                          : mp.mode === "tag"
                               ? (row.modelData.createNew
                                  ? qsTr("+ Create #%1").arg(row.modelData.name)
                                  : "#" + row.modelData.name)
                          : row.modelData.label
-                    color: (row.modelData.createNew === true)
+                    color: (row.modelData.createNew === true || row.modelData.kind === "type")
                                ? (mp.mode === "tag" ? Theme.accent : Theme.ice)
                                : (mp.mode === "tag" ? Theme.accent : mp.mode === "date" ? Theme.journal : Theme.text)
                     font.family: mp.mode === "tag" ? Theme.mono : Theme.body
@@ -201,6 +211,8 @@ Popup {
                     horizontalAlignment: Text.AlignLeft
                     text: row.modelData.createNew
                           ? qsTr("NEW %1").arg(Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : ""))
+                          : row.modelData.kind === "type"
+                          ? qsTr("TYPE · %1").arg(row.modelData.title)
                           : Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : "")
                     color: Theme.faint
                     font.family: Theme.mono

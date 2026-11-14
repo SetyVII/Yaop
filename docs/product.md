@@ -122,6 +122,12 @@ Each type defines the template its objects are born with:
 
 - `@name`, `@type/name`, create any type on the fly, chips with preview, the last 3 used first,
   aliases per language (`@image/`, `@today`…).
+- A type is written as its slug: lowercase, no accents, `-` for spaces (`@web-links/`,
+  `@modelos-de-ia/`); `weblinks` or `web_links` also resolve. The `@` list shows matching types
+  first (recently used first, user types included), then up to 10 objects that narrow while
+  typing, then `+ Create "name" in <Type>`. Picking a type narrows the list to it.
+- A mention stores the target id and its title as label; editors refresh the label to the
+  current title when they load, so a rename shows everywhere.
 - Tags per block and per object, always pointing to the object.
 - **Rich previews in references — DECIDED**: every reference (object mention, tag, object placed
   on a whiteboard) shows in the target's backlinks as a contextual preview: source title + snippet

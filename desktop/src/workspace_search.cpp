@@ -39,6 +39,7 @@
 #endif
 
 #include "workspace_internal.h"
+#include "mentionquery.h"
 
 namespace pkm {
 
@@ -63,11 +64,9 @@ QVariantList Workspace::searchObjects(const QString &query, int limit)
     return out;
 }
 
-static QString matchTypeToken(const QHash<QString, ObjectType> &types, const QString &rawToken)
+// Spellings accepted before `/` besides each type's id and name (see mentionquery.h).
+static const QHash<QString, QString> &typeAliases()
 {
-    const QString t = rawToken.trimmed().toLower();
-    if (t.isEmpty())
-        return {};
     static const QHash<QString, QString> kAliases = {
         { QStringLiteral("nota"), QStringLiteral("note") },
         { QStringLiteral("notas"), QStringLiteral("note") },
@@ -80,49 +79,34 @@ static QString matchTypeToken(const QHash<QString, ObjectType> &types, const QSt
         { QStringLiteral("daily"), QStringLiteral("journal") },
         { QStringLiteral("pizarra"), QStringLiteral("whiteboard") },
         { QStringLiteral("coleccion"), QStringLiteral("collection") },
-        { QStringLiteral("colección"), QStringLiteral("collection") },
         { QStringLiteral("libro"), QStringLiteral("book") },
         { QStringLiteral("weblink"), QStringLiteral("web") },
         { QStringLiteral("enlace"), QStringLiteral("web") },
         { QStringLiteral("imagen"), QStringLiteral("image") },
         { QStringLiteral("etiqueta"), QStringLiteral("tag") },
     };
-    const QString aliased = kAliases.value(t, t);
-    const QString norm = normalizeTypeId(aliased);
-    if (types.contains(norm))
-        return norm;
-    for (auto it = types.constBegin(); it != types.constEnd(); ++it) {
-        if (it.value().name.trimmed().toLower() == t
-            || it.value().id.trimmed().toLower() == t)
-            return it.key();
-    }
-    return {};
+    return kAliases;
 }
 
+// `@` popup entries, in order: types matching the token (only before `/`), up to [limit]
+// objects (title matches first, then most recent), and "create <title> in <type>".
+// A type entry is {kind:"type", typeId, title (name), slug}; picking it writes `@slug/`.
 QVariantList Workspace::mentionSearch(const QString &rawQuery, int limit)
 {
     const QString trimmed = rawQuery.trimmed();
+    const QList<ObjectType> types = m_types.values();
     QString typeFilter;
     QString titleQuery = trimmed;
 
     const int slashPos = trimmed.indexOf(QLatin1Char('/'));
     if (slashPos >= 0) {
-        const QString left = trimmed.left(slashPos).trimmed();
-        const QString right = trimmed.mid(slashPos + 1).trimmed();
-        const QString leftType = matchTypeToken(m_types, left);
-        if (!leftType.isEmpty()) {
-            typeFilter = leftType;
-            titleQuery = right;
-        } else {
-            const QString rightType = matchTypeToken(m_types, right);
-            if (!rightType.isEmpty()) {
-                typeFilter = rightType;
-                titleQuery = left;
-            }
-        }
+        typeFilter = mention::resolveTypeToken(trimmed.left(slashPos), types, typeAliases());
+        if (!typeFilter.isEmpty())
+            titleQuery = trimmed.mid(slashPos + 1).trimmed();
     }
 
     QList<const Object *> matches;
+    QHash<QString, QString> latestByType; // typeId -> newest updatedAt, for "recent types first"
     const QString lowerNeedle = titleQuery.toLower();
     bool exactMatch = false;
 
@@ -130,6 +114,8 @@ QVariantList Workspace::mentionSearch(const QString &rawQuery, int limit)
         const Object &o = it.value();
         if (!o.trashedAt.isEmpty() || o.isTemplate())
             continue;
+        if (o.updatedAt > latestByType.value(o.typeId))
+            latestByType.insert(o.typeId, o.updatedAt);
         if (!typeFilter.isEmpty() && o.typeId != typeFilter)
             continue;
         const QString plainTitle = plainTitleFor(o);
@@ -155,9 +141,25 @@ QVariantList Workspace::mentionSearch(const QString &rawQuery, int limit)
     });
 
     QVariantList out;
+    if (slashPos < 0) {
+        QStringList recentTypeIds = latestByType.keys();
+        std::sort(recentTypeIds.begin(), recentTypeIds.end(), [&](const QString &a, const QString &b) {
+            return latestByType.value(a) > latestByType.value(b);
+        });
+        const int typeCap = trimmed.isEmpty() ? 4 : 6;
+        for (const ObjectType &t : mention::matchingTypes(trimmed, types, typeAliases(), recentTypeIds)) {
+            if (out.size() >= typeCap)
+                break;
+            out.append(QVariantMap{ { "kind", "type" }, { "typeId", t.id }, { "title", t.name },
+                                    { "slug", mention::typeSlug(t.name).isEmpty() ? t.id : mention::typeSlug(t.name) },
+                                    { "id", QString() }, { "assetId", QString() }, { "coverAssetId", QString() } });
+        }
+    }
+
     const int cap = qMax(1, limit);
+    int objectCount = 0;
     for (const Object *o : matches) {
-        if (out.size() >= cap)
+        if (objectCount++ >= cap)
             break;
         out.append(objectToVariant(*o, viewFor(*o), QString()));
     }
@@ -173,7 +175,11 @@ QVariantList Workspace::mentionSearch(const QString &rawQuery, int limit)
         createItem.insert(QStringLiteral("id"), QString());
         createItem.insert(QStringLiteral("assetId"), QString());
         createItem.insert(QStringLiteral("coverAssetId"), QString());
-        out.append(createItem);
+        // Nothing matched: put "create" first so Enter creates it.
+        if (matches.isEmpty())
+            out.prepend(createItem);
+        else
+            out.append(createItem);
     }
     return out;
 }
