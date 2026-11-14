@@ -236,7 +236,7 @@ fun RadialQuickCaptureOverlay(
                 96.dp
             }
             CaptureCardsPanel(
-                items = quickItems,
+                items = remember(quickItems, wheelItems) { captureCardItems(quickItems, wheelItems) },
                 visible = state.isOpen,
                 onPick = onPick,
                 onClose = { state.close() },

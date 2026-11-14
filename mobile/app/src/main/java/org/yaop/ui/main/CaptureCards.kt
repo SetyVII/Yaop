@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +43,18 @@ import org.yaop.ui.theme.AppColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.yaop.core.model.toTextSpan
+
+/**
+ * Everything is an object, so the capture panel offers every type (user-created included):
+ * the quick shortcuts first, then the remaining types in their [all] order, without duplicates.
+ */
+internal fun captureCardItems(quick: List<RadialItem>, all: List<RadialItem>): List<RadialItem> {
+    val quickIds = quick.mapNotNull { it.typeId }.toSet()
+    return quick + all.filter { it.typeId !in quickIds }
+}
+
+/** Cards after this index appear together, so a long type list does not take seconds to fill in. */
+private const val MAX_STAGGERED_CARDS = 9
 
 /**
  * Quick-capture panel: a translucent sheet that springs up from the dock's (+) with a grid of cards
@@ -88,22 +103,28 @@ fun CaptureCardsPanel(
         )
         CaptureTextField(onClose)
         Spacer(Modifier.height(12.dp))
-        items.chunked(3).forEachIndexed { rowIndex, row ->
-            if (rowIndex > 0) Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEachIndexed { col, item ->
-                    CaptureCard(
-                        item = item,
-                        order = rowIndex * 3 + col,
-                        visible = visible,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onPick(item)
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
+        Column(
+            modifier = Modifier
+                .heightIn(max = 340.dp)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            items.chunked(3).forEachIndexed { rowIndex, row ->
+                if (rowIndex > 0) Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    row.forEachIndexed { col, item ->
+                        CaptureCard(
+                            item = item,
+                            order = (rowIndex * 3 + col).coerceAtMost(MAX_STAGGERED_CARDS),
+                            visible = visible,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onPick(item)
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
