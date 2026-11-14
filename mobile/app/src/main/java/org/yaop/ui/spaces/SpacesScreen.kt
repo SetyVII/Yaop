@@ -703,13 +703,20 @@ fun SpacesScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = AppColors.TextSecondary,
                                     )
-                                    Text(
-                                        text = stringResource(
-                                            if (imageViewMode == ImageViewMode.GALLERY) R.string.home_view_mosaic else R.string.home_view_list
-                                        ),
-                                        fontSize = 11.sp,
-                                        color = AppColors.TextTertiary,
-                                    )
+                                    if (selectedTypeObj != null) {
+                                        AccentAddPill(
+                                            label = stringResource(R.string.create_object_action, selectedTypeObj.localizedName()),
+                                            onClick = { triggerQuickCreateForType(selectedTypeObj.id) },
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(
+                                                if (imageViewMode == ImageViewMode.GALLERY) R.string.home_view_mosaic else R.string.home_view_list
+                                            ),
+                                            fontSize = 11.sp,
+                                            color = AppColors.TextTertiary,
+                                        )
+                                    }
                                 }
                             }
 
@@ -781,6 +788,15 @@ fun SpacesScreen(
                                                     text = stringResource(R.string.audio_add_first),
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.SemiBold,
+                                                )
+                                            }
+                                        } else if (searchQuery.isBlank()) {
+                                            val emptyType = allTypes.find { it.id == selectedTypeId }
+                                            if (emptyType != null) {
+                                                Spacer(modifier = Modifier.height(14.dp))
+                                                AccentAddPill(
+                                                    label = stringResource(R.string.create_object_action, emptyType.localizedName()),
+                                                    onClick = { triggerQuickCreateForType(emptyType.id) },
                                                 )
                                             }
                                         }
@@ -1223,16 +1239,9 @@ private fun TypesCatalogView(
         modifier = Modifier.fillMaxSize(),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(
-                text = "+ " + stringResource(R.string.new_type),
-                color = AppColors.Ice,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable { showNewType = true }
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-            )
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                AccentAddPill(label = stringResource(R.string.new_type), onClick = { showNewType = true })
+            }
         }
         item(span = { GridItemSpan(maxLineSpan) }) {
             Row(
@@ -1779,6 +1788,34 @@ fun CreateObjectDialog(
                 }
             }
         }
+    }
+}
+
+/** Small accent pill with a "+" icon: the one create button of Spaces (type feeds, catalog). */
+@Composable
+private fun AccentAddPill(label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(AppColors.AccentSubtle, RoundedCornerShape(8.dp))
+            .border(1.dp, AppColors.Accent.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = AppColors.Accent,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppColors.Accent,
+        )
     }
 }
 
