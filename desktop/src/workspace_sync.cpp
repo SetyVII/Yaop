@@ -501,8 +501,11 @@ void Workspace::applyRemoteObject(const QJsonObject &remote, const QString &kind
     m_objects.insert(id, next);
     m_store->putObject(next);
 
-    const bool editing = m_activeEditingId == id;
-    if (m_editors.contains(id)) {
+    // An editor with unsaved changes (a title typed a moment ago counts, not only a focused block)
+    // is not reloaded: that would drop the edit. It saves over the merged state instead.
+    EditorModel *openEditor = m_editors.value(id);
+    const bool editing = m_activeEditingId == id || (openEditor && openEditor->dirty());
+    if (openEditor) {
         if (!editing)
             m_editors.value(id)->load(next);
         else

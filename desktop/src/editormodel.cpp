@@ -453,7 +453,10 @@ void EditorModel::commitObjectToWorkspace()
 {
     if (!m_ws)
         return;
-    Object obj = m_object;
+    // Start from the workspace's current state (it may hold a merged remote change made while
+    // this editor had unsaved edits) and lay the editor's own fields over it.
+    const Object *current = m_ws->objectPtr(m_object.id);
+    Object obj = current ? *current : m_object;
     obj.blocks = blockops::renumberLists(m_blocks);
     obj.title = m_title;
     obj.updatedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);

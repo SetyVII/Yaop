@@ -29,7 +29,8 @@ QT_QPA_PLATFORM=offscreen ./build/yaop --profile qa --showcase --size 1280x800 -
 
 `tools/qa-desktop.sh <dir>` takes screenshots of every page at several window sizes.
 `--drive <scenario>` drives the real editor (`mention`, `rename`, `dnd`; logs and shots in
-`YAOP_DRIVE_DIR`); `rename` checks that a mention follows a rename of its target.
+`YAOP_DRIVE_DIR`); `rename` checks that a mention follows a rename of its target (run it
+with `--server`/`--token` too: a sync echo must not undo a title being typed).
 
 ## Shortcuts
 

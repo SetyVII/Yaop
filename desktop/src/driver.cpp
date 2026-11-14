@@ -335,8 +335,10 @@ void renameScenario(QQuickWindow *window, Workspace *ws)
                 QTimer::singleShot(800, window, [window, ws, noteId, targetId]() {
                     if (EditorModel *target = sessionOf(window))
                         target->setTitle(QStringLiteral("hydrogen")); // what the title field does
-                    // leave before the 1.2 s save debounce, like a quick click back
-                    QTimer::singleShot(200, window, [window, ws, noteId, targetId]() {
+                    // A sync round now (with a server) brings back the echo of the create
+                    // ("hydroge") while the new title is still unsaved: it must not wipe it.
+                    ws->syncNow();
+                    QTimer::singleShot(1000, window, [window, ws, noteId, targetId]() {
                         QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, noteId));
                         QTimer::singleShot(800, window, [window, ws, noteId, targetId]() {
                             const QString snap = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
