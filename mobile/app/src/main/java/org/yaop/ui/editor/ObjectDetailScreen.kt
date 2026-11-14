@@ -246,12 +246,15 @@ fun ObjectDetailScreen(
                 }
             }
 
+            // Saves run on the application scope: leaving the screen cancels `coroutineScope`, and a
+            // rename typed less than the debounce before navigating away would be lost.
+            val appScope = (LocalContext.current.applicationContext as YaopApp).applicationScope
             fun flushUnsavedNow() {
                 if (pendingSaveJob?.isActive == true) {
                     pendingSaveJob?.cancel()
                     pendingSaveJob = null
                     latestUnsavedObjectRef[0]?.let { unsaved ->
-                        coroutineScope.launch {
+                        appScope.launch {
                             repository.saveObject(unsaved)
                         }
                     }
@@ -271,7 +274,7 @@ fun ObjectDetailScreen(
             fun scheduleDebouncedSave(updatedObj: PkmObject) {
                 latestUnsavedObjectRef[0] = updatedObj
                 pendingSaveJob?.cancel()
-                pendingSaveJob = coroutineScope.launch {
+                pendingSaveJob = appScope.launch {
                     delay(1500L)
                     repository.saveObject(updatedObj)
                 }
