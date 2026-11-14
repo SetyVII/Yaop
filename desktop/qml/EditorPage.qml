@@ -202,6 +202,7 @@ Item {
 
                             TextInput {
                                 id: titleInput
+                                objectName: "titleInput"
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 40
                                 text: session ? session.title : ""
@@ -216,7 +217,7 @@ Item {
                                 clip: true
                                 verticalAlignment: TextInput.AlignVCenter
 
-                                onTextEdited: if (session) session.setTitle(text)
+                                onTextEdited: if (session) session.title = text // the Q_PROPERTY setter (setTitle is not invokable)
                             }
 
                             Button {

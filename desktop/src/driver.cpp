@@ -22,6 +22,8 @@
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTimer>
+#include <QDate>
+#include <functional>
 
 #include <algorithm>
 #include <cmath>
@@ -356,6 +358,144 @@ void renameScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
+// Clicks the mention chip left of the caret in the focused text block (as a user would).
+void clickChipBeforeCaret(QQuickWindow *window, Qt::KeyboardModifiers mods = Qt::NoModifier)
+{
+    QQuickItem *edit = qobject_cast<QQuickItem *>(window->focusObject());
+    if (!edit)
+        return;
+    const QPointF local = edit->property("cursorRectangle").toRectF().center() - QPointF(24, 0);
+    QMouseEvent move(QEvent::MouseMove, local, edit->mapToGlobal(local), Qt::NoButton, Qt::NoButton, mods);
+    QCoreApplication::sendEvent(edit, &move);
+    QMouseEvent press(QEvent::MouseButtonPress, local, edit->mapToGlobal(local), Qt::LeftButton, Qt::LeftButton, mods);
+    QMouseEvent release(QEvent::MouseButtonRelease, local, edit->mapToGlobal(local), Qt::LeftButton, Qt::LeftButton, mods);
+    QCoreApplication::sendEvent(edit, &press);
+    QCoreApplication::sendEvent(edit, &release);
+}
+
+// The same bug report driven only through keys and clicks, with sync rounds in between (run it
+// with --server/--token): a line of text, "@patch" + Enter (create from the popup), click the
+// chip at once, type "es" in the title, sync, go back, sync, click the chip again.
+// The note must keep its block with "@patches" and the object must be titled "patches".
+void renameUiScenario(QQuickWindow *window, Workspace *ws);
+
+// YAOP_DRIVE_DAILY=1: the same flow inside today's daily note instead of a scratch note.
+void renameUiDailyScenario(QQuickWindow *window, Workspace *ws)
+{
+    const QString daily = ws->journalFor(QDate::currentDate().toString(Qt::ISODate));
+    // Shape of the report: four todos, a divider, then an empty line for the mention.
+    for (const Object &o : ws->e2eAllObjects()) {
+        if (o.id != daily)
+            continue;
+        Object seeded = o;
+        seeded.blocks.clear();
+        for (const char *t : { "Genshin", "Wuwa", "Nikke", "Arknights" }) {
+            Run r;
+            r.text = QString::fromLatin1(t);
+            Block b = Block::makeParagraph(newUuid(), { r });
+            b.type = BlockType::Todo;
+            seeded.blocks.append(b);
+        }
+        Block divider = Block::makeParagraph(newUuid());
+        divider.type = BlockType::Divider;
+        seeded.blocks.append(divider);
+        seeded.blocks.append(Block::makeParagraph(newUuid()));
+        ws->saveObject(seeded);
+    }
+    QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, daily));
+    QTimer::singleShot(1200, window, [window, ws]() { renameUiScenario(window, ws); });
+}
+
+void renameUiScenario(QQuickWindow *window, Workspace *ws)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) {
+        QCoreApplication::exit(4);
+        return;
+    }
+    const QString noteId = model->objectId();
+    // YAOP_DRIVE_PREFIX: text before the mention ("" = a block holding only the chip).
+    const QString prefix = qEnvironmentVariableIsSet("YAOP_DRIVE_PREFIX")
+                               ? qEnvironmentVariable("YAOP_DRIVE_PREFIX") : QStringLiteral("ver ");
+    QString startBlock = firstBlockId(window);
+    if (qEnvironmentVariableIsSet("YAOP_DRIVE_DAILY")) { // the empty last line
+        const QJsonArray arr = QJsonDocument::fromJson(model->debugSnapshot().toUtf8()).array();
+        startBlock = arr.last().toObject().value(QLatin1String("id")).toString();
+    }
+    model->forceFocus(startBlock, 0);
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    later(350, [=]() {
+        typeText(window, prefix + QStringLiteral("@patch"));
+        later(500, [=]() {
+            sendWindowKey(window, Qt::Key_Return, QStringLiteral("\r")); // accept the popup entry
+            later(150, [=]() {
+                dumpState(window, QStringLiteral("ui-mentioned"));
+                clickChipBeforeCaret(window);
+                later(900, [=]() {
+                    const QString targetId = window->property("editorObjectId").toString();
+                    dlog(QStringLiteral("DRIVE ui target=%1 note=%2").arg(targetId, noteId));
+                    if (auto *title = window->findChild<QQuickItem *>(QStringLiteral("titleInput"))) {
+                        title->forceActiveFocus();
+                        QMetaObject::invokeMethod(title, "end");
+                    }
+                    typeText(window, QStringLiteral("es"));
+                    {
+                        QObject *f = window->focusObject();
+                        auto *title = window->findChild<QQuickItem *>(QStringLiteral("titleInput"));
+                        dlog(QStringLiteral("DRIVE ui typed focus=%1 title-field=%2 model-title=%3")
+                                 .arg(f ? QString::fromLatin1(f->metaObject()->className()) : QStringLiteral("none"),
+                                      title ? title->property("text").toString() : QStringLiteral("?"),
+                                      sessionOf(window) ? sessionOf(window)->title() : QStringLiteral("?")));
+                        shot(window, shotPath(QStringLiteral("drive_rename_ui_title.png")));
+                    }
+                    ws->syncNow();
+                    later(900, [=]() {
+                        QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, noteId));
+                        later(2500, [=]() {
+                            ws->syncNow();
+                            later(2500, [=]() {
+                                const QString snap = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
+                                const QString title = ws->objectSummary(targetId).value(QStringLiteral("title")).toString();
+                                const bool blockOk = snap.contains(targetId) && snap.contains(prefix);
+                                const bool labelOk = snap.contains(QLatin1String("patches\""));
+                                dlog(QStringLiteral("DRIVE ui block-kept=%1 label-updated=%2 target-title=%3 snap=%4")
+                                         .arg(blockOk ? 1 : 0).arg(labelOk ? 1 : 0).arg(title, snap));
+                                shot(window, shotPath(QStringLiteral("drive_rename_ui.png")));
+                                if (!(blockOk && labelOk && title == QLatin1String("patches"))) {
+                                    QCoreApplication::exit(6);
+                                    return;
+                                }
+                                // Round 2: put the caret after the chip, click it again, come back.
+                                if (EditorModel *m = sessionOf(window))
+                                    m->forceFocus(startBlock, int(prefix.size()) + 7);
+                                later(400, [=]() {
+                                    // YAOP_DRIVE_CTRL=1: the second visit is a Ctrl+click
+                                    clickChipBeforeCaret(window, qEnvironmentVariableIsSet("YAOP_DRIVE_CTRL")
+                                                                     ? Qt::ControlModifier : Qt::NoModifier);
+                                    later(1200, [=]() {
+                                        const bool went = window->property("editorObjectId").toString() == targetId;
+                                        QMetaObject::invokeMethod(window, "openObject", Q_ARG(QVariant, noteId));
+                                        later(1500, [=]() {
+                                            ws->syncNow();
+                                            later(2500, [=]() {
+                                                const QString snap2 = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
+                                                const bool kept = snap2.contains(prefix) && snap2.contains(targetId);
+                                                dlog(QStringLiteral("DRIVE ui round2 navigated=%1 block-kept=%2 snap=%3")
+                                                         .arg(went ? 1 : 0).arg(kept ? 1 : 0).arg(snap2));
+                                                QCoreApplication::exit(went && kept ? 0 : 7);
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 void dndScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -447,6 +587,9 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 mentionScenario(window, ws);
             else if (scenario == QLatin1String("rename"))
                 renameScenario(window, ws);
+            else if (scenario == QLatin1String("rename-ui"))
+                qEnvironmentVariableIsSet("YAOP_DRIVE_DAILY") ? renameUiDailyScenario(window, ws)
+                                                              : renameUiScenario(window, ws);
             else if (scenario == QLatin1String("dnd"))
                 dndScenario(window);
             else
