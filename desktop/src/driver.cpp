@@ -496,6 +496,36 @@ void renameUiScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
+// Mentions are atomic for the caret: from after "@patch", one Left press jumps over the whole
+// chip, so "X" lands before it (never inside), and the mention stays whole.
+void caretScenario(QQuickWindow *window, Workspace *ws)
+{
+    Q_UNUSED(ws);
+    EditorModel *model = sessionOf(window);
+    if (!model) {
+        QCoreApplication::exit(4);
+        return;
+    }
+    model->forceFocus(firstBlockId(window), 0);
+    QTimer::singleShot(350, window, [window]() {
+        typeText(window, QStringLiteral("ver @patch"));
+        QTimer::singleShot(500, window, [window]() {
+            sendWindowKey(window, Qt::Key_Return, QStringLiteral("\r")); // create from the popup
+            QTimer::singleShot(400, window, [window]() {
+                sendWindowKey(window, Qt::Key_Left, QString());
+                typeText(window, QStringLiteral("X"));
+                QTimer::singleShot(1500, window, [window]() {
+                    const QString snap = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
+                    const bool whole = snap.contains(QLatin1String("\"text\":\"@patch\""));
+                    const bool outside = snap.contains(QLatin1String("\"text\":\"ver X\""));
+                    dlog(QStringLiteral("DRIVE caret whole=%1 outside=%2 snap=%3").arg(whole ? 1 : 0).arg(outside ? 1 : 0).arg(snap));
+                    QCoreApplication::exit(whole && outside ? 0 : 6);
+                });
+            });
+        });
+    });
+}
+
 void dndScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -587,6 +617,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 mentionScenario(window, ws);
             else if (scenario == QLatin1String("rename"))
                 renameScenario(window, ws);
+            else if (scenario == QLatin1String("caret"))
+                caretScenario(window, ws);
             else if (scenario == QLatin1String("rename-ui"))
                 qEnvironmentVariableIsSet("YAOP_DRIVE_DAILY") ? renameUiDailyScenario(window, ws)
                                                               : renameUiScenario(window, ws);

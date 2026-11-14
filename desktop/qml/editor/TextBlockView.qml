@@ -35,6 +35,38 @@ Item {
     }
     Timer { id: pillTimer; interval: 60; onTriggered: tb.refreshPills() }
 
+    // A mention is atomic: the caret never stops inside it, so nothing can be typed there.
+    // It jumps to the edge in the direction it was moving (arrows), or the nearest one (click).
+    // Backspace/Delete at an edge still remove the whole mention.
+    property int lastCaret: 0
+    property bool snapping: false
+    function keepCaretOutOfMentions() {
+        const pos = edit.cursorPosition
+        if (snapping || tb.loading || !view.session || edit.selectionStart !== edit.selectionEnd) {
+            lastCaret = pos
+            return
+        }
+        const ranges = view.session.mentionRanges(edit.textDocument)
+        for (let i = 0; i < ranges.length; ++i) {
+            const start = ranges[i].start, end = ranges[i].start + ranges[i].length
+            if (pos <= start || pos >= end)
+                continue
+            let target
+            if (lastCaret <= start)
+                target = end
+            else if (lastCaret >= end)
+                target = start
+            else
+                target = (pos - start < end - pos) ? start : end
+            snapping = true
+            edit.cursorPosition = target
+            snapping = false
+            lastCaret = target
+            return
+        }
+        lastCaret = pos
+    }
+
     Repeater {
         model: tb.pills
         delegate: Rectangle {
@@ -145,6 +177,7 @@ Item {
         onSelectionEndChanged: view.refreshSelection(edit, tb.row)
 
         onCursorPositionChanged: {
+            tb.keepCaretOutOfMentions()
             view.refreshSelection(edit, tb.row)
         }
 
