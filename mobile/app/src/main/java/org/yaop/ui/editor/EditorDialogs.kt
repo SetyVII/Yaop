@@ -367,8 +367,21 @@ internal fun rememberLocalizedTypeAliases(): Map<String, List<String>> {
 }
 
 /**
+ * How a type is written in `@tipo/nombre`: lowercase, no accents, spaces and `_` become `-`.
+ * "Web Links" → `web-links`, "Modelos de IA" → `modelos-de-ia`.
+ */
+internal fun mentionTypeSlug(name: String): String =
+    name.stripMentionAccents().trim().replace(Regex("[\\s_-]+"), "-").trim('-')
+
+/**
+ * Key used to compare a typed type token with a type: the slug without separators, so
+ * `web-links`, `weblinks`, `web links` and `web_links` all match "Web Links".
+ */
+internal fun mentionTypeKey(name: String): String = mentionTypeSlug(name).replace("-", "")
+
+/**
  * Returns the primary localized keyword for `@tipo/` autocomplete chips (first alias in `strings.xml`
- * for the active locale, falling back to `type.name`).
+ * for the active locale, falling back to the [mentionTypeSlug] of `type.name`).
  */
 internal fun preferredTypeMentionKeyword(
     type: ObjectType,
@@ -376,7 +389,7 @@ internal fun preferredTypeMentionKeyword(
 ): String {
     val canon = type.id
     return localizedAliases[canon]?.firstOrNull()
-        ?: type.name.lowercase(Locale.ROOT)
+        ?: mentionTypeSlug(type.name).ifEmpty { type.id }
 }
 
 /**
@@ -400,26 +413,22 @@ internal fun parseMentionQuery(
     }
     val typePart = clean.substringBefore('/').trim()
     val namePart = clean.substringAfter('/').trim()
-    val normType = typePart.stripMentionAccents()
+    val normType = mentionTypeKey(typePart)
 
     val resolved = if (normType.isBlank()) {
         null
     } else {
         // 1. Exact match by id, name, or localized alias from strings.xml
         allTypes.firstOrNull { t ->
-            val canon = t.id
-            t.id.stripMentionAccents() == normType ||
-                canon.stripMentionAccents() == normType ||
-                t.name.stripMentionAccents() == normType ||
-                localizedAliases[canon]?.any { it == normType } == true
+            mentionTypeKey(t.id) == normType ||
+                mentionTypeKey(t.name) == normType ||
+                localizedAliases[t.id]?.any { mentionTypeKey(it) == normType } == true
         } ?: if (normType.length >= 2) {
             // 2. Prefix match (e.g. @im/ or @aud/ or @lib/)
             allTypes.firstOrNull { t ->
-                val canon = t.id
-                t.id.stripMentionAccents().startsWith(normType) ||
-                    canon.stripMentionAccents().startsWith(normType) ||
-                    t.name.stripMentionAccents().startsWith(normType) ||
-                    localizedAliases[canon]?.any { it.startsWith(normType) } == true
+                mentionTypeKey(t.id).startsWith(normType) ||
+                    mentionTypeKey(t.name).startsWith(normType) ||
+                    localizedAliases[t.id]?.any { mentionTypeKey(it).startsWith(normType) } == true
             }
         } else {
             null
@@ -436,27 +445,30 @@ internal fun parseMentionQuery(
 }
 
 /**
- * Returns object types whose name, id, or localized alias matches [prefix] (before typing `/`).
- * Prioritizes visual/media types (`image`, `audio`, `pdf`) when [prefix] is blank.
+ * Returns object types (built-in and user-created) whose name, id, localized alias, or any word of
+ * the name starts with [prefix] (before typing `/`). "mode" matches "Modelos de IA" and
+ * "Modelos de referencia"; "refe" matches the second one too.
+ * Types used most recently come first ([recentTypeIds], most recent first), then the built-in
+ * priority order.
  */
 internal fun matchingTypesForMentionPrefix(
     prefix: String,
     allTypes: List<ObjectType>,
     localizedAliases: Map<String, List<String>> = emptyMap(),
+    recentTypeIds: List<String> = emptyList(),
 ): List<ObjectType> {
-    val cleanPrefix = prefix.trim().removePrefix("@").stripMentionAccents()
+    val key = mentionTypeKey(prefix.trim().removePrefix("@"))
     val priorityIds = listOf("image", "audio", "pdf", "note", "task", "book", "person", "project", "web")
-    val ordered = allTypes.sortedBy { t ->
-        val idx = priorityIds.indexOf(t.id)
-        if (idx >= 0) idx else 99
-    }
-    if (cleanPrefix.isBlank()) return ordered
+    fun rank(ids: List<String>, id: String) = ids.indexOf(id).let { if (it >= 0) it else Int.MAX_VALUE }
+    val ordered = allTypes.sortedWith(
+        compareBy<ObjectType>({ rank(recentTypeIds, it.id) }, { rank(priorityIds, it.id) }),
+    )
+    if (key.isEmpty()) return ordered
     return ordered.filter { t ->
-        val canon = t.id
-        t.id.stripMentionAccents().startsWith(cleanPrefix) ||
-            canon.stripMentionAccents().startsWith(cleanPrefix) ||
-            t.name.stripMentionAccents().startsWith(cleanPrefix) ||
-            localizedAliases[canon]?.any { it.startsWith(cleanPrefix) } == true
+        mentionTypeKey(t.id).startsWith(key) ||
+            mentionTypeKey(t.name).startsWith(key) ||
+            mentionTypeSlug(t.name).split('-').any { word -> key.length >= 2 && word.startsWith(key) } ||
+            localizedAliases[t.id]?.any { mentionTypeKey(it).startsWith(key) } == true
     }
 }
 

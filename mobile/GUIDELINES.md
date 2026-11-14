@@ -22,6 +22,15 @@ competes with scrolling or open time, performance wins. Measure before "smoothin
   `mention_aliases_<type>` resources (the first alias is the chip label, the rest are synonyms)
   and dates in `date_today` / `date_tomorrow` / `date_yesterday`, compared accent-insensitively
   (`stripMentionAccents()`). No alias lists in Kotlin.
+- A type is written as its **slug** in `@type/name`: lowercase, no accents, spaces and `_` become
+  `-` ("Web Links" → `@web-links/`, "Modelos de IA" → `@modelos-de-ia/`). Typing is forgiving:
+  `weblinks`, `web links` and `web_links` resolve to the same type (`mentionTypeSlug`,
+  `mentionTypeKey` in `EditorDialogs.kt`). Built-in types use their first alias instead.
+- The `@` bar shows, in order: matching types (recently used first, user types included, a word
+  of the name also matches), up to 10 objects that narrow while typing (most recent first),
+  quick dates, and `+ Create "name" in <Type>`. `⌄` opens the full list.
+- A mention stores the target id plus its title as a label; the editor refreshes the label to
+  the current title (`refreshMentionLabels`), so renames show everywhere.
 - Adding a language: translate every `mention_aliases_*` (singular, plural, a short form, and keep
   the English id last as a fallback) and the `date_*` strings. No code changes needed.
 

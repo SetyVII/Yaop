@@ -145,6 +145,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 private val BLOCK_TAG_REGEX = Regex("""(?<=^|[\s(\[])#([a-zA-Z0-9_\u0080-\uFFFF]+)""")
+/** `@` suggestion bar limits: a short list that narrows while typing (full list in the `⌄` sheet). */
+private const val MENTION_MAX_TYPES = 6
+private const val MENTION_MAX_OBJECTS = 10
+
 private val LIVE_MENTION_QUERY_REGEX = Regex("""(?<=^|[\s(\[])@([a-zA-Z0-9_/\-.#\u0080-\uFFFF ]*)$""")
 private val LIVE_TAG_QUERY_REGEX = Regex("""(?<=^|[\s(\[])#([a-zA-Z0-9_\u0080-\uFFFF]*)$""")
 
@@ -818,6 +822,10 @@ fun BlockListEditor(
     }
 
     val localizedTypeAliases = rememberLocalizedTypeAliases()
+    // Type ids ordered by their most recently updated object: `@` suggests recent types first.
+    val recentTypeIds = remember(allActiveObjects) {
+        allActiveObjects.sortedByDescending { it.updatedAt }.map { it.typeId }.distinct()
+    }
 
     /**
      * Autocompletes `@tipo/` in the currently focused block when the user taps a type filter chip
@@ -3205,11 +3213,12 @@ fun BlockListEditor(
                     val parsed = remember(q, allTypes, localizedTypeAliases) {
                         parseMentionQuery(q, allTypes, localizedTypeAliases)
                     }
-                    val matchingTypes = remember(q, parsed, allTypes, localizedTypeAliases) {
+                    val matchingTypes = remember(q, parsed, allTypes, localizedTypeAliases, recentTypeIds) {
                         if (parsed.hasTypeSlash) {
                             emptyList()
                         } else {
-                            matchingTypesForMentionPrefix(q, allTypes, localizedTypeAliases).take(6)
+                            matchingTypesForMentionPrefix(q, allTypes, localizedTypeAliases, recentTypeIds)
+                                .take(MENTION_MAX_TYPES)
                         }
                     }
 
@@ -3231,7 +3240,7 @@ fun BlockListEditor(
                         }
                     }
                     val matchingObjects = remember(allMatchingObjects) {
-                        allMatchingObjects.take(8)
+                        allMatchingObjects.take(MENTION_MAX_OBJECTS)
                     }
                     val effectiveCreateName = remember(parsed, q) {
                         if (parsed.hasTypeSlash && parsed.resolvedType != null) parsed.nameQuery else q
@@ -3278,46 +3287,6 @@ fun BlockListEditor(
                                 },
                             )
                         } else {
-                            // Date chips driven by localized R.string.date_* resources (accent-insensitive)
-                            val normQ = q.stripMentionAccents()
-                            if (normQ.isBlank() ||
-                                todayLabel.stripMentionAccents().startsWith(normQ) ||
-                                "today".startsWith(normQ)
-                            ) {
-                                ToolbarChip(
-                                    label = todayLabel,
-                                    leadingEmoji = "📅",
-                                    isAccent = true,
-                                    onClick = {
-                                        applySelectedInlineDate(today.format(DateTimeFormatter.ISO_LOCAL_DATE))
-                                    },
-                                )
-                            }
-                            if (normQ.isBlank() ||
-                                tomorrowLabel.stripMentionAccents().startsWith(normQ) ||
-                                "tomorrow".startsWith(normQ)
-                            ) {
-                                ToolbarChip(
-                                    label = tomorrowLabel,
-                                    leadingEmoji = "📅",
-                                    onClick = {
-                                        applySelectedInlineDate(today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE))
-                                    },
-                                )
-                            }
-                            if (normQ.isNotBlank() &&
-                                (yesterdayLabel.stripMentionAccents().startsWith(normQ) ||
-                                    "yesterday".startsWith(normQ))
-                            ) {
-                                ToolbarChip(
-                                    label = yesterdayLabel,
-                                    leadingEmoji = "📅",
-                                    onClick = {
-                                        applySelectedInlineDate(today.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE))
-                                    },
-                                )
-                            }
-
                             // @tipo/ filter chips so user can filter by type even if they don't remember the object name
                             for (type in matchingTypes) {
                                 val localizedKeyword = preferredTypeMentionKeyword(type, localizedTypeAliases)
@@ -3364,10 +3333,55 @@ fun BlockListEditor(
                             }
                         }
 
+                        if (!parsed.hasTypeSlash) {
+                            // Date chips driven by localized R.string.date_* resources (accent-insensitive)
+                            val normQ = q.stripMentionAccents()
+                            if (normQ.isBlank() ||
+                                todayLabel.stripMentionAccents().startsWith(normQ) ||
+                                "today".startsWith(normQ)
+                            ) {
+                                ToolbarChip(
+                                    label = todayLabel,
+                                    leadingEmoji = "📅",
+                                    isAccent = true,
+                                    onClick = {
+                                        applySelectedInlineDate(today.format(DateTimeFormatter.ISO_LOCAL_DATE))
+                                    },
+                                )
+                            }
+                            if (normQ.isBlank() ||
+                                tomorrowLabel.stripMentionAccents().startsWith(normQ) ||
+                                "tomorrow".startsWith(normQ)
+                            ) {
+                                ToolbarChip(
+                                    label = tomorrowLabel,
+                                    leadingEmoji = "📅",
+                                    onClick = {
+                                        applySelectedInlineDate(today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE))
+                                    },
+                                )
+                            }
+                            if (normQ.isNotBlank() &&
+                                (yesterdayLabel.stripMentionAccents().startsWith(normQ) ||
+                                    "yesterday".startsWith(normQ))
+                            ) {
+                                ToolbarChip(
+                                    label = yesterdayLabel,
+                                    leadingEmoji = "📅",
+                                    onClick = {
+                                        applySelectedInlineDate(today.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE))
+                                    },
+                                )
+                            }
+                        }
+
                         if (effectiveCreateName.isNotBlank()) {
                             ToolbarChip(
-                                label = "+ \"$effectiveCreateName\"",
+                                label = parsed.resolvedType?.let { type ->
+                                    stringResource(R.string.mention_create_in_type, effectiveCreateName, type.name)
+                                } ?: stringResource(R.string.mention_create_named, effectiveCreateName),
                                 isAccent = true,
+                                isActive = allMatchingObjects.isEmpty(),
                                 onClick = {
                                     val preselectedType = parsed.resolvedType
                                     if (preselectedType != null) {
@@ -3451,7 +3465,7 @@ fun BlockListEditor(
                             fontWeight = FontWeight.SemiBold,
                             color = AppColors.TextSecondary,
                         )
-                        allTypes.take(5).forEach { type ->
+                        matchingTypesForMentionPrefix("", allTypes, localizedTypeAliases, recentTypeIds).forEach { type ->
                             ToolbarChip(
                                 label = type.name,
                                 leadingEmoji = type.icon.emoji ?: "📄",

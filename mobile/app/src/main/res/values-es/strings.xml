@@ -321,6 +321,8 @@
     <string name="action_switch_to_keyboard">Teclado</string>
     <string name="action_more_results">Ver más</string>
     <string name="action_create_as_prefix">Crear \"%1$s\" como:</string>
+    <string name="mention_create_in_type">+ Crear \"%1$s\" en %2$s</string>
+    <string name="mention_create_named">+ Crear \"%1$s\"…</string>
     <string name="action_create_tag_chip">+ Crear #%1$s</string>
     <string name="action_other_type">Otro&#8230;</string>
     <string name="action_use_url">Usar %1$s</string>
