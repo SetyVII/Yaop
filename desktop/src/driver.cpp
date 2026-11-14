@@ -945,6 +945,22 @@ int e2eBackupRoundtrip(Workspace *ws, const QHash<QString, QString> &args)
     return 0;
 }
 
+// restore-backup: restores a .yaop (or legacy .facultas) file into this vault and prints the
+// result plus how many objects of each type the vault holds afterwards. args: file=<path>
+int e2eRestoreBackup(Workspace *ws, const QHash<QString, QString> &args)
+{
+    const QString out = ws->restoreBackup(args.value(QStringLiteral("file")));
+    QMap<QString, int> byType;
+    for (const Object &o : ws->e2eAllObjects())
+        ++byType[o.typeId];
+    QStringList counts;
+    for (auto it = byType.constBegin(); it != byType.constEnd(); ++it)
+        counts << QStringLiteral("%1=%2").arg(it.key()).arg(it.value());
+    std::printf("E2ESTEP restore-backup %s [%s] types=%d\n", qPrintable(out), qPrintable(counts.join(' ')),
+                int(ws->allTypes().size()));
+    return out.startsWith(QLatin1String("ok")) ? 0 : 3;
+}
+
 // media-wire-ids: prints the blind wire id of every media object (to ask the server about its bytes)
 int e2eMediaWireIds(Workspace *ws)
 {
@@ -971,7 +987,9 @@ int runE2eStep(Workspace *ws, const QString &step, const QString &args, const QS
         return e2eMediaWireIds(ws);
     if (step == QLatin1String("backup-roundtrip"))
         return e2eBackupRoundtrip(ws, parseE2eArgs(args));
-    std::printf("E2E FAIL: unknown --e2e step %s (pull-assert|edit|digest|backup-roundtrip|pair-host|pair-guest)\n", qPrintable(step));
+    if (step == QLatin1String("restore-backup"))
+        return e2eRestoreBackup(ws, parseE2eArgs(args));
+    std::printf("E2E FAIL: unknown --e2e step %s (pull-assert|edit|digest|backup-roundtrip|restore-backup|pair-host|pair-guest)\n", qPrintable(step));
     return 2;
 }
 

@@ -230,7 +230,7 @@ Popup {
         FileDialog {
             id: restoreDialog
             fileMode: FileDialog.OpenFile
-            nameFilters: [qsTr("YAOP backup (*.yaop)"), qsTr("All files (*)")]
+            nameFilters: [qsTr("YAOP or Facultas backup (*.yaop *.facultas)"), qsTr("All files (*)")]
             onAccepted: if (ws) backupStatus.text = ws.restoreBackup(selectedFile.toString().replace(/^file:\/\//, ""))
         }
 
