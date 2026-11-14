@@ -1660,6 +1660,32 @@ void EditorModel::insertAnchorText(QQuickTextDocument *doc, int caretEnd, const 
     c.insertText(visible, f);
 }
 
+int EditorModel::insertPlainAtChipEdge(QQuickTextDocument *doc, int pos, const QString &text)
+{
+    QTextDocument *td = doc ? doc->textDocument() : nullptr;
+    if (!td || text.isEmpty() || pos < 0 || pos >= td->characterCount())
+        return -1;
+    auto chipAt = [td](int p) {
+        if (p < 0 || p >= td->characterCount() - 1)
+            return false;
+        QTextCursor c(td);
+        c.setPosition(p);
+        c.setPosition(p + 1, QTextCursor::KeepAnchor);
+        return c.charFormat().anchorHref().startsWith(QLatin1String("yaop"));
+    };
+    if (!chipAt(pos - 1) && !chipAt(pos))
+        return -1;
+    QTextCursor c(td);
+    c.setPosition(pos);
+    QTextCharFormat plain = c.charFormat();
+    plain.setAnchor(false);
+    plain.setAnchorHref(QString());
+    plain.clearForeground();
+    plain.clearBackground();
+    c.insertText(text, plain);
+    return pos + int(text.size());
+}
+
 QVariantList EditorModel::mentionRanges(QQuickTextDocument *doc) const
 {
     QVariantList out;

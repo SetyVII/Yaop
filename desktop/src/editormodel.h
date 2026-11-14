@@ -162,6 +162,10 @@ public:
     // Where the object mentions sit in a live block document: [{start, length}] in characters,
     // for the pill drawn behind each one (a QTextDocument cannot draw rounded backgrounds).
     Q_INVOKABLE QVariantList mentionRanges(QQuickTextDocument *doc) const;
+    // Typing right next to a chip (mention, tag, date) would inherit its link format and grow the
+    // chip. When `pos` touches one, inserts `text` there as plain text and returns the new caret;
+    // returns -1 (nothing done) otherwise, so the editor types normally.
+    Q_INVOKABLE int insertPlainAtChipEdge(QQuickTextDocument *doc, int pos, const QString &text);
     Q_INVOKABLE void insertMentionAt(int row, int caret, QQuickTextDocument *doc,
                                      const QString &objectId, const QString &label);
     Q_INVOKABLE void insertTagAt(int row, int caret, QQuickTextDocument *doc,

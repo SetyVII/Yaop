@@ -496,8 +496,9 @@ void renameUiScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
-// Mentions are atomic for the caret: from after "@patch", one Left press jumps over the whole
-// chip, so "X" lands before it (never inside), and the mention stays whole.
+// Mentions are atomic for the caret. With "@patch" alone at the start of a line: "qw" typed right
+// after the chip and "q" typed right before it (Home) stay plain text outside it; then one Left
+// from after "qw" + "X" never lands inside the chip. The mention must stay "@patch".
 void caretScenario(QQuickWindow *window, Workspace *ws)
 {
     Q_UNUSED(ws);
@@ -507,19 +508,27 @@ void caretScenario(QQuickWindow *window, Workspace *ws)
         return;
     }
     model->forceFocus(firstBlockId(window), 0);
-    QTimer::singleShot(350, window, [window]() {
-        typeText(window, QStringLiteral("ver @patch"));
-        QTimer::singleShot(500, window, [window]() {
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    later(350, [=]() {
+        typeText(window, QStringLiteral("@patch"));
+        later(500, [=]() {
             sendWindowKey(window, Qt::Key_Return, QStringLiteral("\r")); // create from the popup
-            QTimer::singleShot(400, window, [window]() {
+            later(400, [=]() {
+                typeText(window, QStringLiteral("qw"));          // right after the chip
+                sendWindowKey(window, Qt::Key_Home, QString());
+                typeText(window, QStringLiteral("q"));           // right before it
+                sendWindowKey(window, Qt::Key_End, QString());
                 sendWindowKey(window, Qt::Key_Left, QString());
+                sendWindowKey(window, Qt::Key_Left, QString());
+                sendWindowKey(window, Qt::Key_Left, QString());  // from the chip's end: jumps over it
                 typeText(window, QStringLiteral("X"));
-                QTimer::singleShot(1500, window, [window]() {
+                later(1500, [=]() {
                     const QString snap = sessionOf(window) ? sessionOf(window)->debugSnapshot() : QString();
-                    const bool whole = snap.contains(QLatin1String("\"text\":\"@patch\""));
-                    const bool outside = snap.contains(QLatin1String("\"text\":\"ver X\""));
-                    dlog(QStringLiteral("DRIVE caret whole=%1 outside=%2 snap=%3").arg(whole ? 1 : 0).arg(outside ? 1 : 0).arg(snap));
-                    QCoreApplication::exit(whole && outside ? 0 : 6);
+                    const bool ok = snap.contains(QLatin1String("\"text\":\"qX\""))
+                                    && snap.contains(QLatin1String("\"text\":\"@patch\""))
+                                    && snap.contains(QLatin1String("\"text\":\"qw\""));
+                    dlog(QStringLiteral("DRIVE caret ok=%1 snap=%2").arg(ok ? 1 : 0).arg(snap));
+                    QCoreApplication::exit(ok ? 0 : 6);
                 });
             });
         });

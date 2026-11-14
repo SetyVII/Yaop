@@ -237,6 +237,17 @@ Item {
 
         // ------------------- structure keys -------------------
         Keys.onPressed: function(event) {
+            // Text typed against a chip (before "@" or right after it) goes outside it as plain text.
+            if (!view.popupActive() && event.text.length > 0 && event.text.charCodeAt(0) >= 32
+                    && !(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier | Qt.AltModifier))
+                    && edit.selectionStart === edit.selectionEnd && view.session) {
+                const caret = view.session.insertPlainAtChipEdge(edit.textDocument, edit.cursorPosition, event.text)
+                if (caret >= 0) {
+                    edit.cursorPosition = caret
+                    event.accepted = true
+                    return
+                }
+            }
             // A trigger popup ("/", "@", "#") is open: arrows, Enter/Tab and Esc drive it from the
             // keyboard while the caret stays here, so the typed query is always visible.
             if (view.popupActive()) {
