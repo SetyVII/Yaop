@@ -233,6 +233,15 @@ record  := length(u32 BE) | envelope            (envelope = the one above)
   those records, (2) write the same file byte for byte with the same nonces, (3) reject the
   negatives (wrong VK, truncated, one byte changed, bad magic, record removed).
 
+### Importing a Facultas backup
+
+YAOP grew from Facultas. A `.facultas` backup is the same container with magic `"FBK1"` and HKDF
+salt `"facultas-vault/1"` for its subkeys; the VK is the same 24-word entropy. Restore accepts it
+(read only, chosen by the magic) so a vault moves over with its phrase: create the YAOP vault
+with "restore with my phrase", then restore the `.facultas` file. YAOP never writes `FBK1`.
+Fixture: `spec/fixtures/backup/legacy-small.facultas` (the records of `small.json`).
+Implemented on desktop; Android and `simclient` do not read it yet.
+
 ## Libraries per platform
 
 All must pass the same vectors in `spec/fixtures/crypto` (the conformance suite requires it).

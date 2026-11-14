@@ -695,6 +695,24 @@ static void testBackupConformance()
     QByteArray flipped = file;
     flipped[flipped.size() / 2] = char(flipped[flipped.size() / 2] ^ 0xff);
     const quint32 first = qFromBigEndian<quint32>(reinterpret_cast<const uchar *>(file.constData() + 4));
+    // A backup exported by Facultas (same records, magic FBK1, salt facultas-vault/1) opens too.
+    QFile legacyBin(specDir() + QLatin1String("/backup/legacy-small.facultas"));
+    if (legacyBin.open(QIODevice::ReadOnly)) {
+        QVector<backup::Record> legacyGot;
+        QBuffer lin;
+        lin.setData(legacyBin.readAll());
+        lin.open(QIODevice::ReadOnly);
+        const auto lep = backup::read(&lin, vk, [&](const backup::Record &r) { legacyGot.append(r); }, &err);
+        bool legacySame = lep && *lep == epoch && legacyGot.size() == got.size();
+        for (int i = 0; legacySame && i < got.size(); ++i)
+            legacySame = legacyGot[i].id == got[i].id && legacyGot[i].data == got[i].data;
+        CHECK(legacySame, "backup: a Facultas backup opens with the same records");
+        QByteArray relabeled = file; // YAOP bytes under the Facultas magic: wrong salt, refused
+        relabeled.replace(0, 4, QByteArray(backup::kLegacyMagic, 4));
+        CHECK(rejects(relabeled, vk), "backup: the magic picks the salt (no mixing)");
+    } else {
+        CHECK(false, "backup: legacy fixture missing");
+    }
     CHECK(rejects(file, QByteArray(32, 7)), "backup: wrong VK is refused");
     CHECK(rejects(file.left(file.size() - 5), vk), "backup: truncated file is refused");
     CHECK(rejects(flipped, vk), "backup: tampered file is refused");

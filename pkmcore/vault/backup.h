@@ -10,6 +10,11 @@
 namespace pkm::backup {
 
 inline constexpr char kMagic[] = "YBK1";
+// Read only: a backup exported by Facultas, the app YAOP grew from. Same container and crypto,
+// other magic and HKDF salt; restoring it with the same 24 words moves a vault over
+// (spec/crypto.md §Importing a Facultas backup).
+inline constexpr char kLegacyMagic[] = "FBK1";
+inline constexpr char kLegacySalt[] = "facultas-vault/1";
 inline constexpr int kAssetChunk = 4 << 20;
 enum Kind : uint8_t { KObj = 1, KType = 2, KAsset = 3, KEnd = 0xFF };
 
@@ -40,7 +45,8 @@ private:
     bool m_ok = true;
 };
 
-// Reads and authenticates every record in order; onRecord gets each non-END one. On failure
+// Reads and authenticates every record in order (a .yaop file, or a legacy .facultas one picked by
+// its magic); onRecord gets each non-END one. On failure
 // returns nullopt and sets *error (wrong phrase, tampered, truncated, reordered).
 std::optional<quint32> read(QIODevice *in, const QByteArray &vk,
                             const std::function<void(const Record &)> &onRecord,

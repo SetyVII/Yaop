@@ -104,9 +104,13 @@ std::optional<quint32> read(QIODevice *in, const QByteArray &vk,
         return std::nullopt;
     };
     char magic[4];
-    if (!readExact(in, magic, 4) || memcmp(magic, kMagic, 4) != 0)
+    if (!readExact(in, magic, 4))
         return fail("bad magic");
-    const QByteArray key = vault::subkey(vk, kDomain);
+    const bool legacy = memcmp(magic, kLegacyMagic, 4) == 0;
+    if (!legacy && memcmp(magic, kMagic, 4) != 0)
+        return fail("bad magic");
+    const QByteArray key = legacy ? vault::subkey(vk, kDomain, QByteArray(kLegacySalt))
+                                  : vault::subkey(vk, kDomain);
     qint64 count = 0;
     for (;;) {
         char lenb[4];

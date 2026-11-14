@@ -118,9 +118,9 @@ QByteArray hkdfSha256(const QByteArray &ikm, const QByteArray &salt, const QByte
     return out.left(length);
 }
 
-QByteArray subkey(const QByteArray &vk, const QByteArray &domain)
+QByteArray subkey(const QByteArray &vk, const QByteArray &domain, const QByteArray &salt)
 {
-    return hkdfSha256(vk, QByteArray(kHkdfSalt), domain, kSubkeyBytes);
+    return hkdfSha256(vk, salt, domain, kSubkeyBytes);
 }
 
 QByteArray randomBytes(int n)

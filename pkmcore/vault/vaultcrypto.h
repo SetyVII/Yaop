@@ -28,7 +28,8 @@ inline constexpr int kSubkeyBytes = 32;
 // Contract domains (spec/crypto.md). `ids` is a MAC key, never an AEAD key.
 QByteArray hkdfSha256(const QByteArray &ikm, const QByteArray &salt, const QByteArray &info,
                       int length);
-QByteArray subkey(const QByteArray &vk, const QByteArray &domain);
+QByteArray subkey(const QByteArray &vk, const QByteArray &domain,
+                  const QByteArray &salt = QByteArray(kHkdfSalt));
 
 // ---------------------------------------------------------------------------
 // AEAD: XChaCha20-Poly1305 (libsodium), 24-byte random nonces, AAD-bound.
