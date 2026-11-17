@@ -323,6 +323,61 @@ QVariantList Workspace::objectsCreatedOn(const QString &isoDate) const
     return out;
 }
 
+QVariantList Workspace::calendarItems(const QString &fromIso, const QString &toIso) const
+{
+    const QDate from = QDate::fromString(fromIso, Qt::ISODate);
+    const QDate to = QDate::fromString(toIso, Qt::ISODate);
+    QVariantList out;
+    if (!from.isValid() || !to.isValid() || from.daysTo(to) > 62)
+        return out;
+    auto item = [](const QString &day, const char *kind, const Object &o, bool done, int minutes) {
+        QVariantMap m;
+        m.insert("day", day);
+        m.insert("kind", QLatin1String(kind));
+        m.insert("id", o.id);
+        m.insert("title", o.title);
+        m.insert("typeId", o.typeId);
+        m.insert("iconEmoji", o.icon().emoji);
+        m.insert("done", done);
+        m.insert("minutes", minutes);
+        return m;
+    };
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate())
+            continue;
+        if (o.typeId == TypeId::Journal) {
+            const QString day = o.propertyString(QStringLiteral("date"));
+            const bool hasText = std::any_of(o.blocks.cbegin(), o.blocks.cend(),
+                                             [](const Block &b) { return !b.plainText().trimmed().isEmpty(); });
+            if (hasText && day >= fromIso && day <= toIso)
+                out.append(item(day, "note", o, false, -1));
+            continue;
+        }
+        if (o.typeId == TypeId::Task) {
+            const ObjectView v = viewFor(o);
+            const QString due = v.dueDate.left(10);
+            if (!due.isEmpty() && due >= fromIso && due <= toIso)
+                out.append(item(due, "task", o, v.taskDone, -1));
+        }
+        QDateTime dt = QDateTime::fromString(o.createdAt, Qt::ISODateWithMs);
+        if (!dt.isValid())
+            dt = QDateTime::fromString(o.createdAt, Qt::ISODate);
+        if (!dt.isValid())
+            continue;
+        const QDateTime local = dt.toLocalTime();
+        const QString day = local.date().toString(QStringLiteral("yyyy-MM-dd"));
+        if (day >= fromIso && day <= toIso)
+            out.append(item(day, "created", o, false, local.time().hour() * 60 + local.time().minute()));
+    }
+    std::sort(out.begin(), out.end(), [](const QVariant &a, const QVariant &b) {
+        const QVariantMap x = a.toMap(), y = b.toMap();
+        if (x.value("day") != y.value("day"))
+            return x.value("day").toString() < y.value("day").toString();
+        return x.value("minutes").toInt() < y.value("minutes").toInt();
+    });
+    return out;
+}
+
 QVariantMap Workspace::dayMarks(const QString &fromIso, const QString &toIso) const
 {
     QHash<QString, QVariantMap> days;

@@ -19,10 +19,36 @@ Item {
     function today() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12) }
     function shift(n) { day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + n, 12) }
     function showToday() { day = today() }
+    // one step of the current view: a day, three days, a week or a month
+    function step(dir) {
+        if (view === "month") day = new Date(day.getFullYear(), day.getMonth() + dir, 1, 12)
+        else shift(dir * (view === "week" ? 7 : view === "three" ? 3 : 1))
+    }
+    function openDay(d) { day = d; prefs.view = "day" }
+
+    readonly property string view: prefs.view
+    readonly property date rangeStart: {
+        if (view === "day") return day
+        if (view === "three") return day
+        const fd = Qt.locale().firstDayOfWeek % 7
+        if (view === "week") return new Date(day.getFullYear(), day.getMonth(), day.getDate() - (day.getDay() - fd + 7) % 7, 12)
+        const first = new Date(day.getFullYear(), day.getMonth(), 1, 12)
+        return new Date(first.getFullYear(), first.getMonth(), 1 - (first.getDay() - fd + 7) % 7, 12)
+    }
+    readonly property int rangeDays: view === "month" ? 42 : view === "week" ? 7 : view === "three" ? 3 : 1
+    readonly property var gridItems: {
+        dataRev
+        if (!ws || view === "day") return []
+        const end = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate() + rangeDays - 1, 12)
+        const want = { note: prefs.markNote, task: prefs.markTasks, created: prefs.markCreated }
+        return ws.calendarItems(Qt.formatDate(rangeStart, "yyyy-MM-dd"), Qt.formatDate(end, "yyyy-MM-dd"))
+                 .filter(it => want[it.kind])
+    }
 
     readonly property string iso: Qt.formatDate(day, "yyyy-MM-dd")
     readonly property bool isToday: iso === Qt.formatDate(new Date(), "yyyy-MM-dd")
-    readonly property string placeTitle: isToday ? qsTr("Today") : day.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
+    readonly property string placeTitle: view !== "day" ? qsTr("Calendar")
+                                       : isToday ? qsTr("Today") : day.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
     function isoWeek(d) {
         const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
         t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7))
@@ -48,6 +74,7 @@ Item {
         id: prefs
         category: "calendar"
         property bool showMonth: true
+        property string view: "day"     // day | three | week | month
         property bool markNote: true
         property bool markTasks: true
         property bool markCreated: true
@@ -67,7 +94,7 @@ Item {
         if (session) {
             const old = session.objectId
             session = null
-            if (!appWindow || appWindow.editorObjectId !== old) ws.closeObject(old)
+            if (!appWindow || !appWindow.objectShownElsewhere(old, page)) ws.closeObject(old)
         }
         if (want) session = ws.openObject(want)
     }
@@ -192,9 +219,19 @@ Item {
             Layout.rightMargin: 16
             spacing: 6
 
-            IconButton { icon: "chevron-left"; onClicked: page.shift(-1) }
+            Text {
+                visible: page.view !== "day"
+                Layout.rightMargin: 10
+                text: Qt.locale().standaloneMonthName(page.day.getMonth()) + " " + page.day.getFullYear()
+                color: Theme.text
+                font.family: Theme.display
+                font.pixelSize: 20
+                font.weight: Font.Bold
+                font.letterSpacing: -0.3
+            }
+            IconButton { icon: "chevron-left"; onClicked: page.step(-1) }
             GhostButton { label: qsTr("Today"); onClicked: page.showToday() }
-            IconButton { icon: "chevron-right"; onClicked: page.shift(1) }
+            IconButton { icon: "chevron-right"; onClicked: page.step(1) }
             Item { Layout.fillWidth: true }
 
             GhostButton {
@@ -211,7 +248,7 @@ Item {
                 }
             }
 
-            // views: only Day exists yet
+            // views; the pill slides to the chosen one
             Rectangle {
                 Layout.preferredHeight: 36
                 implicitWidth: viewsRow.implicitWidth + 8
@@ -219,43 +256,56 @@ Item {
                 color: Theme.page
                 border.width: 1
                 border.color: Theme.line
+                Rectangle {
+                    id: viewPill
+                    readonly property Item target: { viewsRow.width; return viewsRep.itemAt(viewsRep.keys.indexOf(page.view)) }
+                    x: viewsRow.x + (target ? target.x : 0)
+                    y: viewsRow.y
+                    width: target ? target.width : 0
+                    height: 28
+                    radius: Theme.radiusSm
+                    color: Theme.panel2
+                    border.width: 1
+                    border.color: Theme.line2
+                    Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                }
                 Row {
                     id: viewsRow
                     anchors.centerIn: parent
                     spacing: 2
                     Repeater {
+                        id: viewsRep
+                        readonly property var keys: ["month", "week", "three", "day"]
                         model: [
                             { key: "month", label: qsTr("Month") },
                             { key: "week", label: qsTr("Week") },
                             { key: "three", label: qsTr("Three days") },
                             { key: "day", label: qsTr("Day") }
                         ]
-                        delegate: Rectangle {
+                        delegate: Item {
                             required property var modelData
-                            readonly property bool on: modelData.key === "day"
+                            readonly property bool on: modelData.key === page.view
                             width: vt.implicitWidth + 22
                             height: 28
-                            radius: Theme.radiusSm
-                            color: on ? Theme.panel2 : "transparent"
                             Text {
                                 id: vt
                                 anchors.centerIn: parent
                                 text: modelData.label
-                                color: parent.on ? Theme.text : Theme.faint
+                                color: parent.on ? Theme.text : vHover.hovered ? Theme.dim : Theme.muted
                                 font.family: Theme.body
                                 font.pixelSize: 14
-                                font.weight: parent.on ? Font.Medium : Font.Normal
+                                Behavior on color { ColorAnimation { duration: 240 } }
                             }
-                            HoverHandler { id: vHover }
-                            ToolTip.visible: vHover.hovered && !on
-                            ToolTip.text: qsTr("Not built yet")
-                            ToolTip.delay: 400
+                            HoverHandler { id: vHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: prefs.view = modelData.key }
                         }
                     }
                 }
             }
 
             IconButton {
+                visible: page.view !== "month"
                 icon: "calendar"
                 active: prefs.showMonth
                 onClicked: prefs.showMonth = !prefs.showMonth
@@ -269,8 +319,29 @@ Item {
             Layout.fillHeight: true
             spacing: 0
 
+            MonthGrid {
+                visible: page.view === "month"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                month: page.day
+                items: page.gridItems
+                onDayRequested: (d) => page.openDay(d)
+                onOpenRequested: (id) => page.openObjectRequested(id)
+            }
+            TimeGrid {
+                visible: page.view === "week" || page.view === "three"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                start: page.rangeStart
+                days: page.rangeDays
+                items: page.gridItems
+                onDayRequested: (d) => page.openDay(d)
+                onOpenRequested: (id) => page.openObjectRequested(id)
+            }
+
             // the day: header + daily note blocks + day's objects, one scroll
             Item {
+                visible: page.view === "day"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -482,13 +553,13 @@ Item {
 
             // the month and the day's habits
             Rectangle {
-                visible: prefs.showMonth && page.width > 820
+                visible: prefs.showMonth && page.view !== "month" && page.width > 820
                 Layout.preferredWidth: 1
                 Layout.fillHeight: true
                 color: Theme.line
             }
             Flickable {
-                visible: prefs.showMonth && page.width > 820
+                visible: prefs.showMonth && page.view !== "month" && page.width > 820
                 Layout.preferredWidth: 300
                 Layout.fillHeight: true
                 contentWidth: width

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtCore
 import "."
 
 ApplicationWindow {
@@ -29,7 +30,7 @@ ApplicationWindow {
     property var backStack: []
     property var forwardStack: []
     property bool travelling: false
-    property var tabs: [{ key: 0, loc: location, back: [], fwd: [] }]
+    property var tabs: [{ key: 0, loc: location, back: [], fwd: [], pane: "" }]
     property int tabIndex: 0
     property int tabSeq: 1   // stable keys, so the strip animates only the tab that came or went
     onLocationChanged: {
@@ -45,7 +46,7 @@ ApplicationWindow {
     function storeTab() {
         if (!tabs || !tabs[tabIndex]) return   // during start-up, before `tabs` exists
         const t = tabs.slice()
-        t[tabIndex] = { key: tabs[tabIndex].key, loc: location, back: backStack, fwd: forwardStack }
+        t[tabIndex] = { key: tabs[tabIndex].key, loc: location, back: backStack, fwd: forwardStack, pane: paneObjectId }
         tabs = t
     }
     function goTo(loc) {
@@ -71,6 +72,7 @@ ApplicationWindow {
     }
     function loadTab(i) {
         tabIndex = i
+        paneObjectId = tabs[i].pane || ""
         backStack = tabs[i].back
         forwardStack = tabs[i].fwd
         goTo(tabs[i].loc)
@@ -82,7 +84,7 @@ ApplicationWindow {
     }
     function newTab(loc) {
         storeTab()
-        tabs = tabs.concat([{ key: tabSeq++, loc: loc, back: [], fwd: [] }])
+        tabs = tabs.concat([{ key: tabSeq++, loc: loc, back: [], fwd: [], pane: "" }])
         loadTab(tabs.length - 1)
     }
     function closeTab(i) {
@@ -95,7 +97,32 @@ ApplicationWindow {
         loadTab(next)
     }
     // Ctrl held during the click that asked for a place: new tab (slate only, where tabs show).
-    function wantsNewTab() { return Theme.slate && ws && ws.ctrlHeld() }
+    function wantsNewTab() { return Theme.slate && ws && (ws.keyModifiers() & Qt.ControlModifier) }
+    function wantsPane() { return Theme.slate && ws && (ws.keyModifiers() & Qt.ShiftModifier) }
+
+    // Side pane (slate): one object beside the page, keeping the page in view. Shift+click opens
+    // there; links inside the pane open in the page. Each tab keeps its own pane.
+    property string paneObjectId: ""
+    readonly property bool paneOpen: Theme.slate && paneObjectId.length > 0
+    function openInPane(id) {
+        if (id === editorObjectId) { showToast(qsTr("Already open in the page")); return }
+        paneObjectId = id
+        storeTab()
+    }
+    function closePane() { paneObjectId = ""; storeTab() }
+    function paneToPage() {
+        const id = paneObjectId
+        paneObjectId = ""
+        showObject(id)
+    }
+    onEditorObjectIdChanged: if (editorObjectId.length > 0 && editorObjectId === paneObjectId) closePane()
+    // Views that share one editor session per object ask before closing it.
+    function objectShownElsewhere(id, who) {
+        if (who !== editorPage && editorObjectId === id) return true
+        if (who !== sidePane.editor && paneObjectId === id) return true
+        const cal = calendarLoader.item
+        return !!cal && who !== cal && !!cal.session && cal.session.objectId === id
+    }
     function navigate(target) {
         if (wantsNewTab()) { newTab("p:" + target); return }
         editorObjectId = ""
@@ -155,10 +182,12 @@ ApplicationWindow {
     }
     function openObject(objectId) {
         if (wantsNewTab()) newTab("o:" + objectId)
+        else if (wantsPane()) openInPane(objectId)
         else showObject(objectId)
     }
 
     function openObjectAtBlock(objectId, blockId) {
+        if (wantsPane()) { openInPane(objectId); return }
         if (wantsNewTab()) newTab("o:" + objectId)
         pendingScrollBlockId = blockId !== undefined && blockId ? blockId : ""
         if (editorObjectId === objectId && page === "editor" && pendingScrollBlockId.length > 0) {
@@ -371,21 +400,42 @@ ApplicationWindow {
                 Layout.leftMargin: Theme.slate && !app.sidebarOpen ? 10 : 0
                 clip: true
 
+                // The page, and beside it the side pane when one is open. shownW eases from 0 to
+                // the pane's width (plus the gap) so the page gives way smoothly.
+                Item {
+                    id: pageArea
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: parent.width - sidePane.shownW
+                }
+                SidePane {
+                    id: sidePane
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    hostWidth: parent.width
+                    objectId: app.paneOpen ? app.paneObjectId : ""
+                    appWindow: app
+                    onCloseRequested: app.closePane()
+                    onExpandRequested: app.paneToPage()
+                }
+
                 // Slate: the page is a rounded panel sitting on the canvas.
                 Rectangle {
                     visible: Theme.slate
-                    anchors.fill: parent
+                    anchors.fill: pageArea
                     radius: Theme.radiusLg
                     color: Theme.panel
                     border.width: 1
                     border.color: Theme.line
                 }
 
-                GridBackdrop { anchors.fill: parent }
+                GridBackdrop { anchors.fill: pageArea }
 
                 StackLayout {
                     id: pages
-                    anchors.fill: parent
+                    anchors.fill: pageArea
                     onCurrentIndexChanged: pageEnter.restart()
                     ParallelAnimation {
                         id: pageEnter
@@ -479,6 +529,7 @@ ApplicationWindow {
                         objectName: "editorPage"
                         appWindow: app
                         objectId: app.editorObjectId
+                        narrowRail: Theme.narrow || app.paneOpen
                         pendingBlockId: app.pendingScrollBlockId
                         onScrollHandled: app.pendingScrollBlockId = ""
                         onCloseRequested: app.closeEditor()

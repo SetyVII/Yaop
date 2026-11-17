@@ -86,8 +86,9 @@ public:
     Q_INVOKABLE EditorModel *openObject(const QString &id);
     Q_INVOKABLE void closeObject(const QString &id);
     Q_INVOKABLE bool hasEditorFor(const QString &id) { return m_editors.contains(id); }
-    // Ctrl (Cmd on macOS) held during the current input event: the UI opens the place in a new tab.
-    Q_INVOKABLE bool ctrlHeld() const;
+    // Keyboard modifiers of the current input event (Qt.ControlModifier, Qt.ShiftModifier…):
+    // Ctrl+click opens the place in a new tab, Shift+click in the side pane.
+    Q_INVOKABLE int keyModifiers() const;
     bool shuttingDown() const { return m_shuttingDown; }
     void setActiveEditing(const QString &id) { m_activeEditingId = id; }
     void clearActiveEditing(const QString &id);
@@ -151,6 +152,10 @@ public:
     // that hold anything. note = the daily note has text; tasks = open tasks due; created = objects
     // created that day; refs = objects referencing the day's note. One pass over the objects.
     Q_INVOKABLE QVariantMap dayMarks(const QString &fromIso, const QString &toIso) const;
+    // What the calendar grids draw for [fromIso, toIso] (at most 62 days), one pass:
+    // [{day, kind: "note"|"task"|"created", id, title, typeId, iconEmoji, done, minutes}];
+    // minutes = local time of creation for "created", -1 otherwise.
+    Q_INVOKABLE QVariantList calendarItems(const QString &fromIso, const QString &toIso) const;
     Q_INVOKABLE QString ensureMediaObject(const QString &assetId);
     Q_INVOKABLE QString createWebLinkFromUrl(const QString &url, const QString &sourceObjectId = QString(),
                                              const QString &sourceBlockId = QString());

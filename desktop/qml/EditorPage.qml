@@ -30,11 +30,16 @@ Item {
         }
     }
 
+    // Dock the rail only when there is room for it (the side pane never has).
+    property bool narrowRail: Theme.narrow
+
     onObjectIdChanged: {
         Privacy.noteRevealed = false
         if (session) {
-            ws.closeObject(session.objectId)
+            const old = session.objectId
             session = null
+            if (!appWindow || !appWindow.objectShownElsewhere(old, editPage))
+                ws.closeObject(old)
         }
         if (objectId.length > 0) {
             session = ws.openObject(objectId)
@@ -80,7 +85,7 @@ Item {
     clip: true
     property bool railOpen: false
     // One text column for title, breadcrumb and blocks (spec §6: 640 px max, centred).
-    readonly property real mainW: width - (Theme.narrow ? 0 : Theme.railWidth)
+    readonly property real mainW: width - (editPage.narrowRail ? 0 : Theme.railWidth)
     readonly property real colW: Math.min(Theme.editorWidth, mainW - 2 * Theme.pagePad)
     readonly property real colMargin: Math.max(Theme.pagePad, (mainW - Theme.editorWidth) / 2)
 
@@ -204,7 +209,9 @@ Item {
                                 id: titleInput
                                 objectName: "titleInput"
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1   // shares the row instead of claiming the whole title
                                 Layout.preferredHeight: 40
+                                autoScroll: activeFocus    // unfocused, a long title shows its start
                                 text: session ? session.title : ""
                                 color: Theme.text
                                 selectionColor: Qt.rgba(0.75, 0.89, 1, 0.38)
@@ -221,13 +228,13 @@ Item {
                             }
 
                             Button {
-                                visible: !Theme.compact
+                                visible: !Theme.compact && editPage.width >= 620
                                 text: qsTr("COVER")
                                 small: true
                                 onClicked: webCoverPopup.open()
                             }
                             Button {
-                                visible: !Theme.compact
+                                visible: !Theme.compact && editPage.width >= 620
                                 text: qsTr("SHARE")
                                 small: true
                                 onClicked: appWindow.showToast(qsTr("Link copied."))
@@ -239,7 +246,7 @@ Item {
                             }
                             IconButton {
                                 // outline / backlinks rail: docked when wide, on demand when narrow
-                                visible: Theme.narrow
+                                visible: editPage.narrowRail
                                 icon: "adjustments-horizontal"
                                 onClicked: editPage.railOpen = !editPage.railOpen
                             }
@@ -471,15 +478,15 @@ Item {
             id: railHost
             visible: !!session
             // Wide windows dock the rail; narrow ones give it no width and float it over the page.
-            Layout.preferredWidth: Theme.narrow ? 0 : Theme.railWidth
+            Layout.preferredWidth: editPage.narrowRail ? 0 : Theme.railWidth
             Layout.fillHeight: true
             z: 20
 
             Rectangle {
-                visible: !Theme.narrow || editPage.railOpen
+                visible: !editPage.narrowRail || editPage.railOpen
                 width: Theme.railWidth
                 height: parent.height
-                x: Theme.narrow ? -Theme.railWidth : 0
+                x: editPage.narrowRail ? -Theme.railWidth : 0
                 color: Theme.bg2
 
                 Rectangle {
