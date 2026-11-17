@@ -268,6 +268,16 @@ Item {
                         }
                     }
 
+                    // tasks: status and due day right under the title
+                    TaskBar {
+                        visible: !!editPage.session && editPage.session.typeId === "task"
+                        Layout.fillWidth: true
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.bottomMargin: 12
+                        objectId: visible ? editPage.session.objectId : ""
+                    }
+
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
