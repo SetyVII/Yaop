@@ -13,12 +13,90 @@ ApplicationWindow {
     color: Theme.page
     title: "YAOP"
 
-    property string page: (typeof initialPage !== "undefined" && initialPage) ? initialPage : "home"
+    property string page: (typeof initialPage !== "undefined" && initialPage) ? initialPage
+                          : Theme.slate ? "calendar" : "home"
     property bool paletteOpen: false
     property bool captureOpen: false
     property string editorObjectId: (typeof initialObjectId !== "undefined" && initialObjectId) ? initialObjectId : ""
     property string pendingScrollBlockId: ""
     property string libraryType: "all"
+    property bool sidebarOpen: !Theme.compact
+
+    // Back / forward (slate top bar): every place change is remembered unless it came from them.
+    readonly property string location: editorObjectId.length > 0 ? "o:" + editorObjectId : "p:" + page
+    property string lastLocation: location
+    property var backStack: []
+    property var forwardStack: []
+    property bool travelling: false
+    onLocationChanged: {
+        if (!travelling && lastLocation !== location) {
+            backStack = backStack.concat([lastLocation]).slice(-50)
+            forwardStack = []
+        }
+        lastLocation = location
+    }
+    function goTo(loc) {
+        travelling = true
+        if (loc.startsWith("o:")) openObject(loc.substring(2))
+        else { editorObjectId = ""; page = loc.substring(2) }
+        travelling = false
+    }
+    function goBack() {
+        if (backStack.length === 0) return
+        const loc = backStack[backStack.length - 1]
+        backStack = backStack.slice(0, -1)
+        forwardStack = forwardStack.concat([location])
+        goTo(loc)
+    }
+    function goForward() {
+        if (forwardStack.length === 0) return
+        const loc = forwardStack[forwardStack.length - 1]
+        forwardStack = forwardStack.slice(0, -1)
+        backStack = backStack.concat([location])
+        goTo(loc)
+    }
+    function openToday() {
+        editorObjectId = ""
+        page = "calendar"
+        if (calendarLoader.item) calendarLoader.item.showToday()
+    }
+
+    // Where you are, for the slate top bar.
+    function placeIcon() {
+        if (editorObjectId.length > 0) {
+            const o = ws ? ws.objectSummary(editorObjectId) : null
+            return Theme.typeIcon(o && o.typeId ? o.typeId : "")
+        }
+        switch (page) {
+        case "calendar": return "calendar"
+        case "inbox": return "inbox"
+        case "tasks": return "circle-check"
+        case "habits": return "circle-check"
+        case "library": return "layout-grid"
+        case "sets": return "filter"
+        case "whiteboard": return "layout-board-split"
+        case "journal": return "calendar"
+        default: return "home"
+        }
+    }
+    function placeTitle() {
+        if (editorObjectId.length > 0) {
+            ws ? ws.listRevision : 0
+            const o = ws ? ws.objectSummary(editorObjectId) : null
+            return o && o.title ? o.title : qsTr("Untitled")
+        }
+        switch (page) {
+        case "calendar": return calendarLoader.item ? calendarLoader.item.placeTitle : qsTr("Today")
+        case "inbox": return qsTr("Inbox")
+        case "tasks": return qsTr("Tasks")
+        case "habits": return qsTr("Habits")
+        case "library": return qsTr("Spaces")
+        case "sets": return qsTr("Sets")
+        case "whiteboard": return qsTr("Whiteboards")
+        case "journal": return qsTr("Daily")
+        default: return qsTr("Home")
+        }
+    }
 
     // journal/quick object open flow
     function openObject(objectId) {
@@ -62,6 +140,10 @@ ApplicationWindow {
     FontLoader { source: "../assets/fonts/IBMPlexMono-Medium.ttf" }
     FontLoader { source: "../assets/fonts/IBMPlexMono-SemiBold.ttf" }
     FontLoader { source: "../assets/fonts/Doto-Variable.ttf" }
+    FontLoader { source: "../assets/fonts/Inter-Regular.otf" }
+    FontLoader { source: "../assets/fonts/Inter-Medium.otf" }
+    FontLoader { source: "../assets/fonts/Inter-SemiBold.otf" }
+    FontLoader { source: "../assets/fonts/Inter-Bold.otf" }
 
     Shortcut {
         sequence: "Ctrl+K"
@@ -86,6 +168,9 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+3"; onActivated: { app.editorObjectId = ""; app.page = "library" } }
     Shortcut { sequence: "Ctrl+4"; onActivated: { app.editorObjectId = ""; app.page = "whiteboard" } }
     Shortcut { sequence: "Ctrl+5"; onActivated: { app.editorObjectId = ""; app.page = "tasks" } }
+    Shortcut { sequence: "Ctrl+D"; onActivated: app.openToday() }
+    Shortcut { sequence: "Alt+Left"; onActivated: app.goBack() }
+    Shortcut { sequence: "Alt+Right"; onActivated: app.goForward() }
     Shortcut { sequence: "Ctrl+J"; onActivated: { app.editorObjectId = ""; app.page = "journal" } }
     Shortcut { sequence: "Ctrl+L"; onActivated: { app.editorObjectId = ""; app.page = "library" } }
     Shortcut {
@@ -116,6 +201,7 @@ ApplicationWindow {
         case "sets": return 5
         case "habits": return 6
         case "inbox": return 7
+        case "calendar": return 9
         default: return 8
         }
     }
@@ -127,6 +213,7 @@ ApplicationWindow {
         spacing: 0
 
         TitleBar {
+            visible: !Theme.slate
             Layout.fillWidth: true
             Layout.preferredHeight: Theme.topbarH
             onSearchRequested: app.paletteOpen = true
@@ -140,8 +227,32 @@ ApplicationWindow {
         Layout.fillHeight: true
         spacing: 0
 
+        ShellSidebar {
+            visible: Theme.slate && app.sidebarOpen
+            Layout.preferredWidth: Theme.sidebarW
+            Layout.fillHeight: true
+            currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
+            onNavigate: (target) => { app.editorObjectId = ""; app.page = target }
+            onTypeSelected: (typeId) => {
+                app.libraryType = typeId
+                app.editorObjectId = ""
+                app.page = "library"
+            }
+            onNewTypeRequested: {
+                app.editorObjectId = ""
+                app.page = "library"
+                Qt.callLater(() => Qt.callLater(() => { if (libraryLoader.item) libraryLoader.item.openTypeManager() }))
+            }
+            onNewRequested: app.captureOpen = true
+            onSearchRequested: app.paletteOpen = true
+            onSettingsRequested: settingsSheet.open()
+            onHideRequested: app.sidebarOpen = false
+            onOpenObjectRequested: (id) => app.openObject(id)
+        }
+
         Sidebar {
             id: sidebar
+            visible: !Theme.slate
             Layout.preferredWidth: Theme.sidebarW
             Layout.fillHeight: true
             currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
@@ -169,7 +280,22 @@ ApplicationWindow {
             Layout.fillHeight: true
             spacing: 0
 
+            ShellTopBar {
+                visible: Theme.slate
+                Layout.fillWidth: true
+                Layout.preferredHeight: Theme.paneBarH
+                sidebarHidden: !app.sidebarOpen
+                canBack: app.backStack.length > 0
+                canForward: app.forwardStack.length > 0
+                icon: app.placeIcon()
+                title: app.placeTitle()
+                onBackRequested: app.goBack()
+                onForwardRequested: app.goForward()
+                onShowSidebarRequested: app.sidebarOpen = true
+            }
+
             TopBar {
+                visible: !Theme.slate
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.paneBarH
                 page: app.editorObjectId.length > 0 ? "editor" : app.page
@@ -182,7 +308,20 @@ ApplicationWindow {
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.rightMargin: Theme.slate ? 10 : 0
+                Layout.bottomMargin: Theme.slate ? 10 : 0
+                Layout.leftMargin: Theme.slate && !app.sidebarOpen ? 10 : 0
                 clip: true
+
+                // Slate: the page is a rounded panel sitting on the canvas.
+                Rectangle {
+                    visible: Theme.slate
+                    anchors.fill: parent
+                    radius: Theme.radiusLg
+                    color: Theme.panel
+                    border.width: 1
+                    border.color: Theme.line
+                }
 
                 GridBackdrop { anchors.fill: parent }
 
@@ -285,6 +424,17 @@ ApplicationWindow {
                         pendingBlockId: app.pendingScrollBlockId
                         onScrollHandled: app.pendingScrollBlockId = ""
                         onCloseRequested: app.closeEditor()
+                    }
+                    Loader {
+                        id: calendarLoader
+                        property bool everActive: false
+                        active: everActive || pages.currentIndex === 9
+                        onActiveChanged: if (active) everActive = true
+                        sourceComponent: CalendarPage {
+                            appWindow: app
+                            shown: pages.currentIndex === 9
+                            onOpenObjectRequested: (objectId) => app.openObject(objectId)
+                        }
                     }
                 }
             }

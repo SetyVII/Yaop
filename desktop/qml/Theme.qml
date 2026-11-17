@@ -1,76 +1,87 @@
 pragma Singleton
 import QtQuick
+import QtCore
 
 QtObject {
-    // ---- Visual palette: deep blue fading to ink, translucent white surfaces on top, colour reserved for object types.
-    // Page / translucent surfaces
-    readonly property color page: "#050A26"
-    readonly property color bg: "#050A26"
-    readonly property color bg2: Qt.rgba(0.02, 0.04, 0.15, 0.42)   // sidebar: ink over the gradient
-    readonly property color panel: Qt.rgba(1, 1, 1, 0.06)           // surface
-    readonly property color panel2: Qt.rgba(1, 1, 1, 0.14)         // surface-2 (inside a panel)
-    readonly property color panel3: Qt.rgba(1, 1, 1, 0.20)         // hover / pressed
-    readonly property color sheet: "#0B1A4A"                         // popups / sheets (no blur in Qt)
-    readonly property color ink: "#03081E"                           // code boxes (at 55%)
+    // Two looks, chosen per device in Settings › Appearance (never synced):
+    //  "slate": neutral dark gray, a rounded page panel beside a full-height sidebar (default).
+    //  "sky":   deep blue fading to ink, translucent white surfaces, mono caps labels.
+    readonly property Settings store: Settings {
+        category: "appearance"
+        property string scheme: "slate"
+    }
+    readonly property bool slate: store.scheme !== "sky"
+    function setScheme(name) { store.scheme = name }
 
-    // Lines (1 px white at 16 %)
-    readonly property color line: Qt.rgba(1, 1, 1, 0.16)
-    readonly property color line2: Qt.rgba(1, 1, 1, 0.24)
-    readonly property color line3: Qt.rgba(1, 1, 1, 0.34)
+    // Page / surfaces
+    readonly property color page: slate ? "#18191C" : "#050A26"
+    readonly property color bg: page
+    readonly property color bg2: slate ? "#18191C" : Qt.rgba(0.02, 0.04, 0.15, 0.42)   // sidebar
+    readonly property color panel: slate ? "#202124" : Qt.rgba(1, 1, 1, 0.06)          // surface
+    readonly property color panel2: slate ? "#28292D" : Qt.rgba(1, 1, 1, 0.14)         // raised / inside a panel
+    readonly property color panel3: slate ? "#313237" : Qt.rgba(1, 1, 1, 0.20)         // hover / pressed
+    readonly property color sheet: slate ? "#232427" : "#0B1A4A"                        // popups / sheets
+    readonly property color ink: slate ? "#141517" : "#03081E"                          // code boxes
+
+    // Lines
+    readonly property color line: slate ? "#2D2E33" : Qt.rgba(1, 1, 1, 0.16)
+    readonly property color line2: slate ? "#3A3B41" : Qt.rgba(1, 1, 1, 0.24)
+    readonly property color line3: slate ? "#4A4B52" : Qt.rgba(1, 1, 1, 0.34)
 
     // Type
-    readonly property color text: "#FFFFFF"
-    readonly property color dim: "#AEBFE4"      // spec "muted": secondary text
-    readonly property color muted: "#8A9CC8"    // spec "faint": metadata, placeholders
-    readonly property color faint: "#4F6498"    // below the spec: disabled / ghost glyphs
+    readonly property color text: slate ? "#EDEDEF" : "#FFFFFF"
+    readonly property color dim: slate ? "#B5B6BC" : "#AEBFE4"      // secondary text
+    readonly property color muted: slate ? "#8B8C94" : "#8A9CC8"    // metadata, placeholders
+    readonly property color faint: slate ? "#5E5F66" : "#4F6498"    // disabled / ghost glyphs
 
-    // Accent: white buttons (ink text) and ice for mentions, links, active indicators
-    readonly property color accent: "#FFFFFF"
-    readonly property color accent2: "#E8F1FF"
-    readonly property color accentInk: "#0B1F5C"
-    readonly property color accentDim: Qt.rgba(1, 1, 1, 0.14)
-    readonly property color ice: "#BFE3FF"
-    readonly property color mentionPill: Qt.rgba(0.75, 0.89, 1, 0.12)     // @mention pill fill
-    readonly property color mentionPillLine: Qt.rgba(0.75, 0.89, 1, 0.38) // @mention pill border
-    readonly property color violet: "#8F7CFF"
-    readonly property color ok: "#86E8A8"
-    readonly property color late: "#FF8A7A"
-    readonly property color danger: "#FF8A7A"
+    // Accent: light buttons (ink text) and ice for mentions, links, active indicators
+    readonly property color accent: slate ? "#EDEDEF" : "#FFFFFF"
+    readonly property color accent2: slate ? "#FFFFFF" : "#E8F1FF"
+    readonly property color accentInk: slate ? "#18191C" : "#0B1F5C"
+    readonly property color accentDim: slate ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.14)
+    readonly property color ice: slate ? "#7EA6FF" : "#BFE3FF"
+    readonly property color mentionPill: slate ? Qt.rgba(0.49, 0.65, 1, 0.12) : Qt.rgba(0.75, 0.89, 1, 0.12)
+    readonly property color mentionPillLine: slate ? Qt.rgba(0.49, 0.65, 1, 0.36) : Qt.rgba(0.75, 0.89, 1, 0.38)
+    readonly property color violet: slate ? "#A387FF" : "#8F7CFF"
+    readonly property color ok: slate ? "#3DD68C" : "#86E8A8"
+    readonly property color late: slate ? "#F58A7A" : "#FF8A7A"
+    readonly property color danger: late
+    readonly property color warm: "#FF9F43"       // streak flame, "references" marks
     readonly property color tagGreen: "#C9F2A6"   // #tags
 
     // Object type colours (one per base type; unlisted types use ice)
-    readonly property color note: "#BFE3FF"
-    readonly property color task: "#BFE3FF"
+    readonly property color note: ice
+    readonly property color task: ice
     readonly property color project: "#FFD166"
     readonly property color person: "#FFB38A"
-    readonly property color journal: "#E8EEFF"
-    readonly property color board: "#BFE3FF"
-    readonly property color media: "#BFE3FF"
+    readonly property color journal: slate ? "#C9CAD1" : "#E8EEFF"
+    readonly property color board: ice
+    readonly property color media: ice
     readonly property color book: "#9B8CFF"
     readonly property color weblink: "#7AF0D0"
     readonly property color image: "#FF8FB3"
     readonly property color tag: "#DCEC4E"
 
-    // Typography (bundled, OFL): Inter Tight for content, Plex Mono for the interface, Doto as
-    // the single accent word of a screen title.
-    readonly property string display: "Inter Tight"
-    readonly property string body: "Inter Tight"
+    // Typography (bundled, OFL). Sky: Inter Tight for content, Plex Mono for the interface, Doto
+    // as the single accent word of a screen title. Slate: Inter everywhere but code.
+    readonly property string display: slate ? "Inter" : "Inter Tight"
+    readonly property string body: slate ? "Inter" : "Inter Tight"
     readonly property string mono: "IBM Plex Mono"
     readonly property string pixel: "Doto"
 
     // Metrics
-    readonly property int radiusSm: 8      // block colour backgrounds, date chips
-    readonly property int radius: 14       // controls and fields
-    readonly property int radiusLg: 22     // cards and sheets
+    readonly property int radiusSm: slate ? 6 : 8      // block colour backgrounds, date chips
+    readonly property int radius: slate ? 8 : 14       // controls and fields
+    readonly property int radiusLg: slate ? 12 : 22    // cards and sheets
     // Window width, fed by Main.qml. Everything adaptive derives from it, so a layout never has
     // to hardcode "this fits on a 1440 screen".
     property real winW: 1440
     readonly property bool compact: winW < 1000   // sidebar becomes an icon rail
     readonly property bool narrow: winW < 1280    // the editor rail becomes an on-demand overlay
     readonly property int pagePad: compact ? 16 : narrow ? 22 : 28
-    readonly property int sidebarW: compact ? 60 : 220
+    readonly property int sidebarW: compact ? 60 : slate ? 236 : 220
     readonly property int topbarH: 56      // window title bar
-    readonly property int paneBarH: 40     // pane header bar
+    readonly property int paneBarH: slate ? 48 : 40     // pane header bar
     readonly property int panelHeaderH: 42
     readonly property int editorWidth: 640
     readonly property int railWidth: 264

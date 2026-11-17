@@ -6,11 +6,12 @@ Rectangle {
     id: root
     property string icon: "search"
     property bool active: false
+    readonly property alias hovered: hover.hovered
     signal clicked()
 
     implicitWidth: 34
     implicitHeight: 34
-    radius: width / 2
+    radius: Theme.slate ? Theme.radius : width / 2
     color: press.pressed ? Theme.panel3 : (active || hover.hovered) ? Theme.panel2 : "transparent"
     scale: press.pressed ? 0.94 : 1
 

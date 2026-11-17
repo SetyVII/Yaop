@@ -323,4 +323,56 @@ QVariantList Workspace::objectsCreatedOn(const QString &isoDate) const
     return out;
 }
 
+QVariantMap Workspace::dayMarks(const QString &fromIso, const QString &toIso) const
+{
+    QHash<QString, QVariantMap> days;
+    auto bump = [&](const QString &day, const char *key) {
+        if (day < fromIso || day > toIso)
+            return;
+        QVariantMap &m = days[day];
+        m.insert(QLatin1String(key), m.value(QLatin1String(key)).toInt() + 1);
+    };
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate())
+            continue;
+        if (o.typeId == TypeId::Journal) {
+            const QString day = o.propertyString(QStringLiteral("date"));
+            const bool hasText = std::any_of(o.blocks.cbegin(), o.blocks.cend(),
+                                             [](const Block &b) { return !b.plainText().trimmed().isEmpty(); });
+            if (hasText)
+                bump(day, "note");
+            continue;
+        }
+        if (o.typeId == TypeId::Task) {
+            const ObjectView v = viewFor(o);
+            if (!v.taskDone && !v.dueDate.isEmpty())
+                bump(v.dueDate.left(10), "tasks");
+        }
+        QDateTime dt = QDateTime::fromString(o.createdAt, Qt::ISODateWithMs);
+        if (!dt.isValid())
+            dt = QDateTime::fromString(o.createdAt, Qt::ISODate);
+        bump(dt.isValid() ? dt.toLocalTime().date().toString(QStringLiteral("yyyy-MM-dd")) : o.createdAt.left(10),
+             "created");
+    }
+    if (m_store) {
+        const QDate from = QDate::fromString(fromIso, Qt::ISODate);
+        const QDate to = QDate::fromString(toIso, Qt::ISODate);
+        for (QDate d = from; d.isValid() && d <= to && from.daysTo(d) < 62; d = d.addDays(1)) {
+            const QString iso = d.toString(QStringLiteral("yyyy-MM-dd"));
+            int n = 0;
+            for (const search::SourceRef &r : m_store->backlinkRows(QStringLiteral("daily-") + iso)) {
+                auto it = m_objects.find(r.src);
+                if (it != m_objects.end() && it.value().trashedAt.isEmpty())
+                    ++n;
+            }
+            if (n > 0)
+                days[iso].insert(QStringLiteral("refs"), n);
+        }
+    }
+    QVariantMap out;
+    for (auto it = days.cbegin(); it != days.cend(); ++it)
+        out.insert(it.key(), it.value());
+    return out;
+}
+
 } // namespace pkm

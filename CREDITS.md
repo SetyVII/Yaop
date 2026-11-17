@@ -12,6 +12,9 @@ YAOP borrows ideas, not code, from apps that got objects and blocks right:
 - **[Notion](https://notion.so)** — block editor ergonomics: Enter/Backspace rules, `/` menu,
   markdown shortcuts, toggles.
 - **[Heptabase](https://heptabase.com)** — whiteboards where cards are real objects.
+- **[Vasta](https://github.com/ariedotme/vasta)** — the desktop Slate look: the sidebar with the
+  daily places on top, the page as a panel, and the calendar's Day view with the month and habits
+  beside it. Rebuilt in Qt Quick; no Vasta code is used (Vasta is AGPL-3.0, YAOP is MIT).
 - **[Obsidian](https://obsidian.md) / [Logseq](https://logseq.com)** — journals, backlinks and
   owning your data.
 

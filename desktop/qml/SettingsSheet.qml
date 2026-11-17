@@ -44,6 +44,44 @@ Popup {
         spacing: 14
 
         Text {
+            text: qsTr("APPEARANCE")
+            color: Theme.ice
+            font.family: Theme.mono
+            font.pixelSize: 11
+            font.letterSpacing: 1.6
+        }
+        // This device only; both looks share every screen.
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: [
+                    { key: "slate", label: qsTr("Slate"), hint: qsTr("Neutral gray, page panel") },
+                    { key: "sky", label: qsTr("Sky"), hint: qsTr("Deep blue, mono labels") }
+                ]
+                delegate: Rectangle {
+                    required property var modelData
+                    readonly property bool on: (modelData.key === "slate") === Theme.slate
+                    Layout.fillWidth: true
+                    implicitHeight: 54
+                    radius: Theme.radius
+                    color: on ? Theme.panel2 : apHover.hovered ? Theme.panel : "transparent"
+                    border.width: 1
+                    border.color: on ? Theme.ice : Theme.line
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: 12
+                        spacing: 2
+                        Text { text: modelData.label; color: Theme.text; font.family: Theme.body; font.pixelSize: 14; font.weight: Font.Medium }
+                        Text { text: modelData.hint; color: Theme.muted; font.family: Theme.body; font.pixelSize: 12 }
+                    }
+                    HoverHandler { id: apHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: Theme.setScheme(modelData.key) }
+                }
+            }
+        }
+
+        Text {
             text: qsTr("SERVER")
             color: Theme.ice
             font.family: Theme.mono

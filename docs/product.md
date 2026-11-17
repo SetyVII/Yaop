@@ -227,6 +227,9 @@ Android and desktop and meets the budgets of §17.
 Settled: snapshot and trash retention (30 days, §16.3); vault key method (24-word phrase, §15.2);
 trusted node (the desktop, §23); reference device (a mid-range Android tablet, §17.2); habits
 (§24). Visual styling is left to external design tools and customizable directly via the theme tokens.
+Desktop has two looks per device (Settings › Appearance): **Slate** (default: neutral gray, full-height
+sidebar, the page as a rounded panel, Calendar/Inbox/Tasks on top, Today = the calendar's Day view)
+and **Sky** (the original deep blue with mono labels).
 
 ---
 

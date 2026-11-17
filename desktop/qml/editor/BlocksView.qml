@@ -10,6 +10,8 @@ ListView {
     id: blocksView
 
     property var session: null
+    // Optional content drawn under the "+" row (the calendar's day page lists the day's objects there).
+    property Component trailer: null
     property int activeRow: -1
     property var activeDoc: null
     property var activeTextEdit: null
@@ -657,10 +659,18 @@ ListView {
     footerPositioning: ListView.InlineFooter
     footer: Item {
         width: blocksView.width
-        height: 92
-        visible: !!session
+        height: 92 + trailerLoader.height
+        visible: !!session || !!blocksView.trailer
+
+        Loader {
+            id: trailerLoader
+            y: 92
+            width: parent.width
+            sourceComponent: blocksView.trailer
+        }
 
         RowLayout {
+            visible: !!session
             x: 32
             y: 20
             spacing: 12

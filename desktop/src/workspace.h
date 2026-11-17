@@ -145,6 +145,10 @@ public:
     Q_INVOKABLE QVariantList objectsCreatedOn(const QString &isoDate) const;
     Q_INVOKABLE QString journalFor(const QString &isoDate);
     Q_INVOKABLE QString journalLocalFor(const QString &isoDate);
+    // Calendar marks for [fromIso, toIso]: {"yyyy-MM-dd": {note, tasks, created, refs}} for the days
+    // that hold anything. note = the daily note has text; tasks = open tasks due; created = objects
+    // created that day; refs = objects referencing the day's note. One pass over the objects.
+    Q_INVOKABLE QVariantMap dayMarks(const QString &fromIso, const QString &toIso) const;
     Q_INVOKABLE QString ensureMediaObject(const QString &assetId);
     Q_INVOKABLE QString createWebLinkFromUrl(const QString &url, const QString &sourceObjectId = QString(),
                                              const QString &sourceBlockId = QString());
