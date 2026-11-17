@@ -22,24 +22,38 @@ ApplicationWindow {
     property string libraryType: "all"
     property bool sidebarOpen: !Theme.compact
 
-    // Back / forward (slate top bar): every place change is remembered unless it came from them.
+    // Tabs (slate top bar), like a browser: each tab is a place ("p:<page>" | "o:<objectId>") with
+    // its own back / forward. Ctrl+click on anything that opens a place opens it in a new tab.
     readonly property string location: editorObjectId.length > 0 ? "o:" + editorObjectId : "p:" + page
     property string lastLocation: location
     property var backStack: []
     property var forwardStack: []
     property bool travelling: false
+    property var tabs: [{ key: 0, loc: location, back: [], fwd: [] }]
+    property int tabIndex: 0
+    property int tabSeq: 1   // stable keys, so the strip animates only the tab that came or went
     onLocationChanged: {
+        // "p:editor" only exists between clearing the object and setting the next page
+        if (location === "p:editor") return
         if (!travelling && lastLocation !== location) {
             backStack = backStack.concat([lastLocation]).slice(-50)
             forwardStack = []
         }
         lastLocation = location
+        storeTab()
+    }
+    function storeTab() {
+        if (!tabs || !tabs[tabIndex]) return   // during start-up, before `tabs` exists
+        const t = tabs.slice()
+        t[tabIndex] = { key: tabs[tabIndex].key, loc: location, back: backStack, fwd: forwardStack }
+        tabs = t
     }
     function goTo(loc) {
         travelling = true
-        if (loc.startsWith("o:")) openObject(loc.substring(2))
+        if (loc.startsWith("o:")) showObject(loc.substring(2))
         else { editorObjectId = ""; page = loc.substring(2) }
         travelling = false
+        storeTab()
     }
     function goBack() {
         if (backStack.length === 0) return
@@ -55,19 +69,51 @@ ApplicationWindow {
         backStack = backStack.concat([location])
         goTo(loc)
     }
+    function loadTab(i) {
+        tabIndex = i
+        backStack = tabs[i].back
+        forwardStack = tabs[i].fwd
+        goTo(tabs[i].loc)
+    }
+    function switchTab(i) {
+        if (i < 0 || i >= tabs.length || i === tabIndex) return
+        storeTab()
+        loadTab(i)
+    }
+    function newTab(loc) {
+        storeTab()
+        tabs = tabs.concat([{ key: tabSeq++, loc: loc, back: [], fwd: [] }])
+        loadTab(tabs.length - 1)
+    }
+    function closeTab(i) {
+        if (tabs.length <= 1 || i < 0 || i >= tabs.length) return
+        if (i !== tabIndex) storeTab()
+        const t = tabs.slice()
+        t.splice(i, 1)
+        const next = i < tabIndex ? tabIndex - 1 : i === tabIndex ? Math.min(i, t.length - 1) : tabIndex
+        tabs = t
+        loadTab(next)
+    }
+    // Ctrl held during the click that asked for a place: new tab (slate only, where tabs show).
+    function wantsNewTab() { return Theme.slate && ws && ws.ctrlHeld() }
+    function navigate(target) {
+        if (wantsNewTab()) { newTab("p:" + target); return }
+        editorObjectId = ""
+        page = target
+    }
     function openToday() {
         editorObjectId = ""
         page = "calendar"
         if (calendarLoader.item) calendarLoader.item.showToday()
     }
 
-    // Where you are, for the slate top bar.
-    function placeIcon() {
-        if (editorObjectId.length > 0) {
-            const o = ws ? ws.objectSummary(editorObjectId) : null
+    // Where a place is, for the tabs.
+    function placeIcon(loc) {
+        if (loc.startsWith("o:")) {
+            const o = ws ? ws.objectSummary(loc.substring(2)) : null
             return Theme.typeIcon(o && o.typeId ? o.typeId : "")
         }
-        switch (page) {
+        switch (loc.substring(2)) {
         case "calendar": return "calendar"
         case "inbox": return "inbox"
         case "tasks": return "circle-check"
@@ -79,13 +125,12 @@ ApplicationWindow {
         default: return "home"
         }
     }
-    function placeTitle() {
-        if (editorObjectId.length > 0) {
-            ws ? ws.listRevision : 0
-            const o = ws ? ws.objectSummary(editorObjectId) : null
+    function placeTitle(loc) {
+        if (loc.startsWith("o:")) {
+            const o = ws ? ws.objectSummary(loc.substring(2)) : null
             return o && o.title ? o.title : qsTr("Untitled")
         }
-        switch (page) {
+        switch (loc.substring(2)) {
         case "calendar": return calendarLoader.item ? calendarLoader.item.placeTitle : qsTr("Today")
         case "inbox": return qsTr("Inbox")
         case "tasks": return qsTr("Tasks")
@@ -97,15 +142,24 @@ ApplicationWindow {
         default: return qsTr("Home")
         }
     }
+    readonly property var tabViews: {
+        ws ? ws.listRevision : 0
+        return tabs.map(t => ({ key: t.key, icon: placeIcon(t.loc), title: placeTitle(t.loc) }))
+    }
 
     // journal/quick object open flow
-    function openObject(objectId) {
+    function showObject(objectId) {
         pendingScrollBlockId = ""
         editorObjectId = objectId
         page = "editor"
     }
+    function openObject(objectId) {
+        if (wantsNewTab()) newTab("o:" + objectId)
+        else showObject(objectId)
+    }
 
     function openObjectAtBlock(objectId, blockId) {
+        if (wantsNewTab()) newTab("o:" + objectId)
         pendingScrollBlockId = blockId !== undefined && blockId ? blockId : ""
         if (editorObjectId === objectId && page === "editor" && pendingScrollBlockId.length > 0) {
             editorPage.scrollToPendingBlock()
@@ -169,6 +223,10 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+4"; onActivated: { app.editorObjectId = ""; app.page = "whiteboard" } }
     Shortcut { sequence: "Ctrl+5"; onActivated: { app.editorObjectId = ""; app.page = "tasks" } }
     Shortcut { sequence: "Ctrl+D"; onActivated: app.openToday() }
+    Shortcut { sequence: "Ctrl+T"; enabled: Theme.slate; onActivated: { app.newTab("p:calendar"); app.openToday() } }
+    Shortcut { sequence: "Ctrl+W"; enabled: Theme.slate; onActivated: app.closeTab(app.tabIndex) }
+    Shortcut { sequence: "Ctrl+Tab"; enabled: Theme.slate; onActivated: app.switchTab((app.tabIndex + 1) % app.tabs.length) }
+    Shortcut { sequence: "Ctrl+Shift+Tab"; enabled: Theme.slate; onActivated: app.switchTab((app.tabIndex + app.tabs.length - 1) % app.tabs.length) }
     Shortcut { sequence: "Alt+Left"; onActivated: app.goBack() }
     Shortcut { sequence: "Alt+Right"; onActivated: app.goForward() }
     Shortcut { sequence: "Ctrl+J"; onActivated: { app.editorObjectId = ""; app.page = "journal" } }
@@ -232,7 +290,7 @@ ApplicationWindow {
             Layout.preferredWidth: Theme.sidebarW
             Layout.fillHeight: true
             currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
-            onNavigate: (target) => { app.editorObjectId = ""; app.page = target }
+            onNavigate: (target) => app.navigate(target)
             onTypeSelected: (typeId) => {
                 app.libraryType = typeId
                 app.editorObjectId = ""
@@ -256,10 +314,7 @@ ApplicationWindow {
             Layout.preferredWidth: Theme.sidebarW
             Layout.fillHeight: true
             currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
-            onNavigate: (target) => {
-                app.editorObjectId = ""
-                app.page = target
-            }
+            onNavigate: (target) => app.navigate(target)
             onTypeSelected: (typeId) => {
                 app.libraryType = typeId
                 app.editorObjectId = ""
@@ -287,8 +342,11 @@ ApplicationWindow {
                 sidebarHidden: !app.sidebarOpen
                 canBack: app.backStack.length > 0
                 canForward: app.forwardStack.length > 0
-                icon: app.placeIcon()
-                title: app.placeTitle()
+                tabs: app.tabViews
+                currentTab: app.tabIndex
+                onTabClicked: (i) => app.switchTab(i)
+                onTabCloseRequested: (i) => app.closeTab(i)
+                onNewTabRequested: { app.newTab("p:calendar"); app.openToday() }
                 onBackRequested: app.goBack()
                 onForwardRequested: app.goForward()
                 onShowSidebarRequested: app.sidebarOpen = true
@@ -338,7 +396,7 @@ ApplicationWindow {
 
                     HomePage {
                         appWindow: app
-                        onPageRequested: (p) => { app.editorObjectId = ""; app.page = p }
+                        onPageRequested: (p) => app.navigate(p)
                         onOpenObjectRequested: (objectId) => app.openObject(objectId)
                         onTypeSelected: (typeId) => {
                             app.libraryType = typeId

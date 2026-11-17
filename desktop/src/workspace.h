@@ -86,6 +86,8 @@ public:
     Q_INVOKABLE EditorModel *openObject(const QString &id);
     Q_INVOKABLE void closeObject(const QString &id);
     Q_INVOKABLE bool hasEditorFor(const QString &id) { return m_editors.contains(id); }
+    // Ctrl (Cmd on macOS) held during the current input event: the UI opens the place in a new tab.
+    Q_INVOKABLE bool ctrlHeld() const;
     bool shuttingDown() const { return m_shuttingDown; }
     void setActiveEditing(const QString &id) { m_activeEditingId = id; }
     void clearActiveEditing(const QString &id);

@@ -415,6 +415,11 @@ EditorModel *Workspace::openObject(const QString &id)
     return model;
 }
 
+bool Workspace::ctrlHeld() const
+{
+    return QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier);
+}
+
 void Workspace::closeObject(const QString &id)
 {
     auto it = m_editors.find(id);

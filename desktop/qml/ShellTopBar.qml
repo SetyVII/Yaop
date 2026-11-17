@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "."
 
-// Slate top bar: back / forward and where you are (icon + title). The sidebar toggle shows here
+// Slate top bar: back / forward of the current tab, then the tabs. The sidebar toggle shows here
 // only while the sidebar is hidden.
 Item {
     id: bar
@@ -11,8 +11,11 @@ Item {
     property bool sidebarHidden: false
     property bool canBack: false
     property bool canForward: false
-    property string icon: "calendar"
-    property string title: ""
+    property var tabs: []
+    property int currentTab: 0
+    signal tabClicked(int index)
+    signal tabCloseRequested(int index)
+    signal newTabRequested()
     signal backRequested()
     signal forwardRequested()
     signal showSidebarRequested()
@@ -45,21 +48,15 @@ Item {
             onClicked: bar.forwardRequested()
             ToolTip.visible: hovered && enabled; ToolTip.text: qsTr("Forward"); ToolTip.delay: 500
         }
-        TintedIcon {
-            Layout.leftMargin: 12
-            name: bar.icon
-            size: 17
-            color: Theme.dim
-        }
-        Text {
-            Layout.leftMargin: 6
+        ShellTabs {
+            Layout.leftMargin: 10
             Layout.fillWidth: true
-            text: bar.title
-            color: Theme.text
-            font.family: Theme.body
-            font.pixelSize: 15
-            font.weight: Font.Medium
-            elide: Text.ElideRight
+            Layout.fillHeight: true
+            tabs: bar.tabs
+            current: bar.currentTab
+            onTabClicked: (i) => bar.tabClicked(i)
+            onTabCloseRequested: (i) => bar.tabCloseRequested(i)
+            onNewTabRequested: bar.newTabRequested()
         }
     }
 }
