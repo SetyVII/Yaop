@@ -9,6 +9,7 @@ QtObject {
     readonly property Settings store: Settings {
         category: "appearance"
         property string scheme: "slate"
+        property bool reduceMotion: false
     }
     readonly property bool slate: store.scheme !== "sky"
     function setScheme(name) { store.scheme = name }
@@ -110,10 +111,23 @@ QtObject {
     readonly property int editorWidth: 640
     readonly property int railWidth: 264
 
-    // Motion
-    readonly property int fast: 140
-    readonly property int normal: 200
-    readonly property int slow: 280
+    // Motion. Every duration goes through `motion`, so "Reduce motion" (Settings › Appearance,
+    // per device) makes the whole app instant. Only transform, opacity and colour animate;
+    // opening a page, switching tabs or scrolling never starts an animation (product §2:
+    // correctness > performance > motion). Never animate a width, height, margin or anchor of
+    // something with a page inside: that re-lays the page out on every frame. Give the page its
+    // final size at once and slide the moving part with a Translate. No opacity over a whole page
+    // either (measured: frames twice as slow). Use with `easing.type: Easing.Bezier;
+    // easing.bezierCurve: Theme.ease*`.
+    readonly property bool reduceMotion: store.reduceMotion
+    function setReduceMotion(on) { store.reduceMotion = on }
+    readonly property real motion: reduceMotion ? 0 : 1
+    readonly property int fast: 140 * motion     // colour, hover, focus, check
+    readonly property int normal: 200 * motion   // day, toggle, tab, moving a block, leaving
+    readonly property int slow: 280 * motion     // sheets and panes coming in
+    readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
+    readonly property var easeEnter: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var easeExit: [0.3, 0, 0.8, 0.15, 1, 1]
 
     // Named block/inline palette (pkm::Palette kAllNames)
     readonly property var paletteNames: ["yellow", "orange", "red", "pink", "purple", "blue", "ice", "teal", "green", "gray"]

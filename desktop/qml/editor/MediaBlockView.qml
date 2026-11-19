@@ -113,7 +113,7 @@ Item {
             property real shownW: mb.panelOpen ? Math.min(mb.panelWidth, width * 0.6) : 0
             Behavior on shownW {
                 enabled: !splitDrag.active
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 220 * Theme.motion; easing.type: Easing.OutCubic }
             }
             readonly property real gap: Math.min(8, shownW)
 

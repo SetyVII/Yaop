@@ -40,7 +40,21 @@ Popup {
     }
 
     // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle { color: Theme.scrim }
+    Overlay.modal: Rectangle {
+        color: Theme.scrim
+        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+    }
+
+    // In 140 ms (fade, 0.97 → 1, 8 px down), out a little faster.
+    transformOrigin: Popup.Top
+    enter: Transition {
+        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+        NumberAnimation { property: "scale"; from: 0.97; to: 1; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+    }
+    exit: Transition {
+        NumberAnimation { property: "opacity"; to: 0; duration: 100 * Theme.motion }
+        NumberAnimation { property: "scale"; to: 0.97; duration: 100 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
+    }
 
     background: Rectangle {
         radius: Theme.radiusLg

@@ -77,7 +77,7 @@ Flow {
                     radius: 4
                     clip: true
                     color: xHover.hovered ? Qt.rgba(1, 1, 1, 0.14) : "transparent"
-                    Behavior on width { NumberAnimation { duration: 120 } }
+                    Behavior on width { NumberAnimation { duration: 120 * Theme.motion } }
                     TintedIcon { anchors.centerIn: parent; name: "x"; size: 11; color: Theme.dim }
                     HoverHandler { id: xHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler { onTapped: row.removeTag(chip.modelData) }

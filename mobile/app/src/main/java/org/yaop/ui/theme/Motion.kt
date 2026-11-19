@@ -26,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -172,6 +174,35 @@ fun Modifier.staggeredAppear(index: Int): Modifier = composed {
         graphicsLayer {
             alpha = p.coerceIn(0f, 1f)
             translationY = (1f - p) * 16.dp.toPx()
+        }
+    }
+}
+
+/**
+ * Content replaced in place by a neighbour (the Daily note of another day): it slides in
+ * 28 dp from the side it comes from while fading (gentle). The first composition does not
+ * animate, and the layer exists only while moving.
+ */
+fun <T : Comparable<T>> Modifier.enterOnChange(key: T): Modifier = composed {
+    val progress = remember { Animatable(1f) }
+    val shown = remember { mutableStateOf(key) }
+    val direction = remember { mutableIntStateOf(0) }
+    // The frame where the key changed already draws the start pose, so nothing flashes.
+    val pending = key != shown.value
+    if (pending) direction.intValue = if (key > shown.value) 1 else -1
+    LaunchedEffect(key) {
+        if (key == shown.value) return@LaunchedEffect
+        shown.value = key
+        progress.snapTo(0f)
+        progress.animateTo(1f, AppMotion.gentle())
+    }
+    val p = if (pending) 0f else progress.value
+    if (p >= 1f) {
+        this
+    } else {
+        graphicsLayer {
+            alpha = p.coerceIn(0f, 1f)
+            translationX = (1f - p) * direction.intValue * 28.dp.toPx()
         }
     }
 }

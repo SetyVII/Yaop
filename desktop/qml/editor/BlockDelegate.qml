@@ -61,8 +61,32 @@ Rectangle {
     }
     function openActions() { blockActions.popup(blockRoot, Math.max(0, blockRoot.width - 220), 24) }
 
-    opacity: view && view.dragging && view.dragFromRow === index ? 0.35 : 1
-    Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+    opacity: (view && view.dragging && view.dragFromRow === index ? 0.35 : 1) * appearT
+    Behavior on opacity { enabled: !appearAnim.running; NumberAnimation { duration: Theme.fast } }
+
+    // Motion after a structural edit (BlocksView.playMotion): a block that moved slides from
+    // where it was (200 ms), a new or converted block fades in 4 px up (140 ms).
+    property real appearT: 1
+    transform: Translate { id: motionShift }
+    function slideFrom(dy) {
+        motionShift.y = dy
+        slideAnim.restart()
+    }
+    function appear() {
+        appearT = 0
+        motionShift.y = 4
+        appearAnim.restart()
+    }
+    NumberAnimation {
+        id: slideAnim
+        target: motionShift; property: "y"; to: 0
+        duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard
+    }
+    ParallelAnimation {
+        id: appearAnim
+        NumberAnimation { target: blockRoot; property: "appearT"; to: 1; duration: Theme.fast }
+        NumberAnimation { target: motionShift; property: "y"; to: 0; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+    }
 
     // Callout: box with the colour at 14 % and a 25 % border (spec §6). info = blue, warning = orange.
     readonly property string calloutColorName: calloutType === "WARNING" ? "orange"
@@ -70,7 +94,8 @@ Rectangle {
     property var calloutAccent: Theme.paletteColor(calloutColorName)
 
     radius: blockType === "callout" ? Theme.radius : ((selected || blockColorHex.length > 0) ? Theme.radiusSm : 0)
-    border.width: selected ? 1 : (blockType === "callout" ? 1 : 0)
+    // While the block-mode ring is drawn (BlocksView.selectionRing) it is the outline.
+    border.width: selected && !(view && view.ringShown) ? 1 : (blockType === "callout" ? 1 : 0)
     border.color: selected ? Qt.rgba(0.75, 0.89, 1, 0.45) : Theme.paletteHighlight[calloutColorName]
 
     color: {

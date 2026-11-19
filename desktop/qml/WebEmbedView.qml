@@ -189,7 +189,7 @@ Item {
                 width: root.loading ? parent.width * Math.max(0.08, root.loadProgress / 100) : 0
                 visible: root.loading
                 color: Theme.ice
-                Behavior on width { NumberAnimation { duration: 120 } }
+                Behavior on width { NumberAnimation { duration: 120 * Theme.motion } }
             }
             Rectangle {
                 anchors.left: parent.left

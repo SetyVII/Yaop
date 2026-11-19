@@ -71,7 +71,12 @@ ApplicationWindow {
         backStack = backStack.concat([location])
         goTo(loc)
     }
+    // Switching tabs swaps the side pane at once: sliding it would re-lay the page out on every
+    // frame of the switch.
+    property bool switchingTab: false
     function loadTab(i) {
+        switchingTab = true
+        Qt.callLater(() => { switchingTab = false })
         tabIndex = i
         paneObjectId = tabs[i].pane || ""
         backStack = tabs[i].back
@@ -119,8 +124,9 @@ ApplicationWindow {
     onEditorObjectIdChanged: if (editorObjectId.length > 0 && editorObjectId === paneObjectId) closePane()
     // Views that share one editor session per object ask before closing it.
     function objectShownElsewhere(id, who) {
-        if (who !== editorPage && editorObjectId === id) return true
-        if (who !== sidePane.editor && paneObjectId === id) return true
+        // a hidden editor or pane may still hold the object it showed last (EditorPage.release)
+        if (who !== editorPage && (editorObjectId === id || (!!editorPage.session && editorPage.session.objectId === id))) return true
+        if (who !== sidePane.editor && (paneObjectId === id || (!!sidePane.editor.session && sidePane.editor.session.objectId === id))) return true
         const cal = calendarLoader.item
         return !!cal && who !== cal && !!cal.session && cal.session.objectId === id
     }
@@ -202,6 +208,7 @@ ApplicationWindow {
     }
 
     function closeEditor() {
+        editorPage.release()
         if (ws.hasEditorFor(editorObjectId))
             ws.closeObject(editorObjectId)
         editorObjectId = ""
@@ -342,27 +349,45 @@ ApplicationWindow {
         Layout.fillHeight: true
         spacing: 0
 
-        ShellSidebar {
-            visible: Theme.slate && app.sidebarOpen
-            Layout.preferredWidth: Theme.sidebarW
+        // Ctrl+B: the page takes its new width at once (one layout pass) and the sidebar slides
+        // over it (200 ms, a transform only). Animating the width re-laid the page out on every
+        // frame.
+        Item {
+            id: sidebarSlot
+            readonly property bool shown: Theme.slate && app.sidebarOpen
+            z: 3
+            visible: Theme.slate && (shown || sidebarShift.x > -Theme.sidebarW + 0.5)
+            Layout.preferredWidth: shown ? Theme.sidebarW : 0
             Layout.fillHeight: true
-            currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
-            onNavigate: (target) => app.navigate(target)
-            onTypeSelected: (typeId) => {
-                app.libraryType = typeId
-                app.editorObjectId = ""
-                app.page = "library"
+
+            ShellSidebar {
+                transform: Translate {
+                    id: sidebarShift
+                    x: sidebarSlot.shown ? 0 : -Theme.sidebarW
+                    Behavior on x {
+                        NumberAnimation { duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard }
+                    }
+                }
+                width: Theme.sidebarW
+                height: parent.height
+                currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
+                onNavigate: (target) => app.navigate(target)
+                onTypeSelected: (typeId) => {
+                    app.libraryType = typeId
+                    app.editorObjectId = ""
+                    app.page = "library"
+                }
+                onNewTypeRequested: {
+                    app.editorObjectId = ""
+                    app.page = "library"
+                    Qt.callLater(() => Qt.callLater(() => { if (libraryLoader.item) libraryLoader.item.openTypeManager() }))
+                }
+                onNewRequested: app.captureOpen = true
+                onSearchRequested: app.paletteOpen = true
+                onSettingsRequested: settingsSheet.open()
+                onHideRequested: app.sidebarOpen = false
+                onOpenObjectRequested: (id) => app.openObject(id)
             }
-            onNewTypeRequested: {
-                app.editorObjectId = ""
-                app.page = "library"
-                Qt.callLater(() => Qt.callLater(() => { if (libraryLoader.item) libraryLoader.item.openTypeManager() }))
-            }
-            onNewRequested: app.captureOpen = true
-            onSearchRequested: app.paletteOpen = true
-            onSettingsRequested: settingsSheet.open()
-            onHideRequested: app.sidebarOpen = false
-            onOpenObjectRequested: (id) => app.openObject(id)
         }
 
         Sidebar {
@@ -445,15 +470,18 @@ ApplicationWindow {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    width: parent.width - sidePane.shownW
+                    // the final width at once; the pane slides over the freed space
+                    width: parent.width - sidePane.targetW
                 }
                 SidePane {
                     id: sidePane
+                    z: 2
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     hostWidth: parent.width
                     objectId: app.paneOpen ? app.paneObjectId : ""
+                    snap: app.switchingTab
                     appWindow: app
                     onCloseRequested: app.closePane()
                     onExpandRequested: app.paneToPage()
@@ -474,12 +502,9 @@ ApplicationWindow {
                 StackLayout {
                     id: pages
                     anchors.fill: pageArea
-                    onCurrentIndexChanged: pageEnter.restart()
-                    ParallelAnimation {
-                        id: pageEnter
-                        NumberAnimation { target: pages; property: "opacity"; from: 0; to: 1; duration: 160 }
-                        NumberAnimation { target: pages; property: "anchors.topMargin"; from: 10; to: 0; duration: 160; easing.type: Easing.OutCubic }
-                    }
+                    // Changing page or tab is instant, like a browser: the page is not faded or moved.
+                    // A fade over the whole page made every frame of it two times slower, on top of
+                    // building the page.
                     currentIndex: app.pageIndex(app.editorObjectId.length > 0 ? "editor" : app.page)
 
                     HomePage {

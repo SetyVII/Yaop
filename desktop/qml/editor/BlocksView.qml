@@ -203,7 +203,11 @@ ListView {
             if (isTextRow(i)) { session.forceFocus(idAt(i), caretEnd); return }
         selectRow(0)
     }
-    onSessionChanged: if (startPending) Qt.callLater(tryStart)
+    onSessionChanged: {
+        if (startPending) Qt.callLater(tryStart)
+        knownIds = null
+        Qt.callLater(rememberIds)
+    }
     onCountChanged: if (startPending) Qt.callLater(tryStart)
     // From the title (Enter / ↓): start of the first block.
     function enterFromTop() {
@@ -809,15 +813,120 @@ ListView {
     Connections {
         target: blocksView.session
         ignoreUnknownSignals: true
-        function onModelAboutToBeReset() { blocksView.savedContentY = blocksView.contentY }
+        function onModelAboutToBeReset() {
+            blocksView.savedContentY = blocksView.contentY
+            blocksView.noteMotion()
+        }
         function onModelReset() {
             Qt.callLater(function() {
                 blocksView.contentY = Math.max(0, Math.min(blocksView.savedContentY,
                                                             blocksView.contentHeight - blocksView.height))
                 blocksView.ensureFocusedVisible()
+                blocksView.playMotion()
             })
         }
+        function onSelectionChanged() { Qt.callLater(blocksView.updateRing) }
         function onFocusChanged() { Qt.callLater(blocksView.ensureFocusedVisible) }
+    }
+
+    // Motion across a model reset (FLIP). Before the reset: where the visible blocks sit and what
+    // type they are (read from the delegates: the model is already mid-change and must not be
+    // queried). After it, the new delegates slide from their old place, or fade in when they are
+    // new or changed type. `knownIds` (every block after the previous reset) tells new from
+    // merely scrolled into view. Opening another object animates nothing.
+    property var motionBefore: null
+    property var knownIds: null
+    property string knownObject: ""
+    function noteMotion() {
+        motionBefore = null
+        if (Theme.motion === 0 || !session || !knownIds || knownObject !== session.objectId)
+            return
+        const ys = {}, types = {}
+        for (let i = 0; i < count; ++i) {
+            const d = itemAtIndex(i)
+            if (d) { ys[d.blockId] = d.y; types[d.blockId] = d.blockType }
+        }
+        motionBefore = { objectId: session.objectId, ids: knownIds, ys: ys, types: types }
+    }
+    function rememberIds() {
+        const ids = {}
+        if (session)
+            for (let i = 0; i < count; ++i)
+                ids[session.data(session.index(i, 0), 257)] = true
+        knownIds = ids
+        knownObject = session ? session.objectId : ""
+    }
+    function playMotion() {
+        const m = motionBefore
+        motionBefore = null
+        let moved = false
+        if (m && session && m.objectId === session.objectId) {
+            const fresh = [], slides = []
+            let kept = 0
+            for (let i = 0; i < count; ++i) {
+                const d = itemAtIndex(i)
+                if (!d) continue
+                const id = d.blockId
+                if (m.ids[id]) ++kept
+                if (!m.ids[id] || (m.types[id] !== undefined && m.types[id] !== d.blockType))
+                    fresh.push(d)
+                else if (m.ys[id] !== undefined && Math.abs(m.ys[id] - d.y) >= 1)
+                    slides.push({ d: d, dy: m.ys[id] - d.y })
+            }
+            // An edit touches a few blocks; a reload, a paste or another object does not animate.
+            if (kept > 0 && fresh.length <= 3) {
+                fresh.forEach(d => d.appear())
+                slides.forEach(s => s.d.slideFrom(s.dy))
+                moved = slides.length > 0
+            }
+        }
+        rememberIds()
+        updateRing(moved)
+    }
+
+    // Block mode: one outline around the selected run that glides between blocks (140 ms, or
+    // 200 ms with the blocks when they move) instead of each block lighting its own border.
+    readonly property bool ringShown: selectionRing.shown
+    function updateRing(withMove) {
+        let first = null, last = null, lastRow = -1, gap = false
+        if (session && session.selectedCount > 0) {
+            for (let i = 0; i < count; ++i) {
+                const d = itemAtIndex(i)
+                if (!d || !d.selected) continue
+                if (first && i !== lastRow + 1) gap = true
+                if (!first) first = d
+                last = d
+                lastRow = i
+            }
+        }
+        if (!first || gap) {
+            selectionRing.shown = false
+            return
+        }
+        selectionRing.glide = selectionRing.shown
+        selectionRing.dur = withMove === true ? Theme.normal : Theme.fast
+        selectionRing.y = first.y
+        selectionRing.height = last.y + last.height - first.y
+        selectionRing.shown = true
+    }
+    Rectangle {
+        id: selectionRing
+        parent: blocksView.contentItem
+        z: 40
+        x: 0
+        width: blocksView.width
+        property bool shown: false
+        property bool glide: false
+        property int dur: Theme.fast
+        visible: opacity > 0
+        opacity: shown ? 1 : 0
+        radius: Theme.radiusSm
+        color: "transparent"
+        border.width: 1
+        border.color: Qt.rgba(0.75, 0.89, 1, 0.45)
+        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+        Behavior on y { enabled: selectionRing.glide; NumberAnimation { duration: selectionRing.dur; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on height { enabled: selectionRing.glide; NumberAnimation { duration: selectionRing.dur; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
     }
 
     function ensureFocusedVisible() {

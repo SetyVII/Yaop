@@ -80,6 +80,24 @@ Popup {
                 }
             }
         }
+        // Reduce motion: every animation becomes instant (Theme.motion).
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 54
+            radius: Theme.radius
+            color: Theme.reduceMotion ? Theme.panel2 : rmHover.hovered ? Theme.panel : "transparent"
+            border.width: 1
+            border.color: Theme.reduceMotion ? Theme.ice : Theme.line
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                x: 12
+                spacing: 2
+                Text { text: qsTr("Reduce motion"); color: Theme.text; font.family: Theme.body; font.pixelSize: 14; font.weight: Font.Medium }
+                Text { text: Theme.reduceMotion ? qsTr("On · changes are instant") : qsTr("Off · short transitions"); color: Theme.muted; font.family: Theme.body; font.pixelSize: 12 }
+            }
+            HoverHandler { id: rmHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: Theme.setReduceMotion(!Theme.reduceMotion) }
+        }
 
         Text {
             text: Theme.caps(qsTr("SERVER"))

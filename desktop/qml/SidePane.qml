@@ -25,12 +25,21 @@ Item {
     readonly property real paneW: Math.max(340, Math.min(hostWidth - 380, prefs.paneWidth))
     readonly property bool open: objectId.length > 0
     property bool dragging: false
+    property bool snap: false   // no slide (switching tabs)
 
-    // What the host gives up: eased on open/close, immediate while dragging.
+    // What the host gives up, at once (the page is laid out one time per open/close).
+    readonly property real targetW: open ? paneW + gap : 0
+    // The pane's own visible width: eased on open/close so the panel slides; immediate while
+    // dragging or switching tabs. Only this item moves; the page behind does not reflow.
     property real shownW: open ? paneW + gap : 0
     Behavior on shownW {
-        enabled: !pane.dragging
-        NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+        enabled: !pane.dragging && !pane.snap
+        // in slower than out: 280 ms entering, 200 ms leaving
+        NumberAnimation {
+            duration: pane.open ? Theme.slow : Theme.normal
+            easing.type: Easing.Bezier
+            easing.bezierCurve: pane.open ? Theme.easeEnter : Theme.easeExit
+        }
     }
 
     // Keeps the last object on screen while the pane slides out.
@@ -56,7 +65,7 @@ Item {
             radius: 1
             color: Theme.line3
             opacity: grip.containsMouse || pane.dragging ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 140 } }
+            Behavior on opacity { NumberAnimation { duration: 140 * Theme.motion } }
         }
         MouseArea {
             id: grip

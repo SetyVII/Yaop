@@ -1,5 +1,13 @@
 package org.yaop.ui.editor
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.rotate
+import org.yaop.ui.theme.AppMotion
 import org.yaop.ui.common.privacyImage
 import android.content.ClipData
 import android.view.KeyEvent as AndroidKeyEvent
@@ -727,31 +735,10 @@ fun BlockItemView(
                             ) {
                                 when (block) {
                                     is Block.Todo -> {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .border(
-                                                    width = 1.5.dp,
-                                                    color = if (block.checked) AppColors.Accent else AppColors.BorderHover,
-                                                    shape = RoundedCornerShape(4.dp),
-                                                )
-                                                .background(
-                                                    color = if (block.checked) AppColors.Accent else Color.Transparent,
-                                                    shape = RoundedCornerShape(4.dp),
-                                                )
-                                                .clickable { onUpdate(block.copy(checked = !block.checked)) },
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            if (block.checked) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    tint = AppColors.Background,
-                                                    modifier = Modifier.size(13.dp),
-                                                )
-                                            }
-                                        }
+                                        TodoCheckBox(
+                                            checked = block.checked,
+                                            onToggle = { onUpdate(block.copy(checked = !block.checked)) },
+                                        )
                                         Spacer(modifier = Modifier.width(10.dp))
                                     }
                                     is Block.BulletList -> {
@@ -1317,12 +1304,19 @@ private fun ToggleBlockView(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // One chevron that turns 90° (snappy); the revealed children fade in as new rows.
+        val chevronTurn by animateFloatAsState(
+            targetValue = if (block.isExpanded) 90f else 0f,
+            animationSpec = AppMotion.snappy(),
+            label = "toggleChevron",
+        )
         Icon(
-            imageVector = if (block.isExpanded) Icons.Default.ArrowDropDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = stringResource(R.string.block_type_toggle),
             tint = AppColors.TextSecondary,
             modifier = Modifier
                 .size(22.dp)
+                .rotate(chevronTurn)
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onUpdate(block.copy(isExpanded = !block.isExpanded)) },
         )
@@ -3085,6 +3079,59 @@ fun MarkdownBlocksPreview() {
                     onBackspaceOnEmpty = {},
                 )
             }
+        }
+    }
+}
+
+/**
+ * Todo box: fill and outline ease in (snappy) and, when the user checks it, the box pops from
+ * 0.82 (playful) with the tick scaling in. A row scrolled into view does not animate.
+ */
+@Composable
+private fun TodoCheckBox(checked: Boolean, onToggle: () -> Unit) {
+    val fill by animateColorAsState(
+        targetValue = if (checked) AppColors.Accent else Color.Transparent,
+        animationSpec = AppMotion.snappy(),
+        label = "todoFill",
+    )
+    val outline by animateColorAsState(
+        targetValue = if (checked) AppColors.Accent else AppColors.BorderHover,
+        animationSpec = AppMotion.snappy(),
+        label = "todoOutline",
+    )
+    val pop = remember { Animatable(1f) }
+    val seen = remember { mutableStateOf(checked) }
+    LaunchedEffect(checked) {
+        if (checked == seen.value) return@LaunchedEffect
+        seen.value = checked
+        if (checked) {
+            pop.snapTo(0.82f)
+            pop.animateTo(1f, AppMotion.playful())
+        }
+    }
+    val scale = pop.value
+    val shape = RoundedCornerShape(4.dp)
+    Box(
+        modifier = Modifier
+            .size(18.dp)
+            .then(if (scale != 1f) Modifier.graphicsLayer { scaleX = scale; scaleY = scale } else Modifier)
+            .clip(shape)
+            .border(width = 1.5.dp, color = outline, shape = shape)
+            .background(color = fill, shape = shape)
+            .clickable(onClick = onToggle),
+        contentAlignment = Alignment.Center,
+    ) {
+        AnimatedVisibility(
+            visible = checked,
+            enter = scaleIn(AppMotion.playful(), initialScale = 0.6f) + fadeIn(tween(AppMotion.FADE_FAST_MS)),
+            exit = fadeOut(tween(AppMotion.FADE_FAST_MS)),
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = AppColors.Background,
+                modifier = Modifier.size(13.dp),
+            )
         }
     }
 }

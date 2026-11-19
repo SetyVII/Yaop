@@ -29,6 +29,20 @@ Popup {
     focus: false
     closePolicy: Popup.NoAutoClose
 
+    // Opens in 140 ms (fade, 0.96 → 1 from its corner); the first rows arrive 20 ms apart.
+    // Rows rebuilt while filtering do not animate.
+    property bool justOpened: false
+    onAboutToShow: { justOpened = Theme.motion > 0; staggerEnd.restart() }
+    Timer { id: staggerEnd; interval: 60; onTriggered: sm.justOpened = false }
+    transformOrigin: Popup.TopLeft
+    enter: Transition {
+        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+        NumberAnimation { property: "scale"; from: 0.96; to: 1; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+    }
+    exit: Transition {
+        NumberAnimation { property: "opacity"; to: 0; duration: 100 * Theme.motion }
+    }
+
     readonly property var catalogItems: [
         { key: "h1", name: qsTr("Heading 1"), hint: "# ", glyph: "H1" },
         { key: "h2", name: qsTr("Heading 2"), hint: "## ", glyph: "H2" },
@@ -142,6 +156,13 @@ Popup {
                 width: catalog.width
                 height: sm.rowHeight
                 color: index === sm.currentIndex ? Theme.panel3 : "transparent"
+                Component.onCompleted: if (sm.justOpened && index < 8) rowIn.start()
+                SequentialAnimation {
+                    id: rowIn
+                    PropertyAction { target: row; property: "opacity"; value: 0 }
+                    PauseAnimation { duration: row.index * 20 * Theme.motion }
+                    NumberAnimation { target: row; property: "opacity"; to: 1; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+                }
 
                 Rectangle {
                     id: glyphBox

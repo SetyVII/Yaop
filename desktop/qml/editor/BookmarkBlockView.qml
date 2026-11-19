@@ -173,16 +173,38 @@ Item {
                 cache: true
                 smooth: true
                 opacity: status === Image.Ready ? 1 : 0
+                // the cover fades in over its placeholder (280 ms); the slot never changes size
+                Behavior on opacity { NumberAnimation { duration: Theme.slow } }
             }
             Rectangle {
+                id: thumbHolder
                 visible: bb.thumbnailUrl.length > 0 && ogThumb.status !== Image.Ready
                 Layout.preferredWidth: 118
                 Layout.fillHeight: true
                 Layout.leftMargin: 4
                 color: Theme.panel2
                 border.color: Theme.line
+                clip: true
+                // loading: a soft band sweeps across (1.1 s); off with Reduce motion
+                Rectangle {
+                    visible: ogThumb.status === Image.Loading && Theme.motion > 0
+                    width: parent.width * 0.6
+                    height: parent.height
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0; color: "transparent" }
+                        GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.06) }
+                        GradientStop { position: 1; color: "transparent" }
+                    }
+                    NumberAnimation on x {
+                        running: thumbHolder.visible && ogThumb.status === Image.Loading && Theme.motion > 0
+                        from: -thumbHolder.width * 0.6; to: thumbHolder.width
+                        duration: 1100; loops: Animation.Infinite
+                    }
+                }
                 Text {
                     anchors.centerIn: parent
+                    visible: ogThumb.status !== Image.Loading || Theme.motion === 0
                     text: ogThumb.status === Image.Error ? "✕" : "···"
                     color: Theme.faint
                     font.family: Theme.mono

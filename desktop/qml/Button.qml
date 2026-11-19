@@ -23,7 +23,7 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: Theme.fast } }
     Behavior on border.color { ColorAnimation { duration: Theme.fast } }
-    Behavior on scale { NumberAnimation { duration: 90 } }
+    Behavior on scale { NumberAnimation { duration: 90 * Theme.motion } }
 
     // keyboard focus: the shared sliding ring in Main (FocusRing.qml) draws around it
     property bool focusRing: true

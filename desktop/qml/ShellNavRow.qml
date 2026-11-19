@@ -70,6 +70,19 @@ Rectangle {
         color: Theme.muted
         font.family: Theme.body
         font.pixelSize: 12
+        // A count that grows (a capture landing in Inbox) pops once; one that shrinks does not.
+        property int last: Number(text) || 0
+        onTextChanged: {
+            const n = Number(text) || 0
+            if (n > last && Theme.motion > 0) pop.restart()
+            last = n
+        }
+        SequentialAnimation {
+            id: pop
+            PauseAnimation { duration: Theme.normal }
+            NumberAnimation { target: countText; property: "scale"; to: 1.35; duration: 100 * Theme.motion; easing.type: Easing.OutCubic }
+            NumberAnimation { target: countText; property: "scale"; to: 1; duration: Theme.fast; easing.type: Easing.OutBack }
+        }
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

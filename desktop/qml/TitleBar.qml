@@ -66,8 +66,8 @@ Item {
                 SequentialAnimation on scale {
                     running: ws && ws.syncing
                     loops: Animation.Infinite
-                    NumberAnimation { from: 1; to: 1.6; duration: 420 }
-                    NumberAnimation { from: 1.6; to: 1; duration: 420 }
+                    NumberAnimation { from: 1; to: 1.6; duration: 420 * Theme.motion }
+                    NumberAnimation { from: 1.6; to: 1; duration: 420 * Theme.motion }
                 }
             }
             Text {

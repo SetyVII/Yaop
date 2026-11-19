@@ -1013,9 +1013,10 @@ class PkmRepository(
             }
         }
 
-        // Resolve #tags typed in content
-        if (searchable.contains('#')) {
-            TAG_TOKEN_REGEX.findAll(searchable).forEach { match ->
+        // Resolve #tags typed in content (only text the user wrote, never captured web text)
+        val taggable = extractTaggableText(obj)
+        if (taggable.contains('#')) {
+            TAG_TOKEN_REGEX.findAll(taggable).forEach { match ->
                 val tagName = match.groupValues[1]
                 val tagId = "tag_${sanitizeTagKey(tagName)}"
                 if (tagId != obj.id) {
@@ -1088,6 +1089,30 @@ class PkmRepository(
                 is Block.Bookmark -> append(block.title).append(" ").append(block.url).append(" ").append(block.description).append(" ")
                 else -> Unit
             }
+        }
+    }
+
+    /**
+     * Text the user wrote, where a typed `#word` is a tag. Captured web text (bookmark title and
+     * description, properties like `description`) and code/math are not: a post's hashtags are
+     * not the user's tags (spec/object.md `links`).
+     */
+    private fun extractTaggableText(obj: PkmObject): String = buildString {
+        for (block in obj.blocks) {
+            val spans = when (block) {
+                is Block.Paragraph -> block.spans
+                is Block.Heading -> block.spans
+                is Block.Todo -> block.spans
+                is Block.BulletList -> block.spans
+                is Block.NumberedList -> block.spans
+                is Block.AlphabeticList -> block.spans
+                is Block.RomanList -> block.spans
+                is Block.Toggle -> block.spans
+                is Block.Quote -> block.spans
+                is Block.Callout -> block.spans
+                else -> continue
+            }
+            append(spans.toPlainText()).append(" ")
         }
     }
 

@@ -272,8 +272,8 @@ Item {
                     color: Theme.panel2
                     border.width: 1
                     border.color: Theme.line2
-                    Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                    Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
+                    Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
                 }
                 Row {
                     id: viewsRow
@@ -300,7 +300,7 @@ Item {
                                 color: parent.on ? Theme.text : vHover.hovered ? Theme.dim : Theme.muted
                                 font.family: Theme.body
                                 font.pixelSize: 14
-                                Behavior on color { ColorAnimation { duration: 240 } }
+                                Behavior on color { ColorAnimation { duration: 240 * Theme.motion } }
                             }
                             HoverHandler { id: vHover; cursorShape: Qt.PointingHandCursor }
                             TapHandler { onTapped: prefs.view = modelData.key }
@@ -320,9 +320,22 @@ Item {
         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.line }
 
         RowLayout {
+            id: viewBody
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
+
+            // Switching Month / Week / Three days / Day: the new view fades in from 98.5 % (200 ms)
+            // while the selector pill slides. Moving by a step (‹ ›) does not animate.
+            Connections {
+                target: page
+                function onViewChanged() { if (Theme.motion > 0) viewIn.restart() }
+            }
+            ParallelAnimation {
+                id: viewIn
+                NumberAnimation { target: viewBody; property: "opacity"; from: 0; to: 1; duration: Theme.normal }
+                NumberAnimation { target: viewBody; property: "scale"; from: 0.985; to: 1; duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+            }
 
             MonthGrid {
                 visible: page.view === "month"

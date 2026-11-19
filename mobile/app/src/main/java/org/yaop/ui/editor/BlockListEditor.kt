@@ -1,5 +1,7 @@
 package org.yaop.ui.editor
 
+import org.yaop.ui.theme.AppMotion
+import androidx.compose.animation.core.tween
 import org.yaop.ui.common.privacyImage
 import android.content.ClipData
 import android.content.Intent
@@ -2447,7 +2449,18 @@ fun BlockListEditor(
                     key = { it.block.id },
                     contentType = { it.block::class },
                 ) { item ->
-                    BlockRow(item)
+                    // A block inserted while editing (Enter, paste, a toggle opening) fades in.
+                    // Rows reached by scrolling and the first layout never animate; no placement
+                    // animation, so typing and drag stay on their fast paths.
+                    Box(
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(AppMotion.FADE_MS),
+                            placementSpec = null,
+                            fadeOutSpec = null,
+                        ),
+                    ) {
+                        BlockRow(item)
+                    }
                 }
                 item(key = "editor-add-block") {
                     AddBlockBox()

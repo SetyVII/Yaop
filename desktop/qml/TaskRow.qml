@@ -36,7 +36,7 @@ Rectangle {
                 visible: root.task.done
                 scale: root.task.done ? 1 : 0
                 Behavior on scale {
-                    NumberAnimation { duration: 140; easing.type: Easing.OutBack }
+                    NumberAnimation { duration: 140 * Theme.motion; easing.type: Easing.OutBack }
                 }
             }
         }

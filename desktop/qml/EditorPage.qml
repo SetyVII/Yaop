@@ -67,21 +67,29 @@ Item {
         function onObjectPropertiesChanged(id) { editPage.tagRev++; if (session && session.typeId === "tag") editPage.refreshTagBacklinks() }
     }
 
+    // Leaving the editor for another page or tab (objectId becomes "") keeps the last object's
+    // session and its blocks alive while the page is hidden, so coming back to it is instant
+    // instead of rebuilding every block. It is closed when another object replaces it, or
+    // explicitly with release() (closing, trashing).
+    function release() {
+        if (!session) return
+        const old = session.objectId
+        session = null
+        if (!appWindow || !appWindow.objectShownElsewhere(old, editPage))
+            ws.closeObject(old)
+    }
     onObjectIdChanged: {
         Privacy.noteRevealed = false
-        if (session) {
-            const old = session.objectId
-            session = null
-            if (!appWindow || !appWindow.objectShownElsewhere(old, editPage))
-                ws.closeObject(old)
-        }
-        if (objectId.length > 0) {
-            session = ws.openObject(objectId)
-            refreshTagBacklinks()
+        if (objectId.length === 0)
+            return
+        if (session && session.objectId === objectId) {
             scrollToPendingBlock()
-        } else {
-            tagBacklinks = []
+            return
         }
+        release()
+        session = ws.openObject(objectId)
+        refreshTagBacklinks()
+        scrollToPendingBlock()
     }
     onPendingBlockIdChanged: scrollToPendingBlock()
 

@@ -19,7 +19,8 @@ Item {
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 24
+        // y is anchored, so the rise animates the margin: 12 px up while fading in.
+        anchors.bottomMargin: root.open ? 24 : 12
         width: label.implicitWidth + 30
         height: 38
         radius: 19
@@ -27,10 +28,15 @@ Item {
         border.width: 1
         border.color: Theme.line
         opacity: root.open ? 1 : 0
-        y: root.open ? 0 : 8
 
-        Behavior on opacity { NumberAnimation { duration: 160 } }
-        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+        Behavior on anchors.bottomMargin {
+            NumberAnimation {
+                duration: Theme.normal
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.open ? Theme.easeEnter : Theme.easeExit
+            }
+        }
 
         Text {
             id: label

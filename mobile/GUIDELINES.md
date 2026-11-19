@@ -102,6 +102,12 @@ Animate **direct interaction**, not content that is recycled while scrolling.
   Home stays visible 1.1 s before folding away, so it can be undone.
 - `staggeredAppear` only on Home's section items (35 ms apart, at most 8), never on lazy rows.
   `animateItem()` only where insert/remove/reorder is the point (Tasks, Search), with `key`.
+- Editor: a block inserted while editing (Enter, paste, a toggle opening) fades in with
+  `animateItem(fadeInSpec = tween(FADE_MS), placementSpec = null, fadeOutSpec = null)`; no
+  placement or fade-out, so scrolling, typing and drag stay untouched. The toggle chevron turns
+  90° (`snappy`); a todo fills (`snappy`) and pops from 0.82 when checked (`playful`).
+- Daily: changing day slides the day below the calendar in from the side of the new date
+  (`Modifier.enterOnChange(selectedDate)`, `gentle`); the calendar itself does not move.
 
 ## 6. Home and Search
 

@@ -74,9 +74,9 @@ Flow {
             color: bar.status === "todo" ? Theme.panel2 : Qt.rgba(tone.r, tone.g, tone.b, 0.18)
             border.width: 1
             border.color: bar.status === "todo" ? Theme.line2 : Qt.rgba(tone.r, tone.g, tone.b, 0.45)
-            Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-            Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 240 } }
+            Behavior on x { NumberAnimation { duration: 240 * Theme.motion; easing.type: Easing.OutCubic } }
+            Behavior on width { NumberAnimation { duration: 240 * Theme.motion; easing.type: Easing.OutCubic } }
+            Behavior on color { ColorAnimation { duration: 240 * Theme.motion } }
         }
         Row {
             id: statusRow
@@ -113,7 +113,7 @@ Flow {
                             color: parent.parent.on ? Theme.text : sHover.hovered ? Theme.dim : Theme.muted
                             font.family: Theme.body
                             font.pixelSize: 13
-                            Behavior on color { ColorAnimation { duration: 240 } }
+                            Behavior on color { ColorAnimation { duration: 240 * Theme.motion } }
                         }
                     }
                     HoverHandler { id: sHover; cursorShape: Qt.PointingHandCursor }

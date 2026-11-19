@@ -16,7 +16,7 @@ Rectangle {
     scale: press.pressed ? 0.94 : 1
 
     Behavior on color { ColorAnimation { duration: Theme.fast } }
-    Behavior on scale { NumberAnimation { duration: 90 } }
+    Behavior on scale { NumberAnimation { duration: 90 * Theme.motion } }
 
     TintedIcon {
         anchors.centerIn: parent

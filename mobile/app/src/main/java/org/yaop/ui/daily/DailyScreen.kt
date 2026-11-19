@@ -131,6 +131,7 @@ import org.yaop.ui.editor.LocalEditorToolbarController
 import org.yaop.ui.editor.rememberEditorToolbarController
 import org.yaop.ui.editor.EditorBottomSheet
 import org.yaop.ui.theme.AppColors
+import org.yaop.ui.theme.enterOnChange
 import org.yaop.ui.theme.YaopTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -799,6 +800,9 @@ fun DailyContent(
             datesWithActivity = datesWithActivity,
         )
 
+        // Changing day: the day below the calendar slides in from the side of the new date.
+        Column(modifier = Modifier.fillMaxWidth().enterOnChange(selectedDate)) {
+
         Spacer(modifier = Modifier.height(18.dp))
 
         // Subheader: Day of the week + "Today" badge (+ image privacy eye on the right)
@@ -1039,6 +1043,7 @@ fun DailyContent(
         }
 
         Spacer(modifier = Modifier.height(80.dp))
+        }
     }
     }
 

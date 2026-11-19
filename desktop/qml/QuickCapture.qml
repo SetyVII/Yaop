@@ -48,7 +48,31 @@ Popup {
     }
 
     // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle { color: Theme.scrim }
+    Overlay.modal: Rectangle {
+        color: Theme.scrim
+        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+    }
+
+    // Opens like the palette. After saving, the box shrinks into the Inbox row of the sidebar
+    // (where the new object waits) instead of just vanishing; cancelling only fades.
+    property bool sent: false
+    readonly property bool inboxVisible: Theme.slate && !!appWindow && appWindow.sidebarOpen
+    onAboutToShow: {
+        sent = false
+        x = Qt.binding(() => (parent.width - width) / 2)
+        y = Qt.binding(() => topGap)
+    }
+    transformOrigin: Popup.Center
+    enter: Transition {
+        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+        NumberAnimation { property: "scale"; from: 0.97; to: 1; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
+    }
+    exit: Transition {
+        NumberAnimation { property: "opacity"; to: 0; duration: capture.sent ? Theme.slow : 100 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
+        NumberAnimation { property: "scale"; to: capture.sent ? 0.08 : 0.97; duration: capture.sent ? Theme.slow : 100 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
+        NumberAnimation { property: "x"; to: capture.sent && capture.inboxVisible ? Theme.sidebarW / 2 - capture.width / 2 : capture.x; duration: Theme.slow; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
+        NumberAnimation { property: "y"; to: capture.sent && capture.inboxVisible ? 150 - capture.height / 2 : capture.y; duration: Theme.slow; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
+    }
 
     background: Rectangle {
         radius: Theme.radiusLg
@@ -179,6 +203,7 @@ Popup {
             }
             if (input.text.trim().length > 0)
                 ws.renameObject(id, input.text.trim())
+            sent = true
             requestClose()
             objectCreated(id)
         }
@@ -212,6 +237,7 @@ Popup {
         } else {
             id = ws.createObject(selectedTypeId, title)
         }
+        sent = !!id && id.length > 0
         requestClose()
         if (id && id.length > 0) {
             objectCreated(id)

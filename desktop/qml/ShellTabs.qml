@@ -60,7 +60,7 @@ Item {
         opacity: strip.hoverIndex >= 0 ? 1 : 0
         Behavior on x { enabled: hoverPill.opacity > 0; NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
         Behavior on width { NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
-        Behavior on opacity { NumberAnimation { duration: 140 } }
+        Behavior on opacity { NumberAnimation { duration: 140 * Theme.motion } }
         Connections {
             target: strip
             function onHoverIndexChanged() { if (strip.hoverIndex >= 0) hoverPill.at = strip.hoverIndex }
@@ -99,7 +99,7 @@ Item {
             Component.onCompleted: opacity = 1
             Behavior on x { NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
             Behavior on width { NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
-            Behavior on opacity { NumberAnimation { duration: 180 } }
+            Behavior on opacity { NumberAnimation { duration: 180 * Theme.motion } }
 
             TintedIcon {
                 id: tabIcon
