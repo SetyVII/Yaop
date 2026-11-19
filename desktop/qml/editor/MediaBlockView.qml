@@ -36,6 +36,21 @@ Item {
         return false
     }
 
+    function showLarge() {
+        if (!mb.assetReady)
+            return
+        lightboxLoader.active = true
+        lightboxLoader.item.show("file://" + mb.assetPath, mb.captionHtml)
+    }
+
+    Loader {
+        id: lightboxLoader
+        active: false
+        sourceComponent: ImageLightbox {
+            onClosed: Qt.callLater(() => { lightboxLoader.active = false })
+        }
+    }
+
     function openImageObject() {
         if (!mb.view || mb.assetId.length === 0)
             return
@@ -46,10 +61,23 @@ Item {
             mb.view.openObjectRequested(id)
     }
 
-    // Height of the image split row. Fixed (not derived from the async-loaded
-    // image size): a height that changes when the asset arrives makes the
-    // ListView keep stale delegate positions and blocks overlap.
-    readonly property real imagePaneH: blockType === "image" ? 520 : 0
+    // Height of the image split row: the picture's own aspect at the block width, capped at
+    // 520 so a tall image does not take the whole page. The size comes from the file header
+    // (synchronous), never from the async-decoded image: a height that changes when the decode
+    // lands makes the ListView keep stale delegate positions and blocks overlap. A fixed pane
+    // left empty bands above and below wide images that clicked as the image.
+    readonly property size imageFileSize: (blockType === "image" && assetReady && typeof ws !== "undefined" && ws)
+                                          ? ws.imageFileSize(assetPath) : Qt.size(0, 0)
+    readonly property real imagePaneH: {
+        if (blockType !== "image")
+            return 0
+        if (imageFileSize.width <= 0 || imageFileSize.height <= 0)
+            return 160
+        const fitW = Math.max(1, contentCol.width * Math.min(1, mb.widthPercent) - 8)
+        const natural = Math.min(imageFileSize.height, fitW * imageFileSize.height / imageFileSize.width)
+        // The side pane needs room for its controls when the picture is a thin strip.
+        return Math.round(Math.max(mb.panelOpen ? 240 : 48, Math.min(520, natural + 8)))
+    }
 
     // Image side pane: closed by default so the picture gets the full width.
     property bool panelOpen: false
@@ -174,19 +202,25 @@ Item {
                         size: 14
                         color: mb.panelOpen ? Theme.accent : Theme.muted
                     }
-                    HoverHandler { id: toggleHover }
+                    HoverHandler { id: toggleHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: mb.setPanelOpen(!mb.panelOpen) }
                 }
 
+                // Click: view it large. Ctrl/Cmd+click: open the image object. The corner button
+                // toggles the caption pane.
                 HoverHandler { id: imgHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     id: imgTap
-                    onSingleTapped: (eventPoint, button) => {
+                    onTapped: (eventPoint) => {
+                        const p = eventPoint.position
+                        if (p.x >= panelToggle.x && p.x <= panelToggle.x + panelToggle.width
+                                && p.y >= panelToggle.y && p.y <= panelToggle.y + panelToggle.height)
+                            return
                         if (imgTap.point.modifiers & (Qt.ControlModifier | Qt.MetaModifier))
                             mb.openImageObject()
                         else
-                            mb.setPanelOpen(!mb.panelOpen)
+                            mb.showLarge()
                     }
-                    onDoubleTapped: mb.openImageObject()
                 }
             }
 
@@ -274,7 +308,7 @@ Item {
                             font.letterSpacing: Theme.track(1)
                         }
                         Repeater {
-                            model: [0.5, 0.75, 1.0]
+                            model: [0.75, 1.0]
                             delegate: Rectangle {
                                 Layout.preferredWidth: 30
                                 Layout.preferredHeight: 18

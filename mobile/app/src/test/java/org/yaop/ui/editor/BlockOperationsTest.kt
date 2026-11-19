@@ -348,17 +348,13 @@ class BlockOperationsTest {
         val rendered = MarkdownRenderer.renderSpans(spans, customColors)
 
         assertEquals("Nota sobre #arquitectura y también #diseño formal", rendered.text.text)
+        // Only the picked tag is a pill; typed "#diseño" stays plain text (docs/product.md §4.5).
         val tagPills = rendered.pills.filter { it.kind == MarkdownPillKind.TAG }
-        assertEquals(2, tagPills.size)
+        assertEquals(1, tagPills.size)
 
         assertEquals("arquitectura", tagPills[0].target)
         assertEquals("#arquitectura", tagPills[0].label)
         assertTrue(tagPills[0].borderColor != null)
         assertTrue(tagPills[0].accentColor != null)
-
-        assertEquals("diseño", tagPills[1].target)
-        assertEquals("#diseño", tagPills[1].label)
-        assertTrue(tagPills[1].borderColor != null)
-        assertTrue(tagPills[1].accentColor != null)
     }
 }

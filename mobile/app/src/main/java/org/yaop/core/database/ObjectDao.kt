@@ -68,6 +68,12 @@ interface ObjectDao {
     @Query("DELETE FROM object_links WHERE source_id = :sourceId")
     suspend fun deleteLinksForSource(sourceId: String)
 
+    @Transaction
+    suspend fun replaceLinks(sourceId: String, links: List<ObjectLinkEntity>) {
+        deleteLinksForSource(sourceId)
+        if (links.isNotEmpty()) insertLinks(links)
+    }
+
     @Query("""
         SELECT DISTINCT o.* FROM objects o
         INNER JOIN object_links l ON o.id = l.source_id

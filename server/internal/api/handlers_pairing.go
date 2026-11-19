@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"io"
@@ -20,6 +21,7 @@ import (
 //	GET  /v1/pairing/{id}/answer   {b_pub|null}               — the QR holder polls
 //	POST /v1/pairing/{id}/transfer   <raw envelope bytes>     — wrapped VK
 //	GET  /v1/pairing/{id}/transfer   <raw envelope bytes>     — the new device unwraps
+//	POST /v1/pairing/{id}/enroll     {device_id, name, enroll_key} — its own device token
 //
 // The server never sees the shared secret, the 6-digit code or the VK: only
 // pairing_id, two 32-byte public keys and a few dozen opaque envelope bytes.
@@ -167,6 +169,20 @@ func (s *Server) handlePairingTransfer(w http.ResponseWriter, r *http.Request) {
 		writeJSONMessage(w, http.StatusConflict, "forbidden_device", "the joining device has not answered yet")
 		return
 	}
+	// Step 7: an authenticated holder may let the joining device mint one token.
+	enrollKey := r.Header.Get("X-YAOP-Enroll-Key")
+	if enrollKey != "" {
+		if !validEnrollKey(enrollKey) {
+			writeJSONMessage(w, http.StatusBadRequest, "bad_request", "X-YAOP-Enroll-Key must be 32 bytes in lowercase hex (64 chars)")
+			return
+		}
+		auth := r.Header.Get("Authorization")
+		if _, _, ok := s.authenticate(strings.TrimPrefix(auth, "Bearer ")); !strings.HasPrefix(auth, "Bearer ") || !ok {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			writeJSONMessage(w, http.StatusUnauthorized, "unauthorized", "an enroll key needs the holder's own token")
+			return
+		}
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, MaxPairingTransferBytes+1)
 	blob, err := io.ReadAll(r.Body)
 	if err != nil || len(blob) == 0 {
@@ -183,7 +199,80 @@ func (s *Server) handlePairingTransfer(w http.ResponseWriter, r *http.Request) {
 		writeJSONMessage(w, http.StatusInternalServerError, "internal", "could not relay the transfer")
 		return
 	}
-	jsonResponse(w, http.StatusCreated, map[string]any{"pairing_id": p.PairingID, "transfer_size": len(blob)})
+	if enrollKey != "" {
+		if err := s.store.SetPairingEnrollKey(p.PairingID, hashToken(enrollKey), nowUTC().Format(timeFormat)); err != nil {
+			writeJSONMessage(w, http.StatusInternalServerError, "internal", "could not authorize the enroll")
+			return
+		}
+	}
+	jsonResponse(w, http.StatusCreated, map[string]any{
+		"pairing_id": p.PairingID, "transfer_size": len(blob), "enroll": enrollKey != "",
+	})
+}
+
+func validEnrollKey(k string) bool {
+	if len(k) != 64 || strings.ToLower(k) != k {
+		return false
+	}
+	_, err := hex.DecodeString(k)
+	return err == nil
+}
+
+// handlePairingEnroll gives the joining device its own token (spec/crypto.md
+// §Pairing step 7): once, only to whoever holds enroll_key (derived from the
+// X25519 secret, so a QR onlooker cannot claim it), never for an existing id.
+func (s *Server) handlePairingEnroll(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.lookupPairing(w, r.PathValue("id"))
+	if !ok {
+		return
+	}
+	var req struct {
+		DeviceID  string `json:"device_id"`
+		Name      string `json:"name"`
+		EnrollKey string `json:"enroll_key"`
+	}
+	if serr := decodeJSON(w, r, &req, 4096); serr != nil {
+		writeSyncError(w, serr)
+		return
+	}
+	req.DeviceID = strings.TrimSpace(req.DeviceID)
+	if req.DeviceID == "" || len(req.DeviceID) > 200 {
+		writeJSONMessage(w, http.StatusBadRequest, "bad_request", "device_id is required")
+		return
+	}
+	keyHash, redeemed, found, err := s.store.GetPairingEnroll(p.PairingID)
+	if err != nil {
+		writeJSONMessage(w, http.StatusInternalServerError, "internal", "could not read the enroll")
+		return
+	}
+	if !found {
+		writeJSONMessage(w, http.StatusNotFound, "not_found", "the QR holder did not authorize a token for this pairing")
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(hashToken(req.EnrollKey)), []byte(keyHash)) != 1 {
+		writeJSONMessage(w, http.StatusForbidden, "forbidden_device", "wrong enroll key")
+		return
+	}
+	if redeemed {
+		writeJSONMessage(w, http.StatusConflict, "conflict", "this pairing already gave its token")
+		return
+	}
+	s.devices.mu.Lock()
+	defer s.devices.mu.Unlock()
+	if _, exists := s.devices.devices[req.DeviceID]; exists {
+		writeJSONMessage(w, http.StatusConflict, "conflict", "a device with this id already exists")
+		return
+	}
+	if won, err := s.store.RedeemPairingEnroll(p.PairingID, nowUTC().Format(timeFormat)); err != nil || !won {
+		writeJSONMessage(w, http.StatusConflict, "conflict", "this pairing already gave its token")
+		return
+	}
+	token, err := s.mintDeviceTokenLocked(req.DeviceID, req.Name)
+	if err != nil {
+		writeJSONMessage(w, http.StatusInternalServerError, "internal", err.Error())
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, map[string]string{"device_id": req.DeviceID, "token": token})
 }
 
 func (s *Server) handlePairingTransferGet(w http.ResponseWriter, r *http.Request) {

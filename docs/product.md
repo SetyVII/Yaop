@@ -129,6 +129,10 @@ Each type defines the template its objects are born with:
 - A mention stores the target id and its title as label; editors refresh the label to the
   current title when they load, so a rename shows everywhere.
 - Tags per block and per object, always pointing to the object.
+- **A tag exists only when the user picks it — DECIDED**: typing `#word` opens the tag list,
+  but it stays plain text until the user picks an existing tag or chooses to create one. No
+  client turns `#word` in text into a tag, a tag link or a tag pill on its own: not typed text,
+  not a captured web description, not a property.
 - **Rich previews in references — DECIDED**: every reference (object mention, tag, object placed
   on a whiteboard) shows in the target's backlinks as a contextual preview: source title + snippet
   of the block that holds the reference. E.g. on object `Mark`, a mention in "talk to @mark about

@@ -32,7 +32,12 @@ ApplicationWindow {
         onGuestJoined: {
             onb.adoptVk(pairing.receivedVk, pairing.receivedEpoch)
             serverUrlField.text = pairing.guestServerUrl
-            win.step = "server"
+            tokenField.text = pairing.guestToken()
+            // The pairing gave this device its own token: nothing to type, go straight in.
+            if (pairing.guestToken() !== "")
+                win.commitFailed = !onb.commit(pairing.guestServerUrl, pairing.guestToken(), pairing.guestDeviceId())
+            if (pairing.guestToken() === "" || win.commitFailed)
+                win.step = "server"
         }
     }
 
@@ -248,7 +253,9 @@ ApplicationWindow {
                     Button {
                         text: Theme.caps(qsTr("CONNECT AND START"))
                         primary: true
-                        onClicked: win.commitFailed = !onb.commit(serverUrlField.text, tokenField.text)
+                        onClicked: win.commitFailed = !onb.commit(serverUrlField.text, tokenField.text,
+                                                                tokenField.text !== "" && tokenField.text === pairing.guestToken()
+                                                                    ? pairing.guestDeviceId() : "")
                     }
                     Button { text: Theme.caps(qsTr("SKIP FOR NOW")); onClicked: win.commitFailed = !onb.commit("", "") }
                 }

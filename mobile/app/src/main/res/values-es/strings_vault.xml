@@ -36,6 +36,10 @@
     <string name="onb_server_skip">Saltar por ahora</string>
     <string name="onb_server_connect">Conectar y empezar</string>
     <string name="onb_server_failed">No se pudo conectar: revisa la dirección y el token.</string>
+    <string name="onb_server_scan">Escanear el código de configuración del servidor</string>
+    <string name="onb_server_scan_hint">En el servidor: yaop-server -print-setup -public-url … | qrencode -t ansiutf8</string>
+    <string name="onb_server_bad_setup">Ese no es un código de configuración del servidor.</string>
+    <string name="onb_server_bad_cert">El certificado del servidor no coincide con el código.</string>
     <string name="vault_title">Vault</string>
     <string name="vault_show_phrase">Ver la frase de recuperación</string>
     <string name="vault_add_device">Añadir un dispositivo</string>

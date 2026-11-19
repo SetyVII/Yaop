@@ -146,7 +146,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-private val BLOCK_TAG_REGEX = Regex("""(?<=^|[\s(\[])#([a-zA-Z0-9_\u0080-\uFFFF]+)""")
 /** `@` suggestion bar limits: a short list that narrows while typing (full list in the `⌄` sheet). */
 private const val MENTION_MAX_TYPES = 6
 private const val MENTION_MAX_OBJECTS = 10
@@ -155,43 +154,24 @@ private val LIVE_MENTION_QUERY_REGEX = Regex("""(?<=^|[\s(\[])@([a-zA-Z0-9_/\-.#
 private val LIVE_TAG_QUERY_REGEX = Regex("""(?<=^|[\s(\[])#([a-zA-Z0-9_\u0080-\uFFFF]*)$""")
 
 /**
- * Scans every block once for structured [InlineSpan.Tag] nodes and inline `#tag` tokens.
+ * Tags picked inside blocks ([InlineSpan.Tag]). A typed `#word` is plain text until the user
+ * picks or creates a tag (docs/product.md §4.5), so text is never scanned.
  * Kept outside the composable so it can run on [Dispatchers.Default] without touching Compose state.
  */
 private fun computeInferredBlockTagNames(
     blocks: List<Block>,
     directTagNames: List<String>,
 ): List<String> {
-    val hasAnyHash = blocks.any { block ->
-        val spans = BlockOperations.extractSpans(block)
-        spans.any { it is InlineSpan.Tag || (it is InlineSpan.Text && it.text.contains('#')) }
-    }
-    if (!hasAnyHash) return emptyList()
-
     val directLower = directTagNames.map { it.lowercase() }.toSet()
     val found = mutableListOf<String>()
-    fun addTagCandidate(rawName: String) {
-        val name = rawName.removePrefix("#").trim()
-        if (name.isNotBlank() &&
-            name.lowercase() !in directLower &&
-            found.none { it.equals(name, ignoreCase = true) }
-        ) {
-            found.add(name)
-        }
-    }
     blocks.forEach { block ->
-        val spans = BlockOperations.extractSpans(block)
-        spans.forEach { span ->
-            when (span) {
-                is InlineSpan.Tag -> addTagCandidate(span.tagName)
-                is InlineSpan.Text -> {
-                    if (span.text.contains('#')) {
-                        BLOCK_TAG_REGEX.findAll(span.text).forEach { match ->
-                            addTagCandidate(match.groupValues[1])
-                        }
-                    }
-                }
-                else -> Unit
+        BlockOperations.extractSpans(block).filterIsInstance<InlineSpan.Tag>().forEach { span ->
+            val name = span.tagName.removePrefix("#").trim()
+            if (name.isNotBlank() &&
+                name.lowercase() !in directLower &&
+                found.none { it.equals(name, ignoreCase = true) }
+            ) {
+                found.add(name)
             }
         }
     }
@@ -1454,17 +1434,15 @@ fun BlockListEditor(
     if (showTagSheet) {
         val targetId = focusedBlockId
         val currentBlock = currentBlocks.find { it.id == targetId }
-        val currentText = currentBlock?.let { BlockOperations.extractPlainText(it) } ?: ""
-        val activeBlockTags = remember(currentBlock, currentText, isHeaderTagPicker, directTagNames) {
+        val activeBlockTags = remember(currentBlock, isHeaderTagPicker, directTagNames) {
             if (isHeaderTagPicker) {
                 directTagNames
             } else {
-                val spanTags = currentBlock?.let { BlockOperations.extractSpans(it) }
+                currentBlock?.let { BlockOperations.extractSpans(it) }
                     .orEmpty()
                     .filterIsInstance<InlineSpan.Tag>()
                     .map { it.tagName }
-                val regexTags = BLOCK_TAG_REGEX.findAll(currentText).map { it.groupValues[1] }.toList()
-                (spanTags + regexTags).distinctBy { it.lowercase() }
+                    .distinctBy { it.lowercase() }
             }
         }
 

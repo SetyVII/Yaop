@@ -107,6 +107,20 @@ The client encrypts EACH chunk in its own envelope (domain `assets`, AAD
 `media_<asset>` object that the client pushes as an `asset_meta` op. Content is always served as
 `application/octet-stream` — only whoever holds the vault key knows the real type.
 
+## Connecting the first device (setup QR)
+
+With no device enrolled yet, show a QR on the server's terminal and scan it from the phone's
+onboarding ("Connect a server" → scan). It carries the URL, the pinned TLS fingerprint and the
+master token, which the phone swaps for its own token right away:
+
+```bash
+yaop-server -data-dir "$D" -print-setup -public-url https://yaop.example.net | qrencode -t ansiutf8
+```
+
+`qrencode` is the standard package of the same name. Anyone who sees that QR holds the master
+token: show it only to yourself. Every later device pairs from an enrolled one and gets its own
+token in the pairing (below), so nothing is typed.
+
 ## Pairing (blind transport)
 
 `spec/crypto.md` defines the cryptography; this server only relays opaque bytes with a short TTL
@@ -118,11 +132,19 @@ POST /v1/pairing/{id}/join {b_pub}        — B answers
 GET  /v1/pairing/{id}/answer → {b_pub}    — A waits for the answer
 POST /v1/pairing/{id}/transfer <bytes>    — A leaves the wrapped VK
 GET  /v1/pairing/{id}/transfer → <bytes>  — B picks it up
+POST /v1/pairing/{id}/enroll {device_id, name, enroll_key} → {device_id, token}  — B's token
 ```
 
 The joining device has no token yet: the capability is the QR's random 16-byte `pairing_id`, and
 the human check is the 6-digit code both screens show. The server never sees the shared secret,
 the code or the VK (only an opaque blob ≤ 4 KiB).
+
+**B's token (step 7 of `spec/crypto.md`).** When A sends the transfer with its own
+`Authorization: Bearer` token (device or master) and `X-YAOP-Enroll-Key: <64 hex>`, the pairing
+may mint one device token. `enroll` answers `200 {device_id, token}` once and only with that
+`enroll_key`: `403` wrong key, `404` no authorized transfer, `409` already redeemed or a
+`device_id` that already exists (it never rotates another device's token). Without the header
+the transfer still relays and B pastes a token by hand.
 
 ## Limits
 
@@ -150,6 +172,8 @@ in `internal/api.RateLimits`):
 | `-allowed-origins` | `""` | Allowed CORS origins, comma-separated |
 | `-mdns` | `true` | mDNS announcement `_yaop-sync._tcp` with `protocol=yaop-sync/1` |
 | `-init-secrets` | `false` | Generates `master.key` and `bearer.token` and exits |
+| `-print-setup` | `false` | Prints the first-device setup QR payload (`spec/crypto.md`) and exits |
+| `-public-url` | `$YAOP_PUBLIC_URL` | URL devices use to reach the server (for `-print-setup`) |
 | `-fsck` | `false` | Checks every admin record decrypts with the master key |
 | `-healthcheck` | `false` | Local GET to `/health`, exits 0/1 |
 

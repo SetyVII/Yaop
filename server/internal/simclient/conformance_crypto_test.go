@@ -313,6 +313,7 @@ func TestCryptoFixtures_PairingTranscript(t *testing.T) {
 			PairingID string `json:"pairing_id"`
 			Nonce     string `json:"nonce"`
 			Envelope  string `json:"envelope_v1_hex"`
+			EnrollKey string `json:"enroll_key"`
 		} `json:"steps"`
 	}](t, "pairing_transcript.json")
 	steps := map[int]struct {
@@ -329,11 +330,12 @@ func TestCryptoFixtures_PairingTranscript(t *testing.T) {
 		PairingID string `json:"pairing_id"`
 		Nonce     string `json:"nonce"`
 		Envelope  string `json:"envelope_v1_hex"`
+		EnrollKey string `json:"enroll_key"`
 	}{}
 	for _, s := range f.Steps {
 		steps[s.N] = s
 	}
-	s1, s2, s3, s4, s5, s6 := steps[1], steps[2], steps[3], steps[4], steps[5], steps[6]
+	s1, s2, s3, s4, s5, s6, s7 := steps[1], steps[2], steps[3], steps[4], steps[5], steps[6], steps[7]
 
 	pubA, err := PubFromScalar(hx(s1.PrivA))
 	if err != nil {
@@ -369,6 +371,12 @@ func TestCryptoFixtures_PairingTranscript(t *testing.T) {
 	}
 	if got := PairingCode(sA); got != s5.Code {
 		t.Errorf("short code\n got  %s\n want %s", got, s5.Code)
+	}
+	if s7.EnrollKey == "" {
+		t.Fatal("fixture: step 7 (enroll_key) missing")
+	}
+	if got := PairingEnrollKey(sB); got != s7.EnrollKey {
+		t.Errorf("enroll key\n got  %s\n want %s", got, s7.EnrollKey)
 	}
 	if got := he(PairingVKKey(sA)); got != s6.VkKey {
 		t.Errorf("vk transfer key\n got  %s\n want %s", got, s6.VkKey)
@@ -464,5 +472,43 @@ func TestSealRandomNonceRoundtrip(t *testing.T) {
 	pt, err := Open(key, s.Nonce, s.Ciphertext, []byte("objects/xyz"))
 	if err != nil || string(pt) != "production payload" {
 		t.Fatal("roundtrip failed")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// First-device setup QR
+// ---------------------------------------------------------------------------
+
+func TestCryptoFixtures_SetupQr(t *testing.T) {
+	type qrCase struct {
+		Desc   string `json:"desc"`
+		QrJSON string `json:"qr_json"`
+	}
+	f := fixtureTop[struct {
+		Encode struct {
+			ServerURL string `json:"server_url"`
+			TlsFP     string `json:"tls_fp"`
+			Token     string `json:"token"`
+			QrJSON    string `json:"qr_json"`
+		} `json:"encode"`
+		Valid   []qrCase `json:"valid"`
+		Invalid []qrCase `json:"invalid"`
+	}](t, "setup_qr.json")
+	got, err := EncodeSetupQr(SetupQr{ServerURL: f.Encode.ServerURL, TlsFP: f.Encode.TlsFP, Token: f.Encode.Token})
+	if err != nil || got != f.Encode.QrJSON {
+		t.Errorf("encode\n got  %s\n want %s (%v)", got, f.Encode.QrJSON, err)
+	}
+	for _, c := range f.Valid {
+		if _, err := DecodeSetupQr(c.QrJSON); err != nil {
+			t.Errorf("%s: rejected: %v", c.Desc, err)
+		}
+	}
+	for _, c := range f.Invalid {
+		if _, err := DecodeSetupQr(c.QrJSON); err == nil {
+			t.Errorf("%s: accepted", c.Desc)
+		}
+	}
+	if len(f.Valid) == 0 || len(f.Invalid) == 0 {
+		t.Fatal("fixture: setup_qr.json has no cases")
 	}
 }

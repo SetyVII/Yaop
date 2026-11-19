@@ -1,5 +1,12 @@
 package org.yaop.ui.settings
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import org.yaop.core.pairing.TlsFingerprint
+import org.yaop.core.pairing.SetupQr
+import com.journeyapps.barcodescanner.ScanOptions
+import com.journeyapps.barcodescanner.ScanContract
+import androidx.activity.compose.rememberLauncherForActivityResult
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -104,6 +111,22 @@ private fun SyncSettingsDialog(sync: SyncManager, onDismiss: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<SyncManager.AuthCheck?>(null) }
 
+    var scanError by remember { mutableStateOf<Int?>(null) }
+    // The server's setup QR fills URL and token (spec/crypto.md §First device).
+    val scanner = rememberLauncherForActivityResult(ScanContract()) { r ->
+        val setup = r.contents?.let { SetupQr.decode(it) }
+        if (setup == null) {
+            if (r.contents != null) scanError = R.string.onb_server_bad_setup
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            val pinned = withContext(Dispatchers.IO) { TlsFingerprint.matches(setup.serverUrl, setup.tlsFp) }
+            if (!pinned) { scanError = R.string.onb_server_bad_cert; return@launch }
+            scanError = null; result = null
+            url = setup.serverUrl; token = setup.token
+        }
+    }
+
     if (vaultOpen) VaultSheet(onDismiss = { vaultOpen = false })
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -125,6 +148,10 @@ private fun SyncSettingsDialog(sync: SyncManager, onDismiss: () -> Unit) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                TextButton(enabled = !busy, onClick = {
+                    scanner.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.QR_CODE).setBeepEnabled(false).setOrientationLocked(false))
+                }) { Text(stringResource(R.string.onb_server_scan)) }
+                scanError?.let { Text(stringResource(it), fontSize = 13.sp, color = AppColors.Danger) }
                 result?.let {
                     Text(
                         stringResource(

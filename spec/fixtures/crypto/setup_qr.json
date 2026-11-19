@@ -1,0 +1,50 @@
+{
+  "name": "setup QR of the first device (spec/crypto.md §First device)",
+  "note": "all values are test values (made up); never real keys",
+  "encode": {
+    "server_url": "https://yaop.vps.example.net",
+    "tls_fp": "abababababababababababababababababababababababababababababababab",
+    "token": "test-master-token-0123456789abcdef0123456789",
+    "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+  },
+  "valid": [
+    {
+      "desc": "https server",
+      "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+    },
+    {
+      "desc": "plain http server: tls_fp is all zeros",
+      "qr_json": "{\"v\":1,\"server_url\":\"http://192.168.1.20:8765\",\"tls_fp\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+    }
+  ],
+  "invalid": [
+    {
+      "desc": "unknown version",
+      "qr_json": "{\"v\":2,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+    },
+    {
+      "desc": "empty token",
+      "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"\"}"
+    },
+    {
+      "desc": "empty server url",
+      "qr_json": "{\"v\":1,\"server_url\":\"\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+    },
+    {
+      "desc": "tls_fp not 64 lowercase hex",
+      "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB\",\"token\":\"test-master-token-0123456789abcdef0123456789\"}"
+    },
+    {
+      "desc": "a pairing QR is not a setup QR",
+      "qr_json": "{\"v\":1,\"server_url\":\"https://x\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"eph_pub\":\"eGz-L_16E8ZcIwURATH3FYhvspWA2Ojimldrh6rm_0w\",\"pairing_id\":\"8f14e45fceea167a5a36dedd4bea2543\"}"
+    },
+    {
+      "desc": "extra key",
+      "qr_json": "{\"v\":1,\"server_url\":\"https://yaop.vps.example.net\",\"tls_fp\":\"abababababababababababababababababababababababababababababababab\",\"token\":\"test-master-token-0123456789abcdef0123456789\",\"extra\":1}"
+    },
+    {
+      "desc": "not json",
+      "qr_json": "yaop"
+    }
+  ]
+}

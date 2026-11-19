@@ -34,6 +34,8 @@ type cliConfig struct {
 	initSecrets    bool
 	runFsck        bool
 	runHealth      bool
+	printSetup     bool
+	publicURL      string
 }
 
 // registerFlags declares the command line of the BLIND server: everything the
@@ -48,6 +50,8 @@ func registerFlags(fs *flag.FlagSet) *cliConfig {
 	fs.BoolVar(&c.initSecrets, "init-secrets", false, "Generate new keys and exit")
 	fs.BoolVar(&c.runFsck, "fsck", false, "Check cryptographic integrity of database and exit")
 	fs.BoolVar(&c.runHealth, "healthcheck", false, "Perform local HTTP health check and exit")
+	fs.BoolVar(&c.printSetup, "print-setup", false, "Print the first-device setup QR payload (pipe it to qrencode -t ansiutf8) and exit")
+	fs.StringVar(&c.publicURL, "public-url", envString("YAOP_PUBLIC_URL", ""), "URL devices use to reach this server (for -print-setup)")
 	return c
 }
 
@@ -82,6 +86,16 @@ func main() {
 	masterKey, bearerToken, err := loadOrInitSecrets(cfg.dataDir, masterKeyPath, bearerTokenPath)
 	if err != nil {
 		log.Fatalf("Fatal loading secrets: %v", err)
+	}
+
+	// Setup QR for the first device: only stdout, so it pipes into qrencode.
+	if cfg.printSetup {
+		payload, err := setupQrPayload(cfg.publicURL, bearerToken)
+		if err != nil {
+			log.Fatalf("Fatal: %v", err)
+		}
+		fmt.Println(payload)
+		return
 	}
 
 	// 3. Vault & Encrypted Store

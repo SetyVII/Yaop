@@ -13,6 +13,7 @@
 #include <QSslCertificate>
 #include <QSslKey>
 #include <QSslSocket>
+#include <QSysInfo>
 #include <QUrl>
 
 #include <algorithm>
@@ -125,7 +126,7 @@ void VaultOnboarding::adoptVk(const QByteArray &vk, quint32 epoch)
     m_epoch = epoch;
 }
 
-bool VaultOnboarding::commit(const QString &serverUrl, const QString &token)
+bool VaultOnboarding::commit(const QString &serverUrl, const QString &token, const QString &deviceId)
 {
     if (m_vk.size() != 32)
         return false;
@@ -138,6 +139,9 @@ bool VaultOnboarding::commit(const QString &serverUrl, const QString &token)
         s.setValue(QStringLiteral("server/url"), serverUrl.trimmed());
         if (!token.trimmed().isEmpty())
             s.setValue(QStringLiteral("server/token"), token.trimmed());
+        // The token belongs to this id (the server pins it); the workspace adopts it once.
+        if (!deviceId.trimmed().isEmpty())
+            s.setValue(QStringLiteral("server/device_id"), deviceId.trimmed());
     }
     m_vk.fill(0);
     m_committed = true;
@@ -340,7 +344,16 @@ void PairingFlow::hostApprove()
     setState(QStringLiteral("sending"));
     const QByteArray env = vault::sealPairingVk(m_shared, m_pairingId, m_ws->vaultKeyBytes(),
                                                 m_ws->vaultEpoch());
-    auto *reply = post(QStringLiteral("/v1/pairing/%1/transfer").arg(m_pairingId), env, "application/octet-stream");
+    // With this device's own token the new one gets a token of its own (spec step 7).
+    QNetworkRequest req(QUrl(m_base + QStringLiteral("/v1/pairing/%1/transfer").arg(m_pairingId)));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/octet-stream"));
+    req.setTransferTimeout(8000);
+    const QString ownToken = m_ws->bearerToken().trimmed();
+    if (!ownToken.isEmpty()) {
+        req.setRawHeader("Authorization", "Bearer " + ownToken.toUtf8());
+        req.setRawHeader("X-YAOP-Enroll-Key", vault::pairingEnrollKey(m_shared).toLatin1());
+    }
+    auto *reply = m_nam.post(req, env);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         reply->deleteLater();
@@ -416,6 +429,29 @@ void PairingFlow::pollGuestTransfer()
         }
         m_receivedVk = *vk;
         m_receivedEpoch = epoch;
+        m_poll.stop();
+        guestEnroll();
+    });
+}
+
+// After the VK: redeem this device's own token. No token offered (older holder or server) is not
+// an error: onboarding then asks for one by hand.
+void PairingFlow::guestEnroll()
+{
+    m_guestDeviceId = QStringLiteral("desktop-")
+        + QString::fromLatin1(vault::randomBytes(4).toHex());
+    const QJsonObject body{ { QStringLiteral("device_id"), m_guestDeviceId },
+                            { QStringLiteral("name"), QSysInfo::machineHostName() },
+                            { QStringLiteral("enroll_key"), vault::pairingEnrollKey(m_shared) } };
+    auto *reply = post(QStringLiteral("/v1/pairing/%1/enroll").arg(m_pairingId),
+                       QJsonDocument(body).toJson(QJsonDocument::Compact), "application/json");
+    connect(reply, &QNetworkReply::finished, this, [this, reply] {
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QJsonObject o = QJsonDocument::fromJson(reply->readAll()).object();
+        reply->deleteLater();
+        m_guestToken = status == 200 ? o.value(QLatin1String("token")).toString() : QString();
+        if (m_guestToken.isEmpty())
+            m_guestDeviceId.clear();
         setState(QStringLiteral("done"));
         emit guestJoined();
     });

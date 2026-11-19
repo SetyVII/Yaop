@@ -138,6 +138,18 @@ class PkmRepository(
         dao.getAllObjectsSnapshot().mapNotNull(::decodeOrGetCached)
     }
 
+    /**
+     * Recomputes every object's local links (backlinks index) from its current content. Local
+     * only: nothing is saved, stamped or synced. Used once after a links rule changes, so stale
+     * entries (e.g. old `#word` text links) go away without re-saving each note.
+     */
+    suspend fun rebuildLinkIndex() = withContext(Dispatchers.IO) {
+        for (obj in dao.getAllObjectsSnapshot().mapNotNull(::decodeOrGetCached)) {
+            val links = extractLinks(obj)
+            dao.replaceLinks(obj.id, links)
+        }
+    }
+
     override fun getObjectsByType(typeId: String): Flow<List<PkmObject>> =
         cachedFlow("type:$typeId") {
             dao.getObjectsByTypes(typeAliases(typeId)).map { list ->
@@ -1013,18 +1025,6 @@ class PkmRepository(
             }
         }
 
-        // Resolve #tags typed in content (only text the user wrote, never captured web text)
-        val taggable = extractTaggableText(obj)
-        if (taggable.contains('#')) {
-            TAG_TOKEN_REGEX.findAll(taggable).forEach { match ->
-                val tagName = match.groupValues[1]
-                val tagId = "tag_${sanitizeTagKey(tagName)}"
-                if (tagId != obj.id) {
-                    links += ObjectLinkEntity(obj.id, tagId, "BLOCK_TAG")
-                }
-            }
-        }
-
         // Resolve inline date mentions typed in content (e.g. @2026-11-08)
         if (searchable.contains('@')) {
             INLINE_DATE_MENTION_REGEX.findAll(searchable).forEach { match ->
@@ -1092,29 +1092,6 @@ class PkmRepository(
         }
     }
 
-    /**
-     * Text the user wrote, where a typed `#word` is a tag. Captured web text (bookmark title and
-     * description, properties like `description`) and code/math are not: a post's hashtags are
-     * not the user's tags (spec/object.md `links`).
-     */
-    private fun extractTaggableText(obj: PkmObject): String = buildString {
-        for (block in obj.blocks) {
-            val spans = when (block) {
-                is Block.Paragraph -> block.spans
-                is Block.Heading -> block.spans
-                is Block.Todo -> block.spans
-                is Block.BulletList -> block.spans
-                is Block.NumberedList -> block.spans
-                is Block.AlphabeticList -> block.spans
-                is Block.RomanList -> block.spans
-                is Block.Toggle -> block.spans
-                is Block.Quote -> block.spans
-                is Block.Callout -> block.spans
-                else -> continue
-            }
-            append(spans.toPlainText()).append(" ")
-        }
-    }
 
     private fun sanitizeTagKey(name: String): String =
         org.yaop.core.sync.MergeContract.tagKey(name).removePrefix("tag_")
@@ -1133,7 +1110,6 @@ class PkmRepository(
 
     companion object {
         private val MENTION_TOKEN_REGEX = Regex("""@\[([^\]]+)]|\[\[([^\]]+)]]""")
-        private val TAG_TOKEN_REGEX = Regex("""(?<!\S)#([a-zA-Z0-9_\u00C0-\u017F\-]+)""")
         private val INLINE_DATE_MENTION_REGEX = Regex("""(?<=^|[\s(\[])@(\d{4}-\d{2}-\d{2})""")
         private val ISO_DATE_EXACT_REGEX = Regex("""\d{4}-\d{2}-\d{2}""")
         private val WHITESPACE_REGEX = Regex("""\s+""")

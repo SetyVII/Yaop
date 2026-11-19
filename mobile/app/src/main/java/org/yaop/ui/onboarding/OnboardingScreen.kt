@@ -41,6 +41,7 @@ import org.yaop.core.crypto.vault.Bip39Runtime
 import org.yaop.core.crypto.vault.Pairing
 import org.yaop.core.pairing.PairingRelay
 import org.yaop.core.pairing.PairingSession
+import org.yaop.core.pairing.SetupQr
 import org.yaop.core.pairing.TlsFingerprint
 import org.yaop.core.sync.SyncManager
 import org.yaop.ui.onboarding.OnboardingMachine.RestoreError
@@ -132,7 +133,11 @@ fun OnboardingScreen(onDone: () -> Unit) {
             }
 
             is Step.Join -> JoinStep(
-                onVk = { vk, ep, url -> epoch = ep; qrServer = url; machine.joined(vk); sync() },
+                onVk = { vk, ep, url, token ->
+                    epoch = ep; qrServer = url; machine.joined(vk)
+                    // The pairing gave this device its own token: nothing to type, go straight in.
+                    if (token != null) scope.launch { commit(app, vk, ep, url to token); machine.finish(); onDone() } else sync()
+                },
                 onBack = { machine.back(); sync() },
             )
 
@@ -177,7 +182,8 @@ private fun PhraseGrid(phrase: String) {
 }
 
 @Composable
-private fun JoinStep(onVk: (ByteArray, Long, String) -> Unit, onBack: () -> Unit) {
+private fun JoinStep(onVk: (ByteArray, Long, String, String?) -> Unit, onBack: () -> Unit) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var pasted by remember { mutableStateOf("") }
     var errorRes by remember { mutableStateOf<Int?>(null) }
@@ -205,7 +211,13 @@ private fun JoinStep(onVk: (ByteArray, Long, String) -> Unit, onBack: () -> Unit
         val g = guest ?: return@LaunchedEffect
         repeat(300) {
             val opened = withContext(Dispatchers.IO) { g.pollVk() }
-            if (opened != null) { onVk(opened.vk, opened.keyEpoch, serverUrl); return@LaunchedEffect }
+            if (opened != null) {
+                val token = withContext(Dispatchers.IO) {
+                    g.enroll(org.yaop.core.sync.deviceIdFor(context), android.os.Build.MODEL ?: "Android")
+                }
+                onVk(opened.vk, opened.keyEpoch, serverUrl, token)
+                return@LaunchedEffect
+            }
             delay(2000)
         }
         errorRes = R.string.onb_join_unreachable
@@ -245,8 +257,38 @@ private fun ServerStep(
     var token by remember { mutableStateOf("") }
     var failed by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    var scanError by remember { mutableStateOf<Int?>(null) }
+
+    fun connect(u: String, t: String) {
+        busy = true
+        scope.launch {
+            val ok = sync.testConnection(u, t) == SyncManager.AuthCheck.OK
+            busy = false
+            if (ok) onConnect(u, t) else failed = true
+        }
+    }
+
+    // First device: the server's setup QR carries URL, pinned certificate and token.
+    val scanner = rememberLauncherForActivityResult(ScanContract()) { r ->
+        val raw = r.contents ?: return@rememberLauncherForActivityResult
+        val setup = SetupQr.decode(raw)
+        if (setup == null) { scanError = R.string.onb_server_bad_setup; return@rememberLauncherForActivityResult }
+        scope.launch {
+            val pinned = withContext(Dispatchers.IO) { TlsFingerprint.matches(setup.serverUrl, setup.tlsFp) }
+            if (!pinned) { scanError = R.string.onb_server_bad_cert; return@launch }
+            scanError = null; failed = false
+            url = setup.serverUrl; token = setup.token
+            connect(setup.serverUrl, setup.token)
+        }
+    }
+
     org.yaop.ui.common.ScreenTitle(stringResource(R.string.onb_server_title))
     Text(stringResource(R.string.onb_server_hint), color = AppColors.TextSecondary)
+    Button(enabled = !busy, onClick = {
+        scanner.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.QR_CODE).setBeepEnabled(false).setOrientationLocked(false))
+    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.onb_server_scan)) }
+    Text(stringResource(R.string.onb_server_scan_hint), color = AppColors.TextSecondary, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+    scanError?.let { Text(stringResource(it), color = AppColors.Danger) }
     OutlinedTextField(
         value = url, onValueChange = { url = it; failed = false },
         label = { Text(stringResource(R.string.sync_settings_url)) }, singleLine = true,
@@ -258,13 +300,8 @@ private fun ServerStep(
         modifier = Modifier.fillMaxWidth(),
     )
     if (failed) Text(stringResource(R.string.onb_server_failed), color = AppColors.Danger)
-    Button(enabled = !busy && url.isNotBlank() && token.isNotBlank(), onClick = {
-        busy = true
-        scope.launch {
-            val ok = sync.testConnection(url, token) == SyncManager.AuthCheck.OK
-            busy = false
-            if (ok) onConnect(url, token) else failed = true
-        }
-    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.onb_server_connect)) }
+    OutlinedButton(enabled = !busy && url.isNotBlank() && token.isNotBlank(), onClick = { connect(url, token) }, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.onb_server_connect))
+    }
     TextButton(onSkip) { Text(stringResource(R.string.onb_server_skip)) }
 }

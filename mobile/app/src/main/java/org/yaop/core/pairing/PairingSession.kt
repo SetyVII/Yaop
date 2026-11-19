@@ -31,10 +31,13 @@ object PairingSession {
             return Pairing.shortCode(s)
         }
 
-        /** The human confirmed the codes match: send the VK. */
-        fun approve(vk: ByteArray, keyEpoch: Long): Boolean {
+        /**
+         * The human confirmed the codes match: send the VK. With this device's [ownToken] the
+         * guest also gets its own server token, so nobody types one.
+         */
+        fun approve(vk: ByteArray, keyEpoch: Long, ownToken: String?): Boolean {
             val s = shared ?: return false
-            return relay.sendTransfer(pairingId, Pairing.sealVk(s, pairingId, vk, keyEpoch))
+            return relay.sendTransfer(pairingId, Pairing.sealVk(s, pairingId, vk, keyEpoch), ownToken, Pairing.enrollKey(s))
         }
     }
 
@@ -56,6 +59,12 @@ object PairingSession {
             val s = shared ?: return null
             val env = relay.fetchTransfer(pairingId) ?: return null
             return Pairing.openVk(s, pairingId, env)
+        }
+
+        /** After the VK arrived: this device's own server token, or null if none was offered. */
+        fun enroll(deviceId: String, name: String): String? {
+            val s = shared ?: return null
+            return relay.enroll(pairingId, deviceId, name, Pairing.enrollKey(s))
         }
     }
 }

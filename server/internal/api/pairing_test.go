@@ -212,3 +212,92 @@ func TestPairingUnknownAndExpired(t *testing.T) {
 	// Requests never leak write bodies on this transport.
 	_ = io.EOF
 }
+
+// Step 7 of spec/crypto.md §Pairing: the holder's authenticated transfer lets the joining device
+// mint its own token once, only with the enroll key derived from the shared secret.
+func TestPairingEnrollGivesTheNewDeviceAToken(t *testing.T) {
+	server, _, master, cleanup := setupTestServer(t)
+	defer cleanup()
+	h := server.Handler()
+
+	// A real holder device (A) syncs with its own token, not the master.
+	rec := doRequest(t, h, "POST", "/v1/devices/enroll", master, []byte(`{"device_id":"dev-a","name":"A"}`), "application/json")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("enroll A: %d %s", rec.Code, rec.Body.String())
+	}
+	var a struct{ Token string }
+	_ = json.Unmarshal(rec.Body.Bytes(), &a)
+
+	pairingID := strings.Repeat("ab", 16)
+	aPriv, bPriv := bytes.Repeat([]byte{1}, 32), bytes.Repeat([]byte{2}, 32)
+	aPub, _ := simclient.PubFromScalar(aPriv)
+	bPub, _ := simclient.PubFromScalar(bPriv)
+	body, _ := json.Marshal(map[string]string{"pairing_id": pairingID, "eph_pub": simclient.EncodePub(aPub)})
+	if rec := doRequest(t, h, "POST", "/v1/pairing", "", body, "application/json"); rec.Code != http.StatusCreated {
+		t.Fatalf("create: %d", rec.Code)
+	}
+	join, _ := json.Marshal(map[string]string{"b_pub": simclient.EncodePub(bPub)})
+	if rec := doRequest(t, h, "POST", "/v1/pairing/"+pairingID+"/join", "", join, "application/json"); rec.Code != http.StatusAccepted {
+		t.Fatalf("join: %d", rec.Code)
+	}
+	shared, _ := simclient.X25519Shared(aPriv, bPub)
+	key := simclient.PairingEnrollKey(shared)
+	env, _ := simclient.SealPairingVK(shared, pairingID, make([]byte, 32), 1, nil)
+	enroll := func(deviceID, k string) *httptest.ResponseRecorder {
+		b, _ := json.Marshal(map[string]string{"device_id": deviceID, "name": "B", "enroll_key": k})
+		return doRequest(t, h, "POST", "/v1/pairing/"+pairingID+"/enroll", "", b, "application/json")
+	}
+	transfer := "/v1/pairing/" + pairingID + "/transfer"
+
+	// Before any authorized transfer there is nothing to redeem.
+	if rec := enroll("dev-b", key); rec.Code != http.StatusNotFound {
+		t.Fatalf("enroll before transfer: %d", rec.Code)
+	}
+	// An enroll key needs the holder's token: someone who only saw the QR cannot arm it.
+	if rec := doRequestRaw(t, h, "POST", transfer, "", env, "X-YAOP-Enroll-Key: "+key); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated enroll key: %d", rec.Code)
+	}
+	if rec := doRequestRaw(t, h, "POST", transfer, "not-a-token", env, "X-YAOP-Enroll-Key: "+key); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("bad holder token: %d", rec.Code)
+	}
+	if rec := doRequestRaw(t, h, "POST", transfer, a.Token, env, "X-YAOP-Enroll-Key: SHORT"); rec.Code != http.StatusBadRequest {
+		t.Fatalf("malformed enroll key: %d", rec.Code)
+	}
+	if rec := doRequestRaw(t, h, "POST", transfer, a.Token, env, "X-YAOP-Enroll-Key: "+key); rec.Code != http.StatusCreated {
+		t.Fatalf("authorized transfer: %d %s", rec.Code, rec.Body.String())
+	}
+
+	if rec := enroll("dev-b", strings.Repeat("0", 64)); rec.Code != http.StatusForbidden {
+		t.Fatalf("wrong enroll key: %d", rec.Code)
+	}
+	// Never rotates an existing device's token.
+	if rec := enroll("dev-a", key); rec.Code != http.StatusConflict {
+		t.Fatalf("existing device id: %d", rec.Code)
+	}
+	rec = enroll("dev-b", key)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("enroll: %d %s", rec.Code, rec.Body.String())
+	}
+	var b struct {
+		DeviceID string `json:"device_id"`
+		Token    string `json:"token"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &b)
+	if b.DeviceID != "dev-b" || len(b.Token) != 64 {
+		t.Fatalf("enroll answer: %+v", b)
+	}
+	if rec := doRequest(t, h, "GET", "/v1/sync/status", b.Token, nil, ""); rec.Code != http.StatusOK {
+		t.Fatalf("the new token syncs: %d", rec.Code)
+	}
+	if rec := doRequest(t, h, "GET", "/v1/sync/status", a.Token, nil, ""); rec.Code != http.StatusOK {
+		t.Fatalf("A keeps its token: %d", rec.Code)
+	}
+	// Once only, even if the holder retries the transfer.
+	if rec := enroll("dev-c", key); rec.Code != http.StatusConflict {
+		t.Fatalf("second redeem: %d", rec.Code)
+	}
+	_ = doRequestRaw(t, h, "POST", transfer, a.Token, env, "X-YAOP-Enroll-Key: "+key)
+	if rec := enroll("dev-c", key); rec.Code != http.StatusConflict {
+		t.Fatalf("redeem after a retried transfer: %d", rec.Code)
+	}
+}

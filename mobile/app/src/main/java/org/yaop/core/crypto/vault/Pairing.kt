@@ -68,6 +68,13 @@ object Pairing {
     fun vkTransferKey(shared: ByteArray): ByteArray =
         Hkdf.derive(shared, PAIRING_SALT.toByteArray(Charsets.UTF_8), "vk-transfer".toByteArray(Charsets.UTF_8), 32)
 
+    /**
+     * Key B redeems for its own server token (step 7): HKDF(shared, "enroll"), 32 bytes as
+     * lowercase hex. Independent of [vkTransferKey], so the server seeing it learns no VK.
+     */
+    fun enrollKey(shared: ByteArray): String =
+        hex(Hkdf.derive(shared, PAIRING_SALT.toByteArray(Charsets.UTF_8), "enroll".toByteArray(Charsets.UTF_8), 32))
+
     /** A wraps the vault key of [keyEpoch] for the new device (envelope 0x01, AAD pairing/<id>). */
     fun sealVk(shared: ByteArray, pairingId: String, vk: ByteArray, keyEpoch: Long, nonce: ByteArray? = null): ByteArray =
         Envelope.seal(

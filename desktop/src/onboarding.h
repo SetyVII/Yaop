@@ -53,7 +53,9 @@ public:
 
     // Server step (optional): url/token stored in QSettings like --server/--token. Returns
     // whether the vault key was persisted.
-    Q_INVOKABLE bool commit(const QString &serverUrl, const QString &token);
+    // deviceId: the id a pairing enrolled this device's token under (empty otherwise).
+    Q_INVOKABLE bool commit(const QString &serverUrl, const QString &token,
+                            const QString &deviceId = QString());
     bool committed() const { return m_committed; }
     // False when no keychain/passphrase could protect the key (QML warns).
     bool persistent() const { return m_persistent; }
@@ -114,6 +116,9 @@ public:
     QByteArray receivedVk() const { return m_receivedVk; }
     quint32 receivedEpoch() const { return m_receivedEpoch; }
     QString guestServerUrl() const { return m_guestServer; }
+    // Own server token the pairing gave this device (empty if the holder offered none).
+    Q_INVOKABLE QString guestToken() const { return m_guestToken; }
+    Q_INVOKABLE QString guestDeviceId() const { return m_guestDeviceId; }
 
     // Pure helper (selftest): SHA-256 of an SPKI DER, lowercase hex.
     static QString fingerprintOf(const QByteArray &spkiDer);
@@ -129,6 +134,7 @@ private:
     void startPolling();
     void pollHostAnswer();
     void pollGuestTransfer();
+    void guestEnroll();
     void withTlsFingerprint(const QString &url, std::function<void(const QString &)> done);
     QNetworkReply *post(const QString &path, const QByteArray &body, const QByteArray &type);
     QNetworkReply *get(const QString &path);
@@ -147,6 +153,8 @@ private:
     QByteArray m_receivedVk;
     quint32 m_receivedEpoch = 1;
     QString m_guestServer;
+    QString m_guestToken;
+    QString m_guestDeviceId;
     int m_ticks = 0;
     bool m_isHost = false;
     bool m_busy = false;

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"sort"
@@ -121,25 +122,34 @@ func (s *Server) handleEnrollDevice(w http.ResponseWriter, r *http.Request) {
 		writeJSONMessage(w, http.StatusBadRequest, "error", "device_id is required")
 		return
 	}
-	raw := make([]byte, 32)
-	if _, err := rand.Read(raw); err != nil {
-		writeJSONMessage(w, http.StatusInternalServerError, "error", "rng failure")
-		return
-	}
-	token := hex.EncodeToString(raw)
 	s.devices.mu.Lock()
 	defer s.devices.mu.Unlock()
-	if old, ok := s.devices.devices[req.DeviceID]; ok {
-		delete(s.devices.byHash, old.TokenHash)
-	}
-	rec := &deviceRecord{DeviceID: req.DeviceID, Name: strings.TrimSpace(req.Name), TokenHash: hashToken(token), CreatedAt: nowUTC().Format(timeFormat)}
-	s.devices.devices[req.DeviceID] = rec
-	s.devices.byHash[rec.TokenHash] = req.DeviceID
-	if err := s.saveDevicesLocked(); err != nil {
-		writeJSONMessage(w, http.StatusInternalServerError, "error", "could not persist device")
+	token, err := s.mintDeviceTokenLocked(req.DeviceID, req.Name)
+	if err != nil {
+		writeJSONMessage(w, http.StatusInternalServerError, "error", err.Error())
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, map[string]string{"device_id": req.DeviceID, "token": token})
+}
+
+// mintDeviceTokenLocked issues a fresh token for deviceID (replacing any previous one) and
+// persists the registry. The caller holds s.devices.mu.
+func (s *Server) mintDeviceTokenLocked(deviceID, name string) (string, error) {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return "", errors.New("rng failure")
+	}
+	token := hex.EncodeToString(raw)
+	if old, ok := s.devices.devices[deviceID]; ok {
+		delete(s.devices.byHash, old.TokenHash)
+	}
+	rec := &deviceRecord{DeviceID: deviceID, Name: strings.TrimSpace(name), TokenHash: hashToken(token), CreatedAt: nowUTC().Format(timeFormat)}
+	s.devices.devices[deviceID] = rec
+	s.devices.byHash[rec.TokenHash] = deviceID
+	if err := s.saveDevicesLocked(); err != nil {
+		return "", errors.New("could not persist device")
+	}
+	return token, nil
 }
 
 // GET /v1/devices → devices without hashes (any authenticated caller).

@@ -286,6 +286,10 @@ static void testCryptoConformance()
               "crypto: x25519 shared secret agrees on both sides");
         CHECK(vault::pairingCode(*sharedA) == s5.value(QLatin1String("short_code")).toString(),
               "crypto: 6-digit short code");
+        const QString enrollKey = steps.value(7).value(QLatin1String("enroll_key")).toString();
+        CHECK(!enrollKey.isEmpty() && vault::pairingEnrollKey(*sharedA) == enrollKey
+                  && vault::pairingEnrollKey(*sharedB) == enrollKey,
+              "crypto: enroll key (step 7) agrees on both sides");
         CHECK(hexStr(vault::pairingVkKey(*sharedA))
                   == s6.value(QLatin1String("vk_transfer_key")).toString(),
               "crypto: vk transfer key");

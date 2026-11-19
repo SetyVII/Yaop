@@ -125,6 +125,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/pairing/{id}/answer", s.handlePairingAnswer)
 	mux.HandleFunc("POST /v1/pairing/{id}/transfer", s.handlePairingTransfer)
 	mux.HandleFunc("GET /v1/pairing/{id}/transfer", s.handlePairingTransferGet)
+	mux.HandleFunc("POST /v1/pairing/{id}/enroll", s.handlePairingEnroll)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Version headers

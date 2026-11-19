@@ -138,6 +138,12 @@ func (s *Store) initSchema() error {
 		created_at TEXT NOT NULL,
 		updated_at TEXT NOT NULL
 	);
+	CREATE TABLE IF NOT EXISTS pairing_enrolls (
+		pairing_id TEXT PRIMARY KEY,
+		key_hash TEXT NOT NULL,
+		redeemed INTEGER NOT NULL DEFAULT 0,
+		updated_at TEXT NOT NULL
+	);
 	CREATE TABLE IF NOT EXISTS asset_uploads (
 		wire_id TEXT PRIMARY KEY,
 		total_chunks INTEGER NOT NULL,

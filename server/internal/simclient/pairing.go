@@ -138,6 +138,13 @@ func PairingVKKey(shared []byte) []byte {
 	return pairingHKDF(shared, "vk-transfer", SubkeyBytes)
 }
 
+// PairingEnrollKey derives the key the joining device redeems for its own
+// server token (step 7): HKDF(info="enroll"), 32 bytes as lowercase hex.
+// Independent of PairingVKKey, so showing it to the server reveals no VK.
+func PairingEnrollKey(shared []byte) string {
+	return hex.EncodeToString(pairingHKDF(shared, "enroll", 32))
+}
+
 // SealPairingVK wraps the vault key of the given epoch for the new device:
 // envelope v1 under PairingVKKey(shared), AAD "pairing/<pairing_id>",
 // payload = VK. nonce may be nil (random, production) or fixed (vectors).

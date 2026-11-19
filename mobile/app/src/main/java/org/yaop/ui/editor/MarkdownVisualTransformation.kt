@@ -119,11 +119,9 @@ data class MarkdownRender(
  */
 object MarkdownRenderer {
 
-    private val INLINE_TAG_TOKEN = Regex("""(?<=^|[\s(\[])#([a-zA-Z0-9_\u0080-\uFFFF]+)""")
-
     /**
      * Fast O(N) check to determine whether [spans] requires any visual transformation or pill rendering.
-     * When false (pure unstyled plain text without inline `#tags`), `BasicTextField` can use
+     * When false (pure unstyled plain text), `BasicTextField` can use
      * [VisualTransformation.None] directly, eliminating AnnotatedString style passes and IME layout invalidation.
      */
     fun hasRichStylingOrPills(spans: List<InlineSpan>): Boolean {
@@ -134,8 +132,7 @@ object MarkdownRenderer {
                         span.marks.isNotEmpty() ||
                         !span.linkUrl.isNullOrBlank() ||
                         span.textColor != null ||
-                        span.backgroundColor != null ||
-                        span.text.indexOf('#') >= 0
+                        span.backgroundColor != null
                     ) {
                         return true
                     }
@@ -298,23 +295,9 @@ object MarkdownRenderer {
                                 borderColor = AppColors.Accent.copy(alpha = 0.35f),
                             ),
                         )
-                    } else if (TextMark.CODE !in span.marks && span.text.indexOf('#') >= 0) {
-                        // Also render inline #tag tokens inside plain text runs with the same formal pill style
-                        for (match in INLINE_TAG_TOKEN.findAll(span.text)) {
-                            val cleanTag = match.groupValues[1].trim()
-                            val matchStart = seg.start + match.range.first
-                            val matchEnd = seg.start + match.range.last + 1
-                            applyFormalTagStyle(
-                                builder = builder,
-                                pills = pills,
-                                start = matchStart,
-                                end = matchEnd,
-                                visibleLabel = match.value,
-                                cleanTag = cleanTag,
-                                customHex = tagColors[cleanTag.lowercase()],
-                            )
-                        }
                     }
+                    // A typed `#word` stays plain text: only a picked tag (InlineSpan.Tag) is a pill
+                    // (docs/product.md §4.5).
                 }
 
                 is InlineSpan.Mention -> {

@@ -155,6 +155,8 @@ std::optional<QByteArray> x25519Shared(const QByteArray &priv, const QByteArray 
 // 6-digit zero-padded short code both devices show.
 QString pairingCode(const QByteArray &shared);
 QByteArray pairingVkKey(const QByteArray &shared);
+// Step 7: key B redeems for its own server token, HKDF(info="enroll"), 32 bytes lowercase hex.
+QString pairingEnrollKey(const QByteArray &shared);
 QByteArray sealPairingVk(const QByteArray &shared, const QString &pairingId, const QByteArray &vk,
                          uint32_t keyEpoch, const QByteArray *fixedNonce = nullptr);
 std::optional<QByteArray> openPairingVk(const QByteArray &shared, const QString &pairingId,

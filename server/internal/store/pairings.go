@@ -87,5 +87,46 @@ func (s *Store) PurgePairingsBefore(cutoff string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	if _, err := s.writeDB.Exec("DELETE FROM pairing_enrolls WHERE updated_at < ?", cutoff); err != nil {
+		return 0, err
+	}
 	return res.RowsAffected()
+}
+
+// SetPairingEnrollKey authorizes the pairing to mint one device token for the
+// joining device (spec/crypto.md §Pairing step 7). Only the SHA-256 of the
+// enroll key is kept. Setting it again (a retried transfer) re-arms it.
+func (s *Store) SetPairingEnrollKey(pairingID, keyHash, now string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.writeDB.Exec(
+		"INSERT INTO pairing_enrolls(pairing_id, key_hash, updated_at) VALUES(?, ?, ?) ON CONFLICT(pairing_id) DO UPDATE SET key_hash=excluded.key_hash, updated_at=excluded.updated_at WHERE redeemed = 0",
+		pairingID, keyHash, now)
+	return err
+}
+
+// GetPairingEnroll returns the enroll key hash and whether it was redeemed.
+func (s *Store) GetPairingEnroll(pairingID string) (keyHash string, redeemed, ok bool, err error) {
+	var r int
+	err = s.readDB.QueryRow("SELECT key_hash, redeemed FROM pairing_enrolls WHERE pairing_id = ?", pairingID).Scan(&keyHash, &r)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, false, nil
+	}
+	if err != nil {
+		return "", false, false, err
+	}
+	return keyHash, r != 0, true, nil
+}
+
+// RedeemPairingEnroll marks the enroll as used; false when it already was
+// (two concurrent redeems: only one wins).
+func (s *Store) RedeemPairingEnroll(pairingID, now string) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	res, err := s.writeDB.Exec("UPDATE pairing_enrolls SET redeemed = 1, updated_at = ? WHERE pairing_id = ? AND redeemed = 0", now, pairingID)
+	if err != nil {
+		return false, err
+	}
+	n, _ := res.RowsAffected()
+	return n == 1, nil
 }

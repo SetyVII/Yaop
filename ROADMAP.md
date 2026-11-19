@@ -9,6 +9,7 @@ mobile and desktop, then a test that both pass.
 ## In 0.1.0
 
 - E2EE vault: 24-word phrase, HKDF subkeys, XChaCha20 envelopes, blind ids, QR pairing (M, D, S).
+- No typed tokens: pairing gives the new device its own token; the first device scans the server's setup QR (M, D, S).
 - Blind sync server (`yaop-sync/1`): op log, idempotent push/pull, live stream, chunked media (S).
 - Field/block merge with HLC and block anchors, identical on Go, Kotlin and C++ (fixtures).
 - Local search and backlinks, journal, tasks, habits, trash with 30-day purge (M, D).
@@ -94,7 +95,6 @@ mobile and desktop, then a test that both pass.
       with other people or as a service.
 - [ ] External review of the crypto composition (envelope, HKDF domains, blind ids, pairing).
 - [ ] Wrap the desktop's fallback key file (no keychain) with a passphrase.
-- [ ] Pairing QR could carry the device token too (today it is pasted by hand after pairing).
 
 ## UI polish
 

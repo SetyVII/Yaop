@@ -9,6 +9,7 @@
 #include <QSaveFile>
 #include <QRegularExpression>
 #include <QImage>
+#include <QImageReader>
 #include <QMimeData>
 #include <QGuiApplication>
 #include <QClipboard>
@@ -43,6 +44,18 @@
 namespace pkm {
 
 using namespace detail;
+
+QSize Workspace::imageFileSize(const QString &localPath) const
+{
+    if (localPath.isEmpty())
+        return {};
+    QImageReader reader(localPath);
+    reader.setAutoTransform(true);
+    QSize size = reader.size();
+    if (size.isValid() && (reader.transformation() & QImageIOHandler::TransformationRotate90))
+        size.transpose();
+    return size;
+}
 
 QString Workspace::ensureMediaObject(const QString &assetId)
 {

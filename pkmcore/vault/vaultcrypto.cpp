@@ -506,6 +506,12 @@ QByteArray pairingVkKey(const QByteArray &shared)
                      kSubkeyBytes);
 }
 
+QString pairingEnrollKey(const QByteArray &shared)
+{
+    return QString::fromLatin1(
+        hkdfSha256(shared, QByteArray(kPairingSalt), QByteArrayLiteral("enroll"), 32).toHex());
+}
+
 QByteArray sealPairingVk(const QByteArray &shared, const QString &pairingId, const QByteArray &vk,
                          uint32_t keyEpoch, const QByteArray *fixedNonce)
 {

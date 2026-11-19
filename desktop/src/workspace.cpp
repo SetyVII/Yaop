@@ -133,6 +133,11 @@ Workspace::Workspace(QObject *parent)
 
     m_deviceId = m_store ? m_store->kv(QStringLiteral("device_id")) : QString();
     if (m_deviceId.isEmpty()) {
+        // A pairing enrolled a token under this id (onboarding): adopt it once.
+        m_deviceId = settings.value(QStringLiteral("server/device_id")).toString().trimmed();
+        settings.remove(QStringLiteral("server/device_id"));
+    }
+    if (m_deviceId.isEmpty()) {
         m_deviceId = QStringLiteral("desktop-") + newUuid().left(8);
         if (m_store)
             m_store->setKv(QStringLiteral("device_id"), m_deviceId);

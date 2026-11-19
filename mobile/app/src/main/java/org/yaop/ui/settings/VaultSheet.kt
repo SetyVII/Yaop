@@ -157,7 +157,7 @@ private fun AddDevicePane() {
                         scope.launch {
                             val session = withContext(Dispatchers.IO) { app.repository.vaultSession() }
                             val ok = session != null && withContext(Dispatchers.IO) {
-                                host?.approve(session.vaultKey.key, session.vaultKey.keyEpoch) == true
+                                host?.approve(session.vaultKey.key, session.vaultKey.keyEpoch, app.syncManager.bearerToken) == true
                             }
                             state = if (ok) AddState.Done else AddState.Failed
                         }

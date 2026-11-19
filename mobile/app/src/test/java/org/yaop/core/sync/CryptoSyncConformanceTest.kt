@@ -259,6 +259,11 @@ class CryptoSyncConformanceTest {
         assertEquals(s5.getString("desc"), s5.getString("short_code"), Pairing.shortCode(sharedA!!))
         assertEquals("code is symmetric", s5.getString("short_code"), Pairing.shortCode(sharedB!!))
 
+        // 7. The enroll key B redeems for its own server token (same on both sides).
+        val s7 = steps.getJSONObject(6)
+        assertEquals(s7.getString("desc"), s7.getString("enroll_key"), Pairing.enrollKey(sharedA))
+        assertEquals("enroll key is symmetric", s7.getString("enroll_key"), Pairing.enrollKey(sharedB))
+
         // 6. A wraps the VK under the vk-transfer key; the envelope is byte-exact.
         val vk = unhex(s6.getString("vk"))
         assertArrayEquals(s6.getString("desc"), unhex(s6.getString("vk_transfer_key")), Pairing.vkTransferKey(sharedA))
@@ -356,6 +361,27 @@ class CryptoSyncConformanceTest {
             var i = 0
             override fun hasNext() = i < arr.length()
             override fun next() = arr.getJSONObject(i++)
+        }
+    }
+
+    @Test
+    fun setupQr() {
+        val fx = fx("crypto", "setup_qr.json")
+        val enc = fx.getJSONObject("encode")
+        val decoded = org.yaop.core.pairing.SetupQr.decode(enc.getString("qr_json"))
+        assertNotNull("encode case decodes", decoded)
+        assertEquals(enc.getString("server_url"), decoded!!.serverUrl)
+        assertEquals(enc.getString("tls_fp"), decoded.tlsFp)
+        assertEquals(enc.getString("token"), decoded.token)
+        val valid = fx.getJSONArray("valid")
+        for (k in 0 until valid.length()) {
+            val c = valid.getJSONObject(k)
+            assertNotNull(c.getString("desc"), org.yaop.core.pairing.SetupQr.decode(c.getString("qr_json")))
+        }
+        val invalid = fx.getJSONArray("invalid")
+        for (k in 0 until invalid.length()) {
+            val c = invalid.getJSONObject(k)
+            assertNull(c.getString("desc"), org.yaop.core.pairing.SetupQr.decode(c.getString("qr_json")))
         }
     }
 }

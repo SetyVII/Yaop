@@ -72,8 +72,24 @@ class YaopApp : Application() {
                 repository.syncDefaultTypes()
                 repository.getAllActiveObjectsSnapshot()
             }
+            rebuildLinkIndexOnce()
             syncManager.syncNow()
         }
+    }
+
+    /**
+     * Bump [LINK_INDEX_VERSION] when the local links rule changes; each device then rebuilds its
+     * backlinks once. v2: typed `#word` text is no longer a tag (docs/product.md §4.5).
+     */
+    private suspend fun rebuildLinkIndexOnce() {
+        val prefs = getSharedPreferences("maintenance", MODE_PRIVATE)
+        if (prefs.getInt("link_index_version", 1) >= LINK_INDEX_VERSION) return
+        runCatching { repository.rebuildLinkIndex() }
+            .onSuccess { prefs.edit().putInt("link_index_version", LINK_INDEX_VERSION).apply() }
+    }
+
+    private companion object {
+        const val LINK_INDEX_VERSION = 2
     }
 
     /**

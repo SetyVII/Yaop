@@ -148,10 +148,41 @@ An enrolled device (A) adds another (B) without the VK ever travelling in clear 
    in a version `0x01` envelope, `key_epoch` = the vault's current epoch, a random 24-byte nonce
    and AAD `"pairing/<pairing_id>"`; the payload is the VK (32 bytes). B opens it, checks the
    code matches its own and is enrolled.
+7. **B gets its own server token** (nothing typed by hand). Both derive
+
+   ```
+   enroll_key = HKDF-SHA256(shared, salt="yaop-pairing/1", info="enroll")  // 32 bytes, lowercase hex
+   ```
+
+   A sends the transfer authenticated with **its own** token (`Authorization: Bearer …`) and the
+   header `X-YAOP-Enroll-Key: <enroll_key>`; that authorizes the pairing to mint one device
+   token. B then calls `POST /v1/pairing/{id}/enroll {device_id, name, enroll_key}` and gets
+   `{device_id, token}`, once. The server only compares `enroll_key` (an HKDF output independent
+   of `vk_key`, so it reveals nothing about the VK); it binds the token to the pair holding
+   `shared`, so someone who only saw the QR cannot claim it. A transfer sent without a token still
+   relays the VK, but no token is offered and B asks for one by hand as before.
 
 The full transcript with fixed test keys (every intermediate value in hex) is
 `spec/fixtures/crypto/pairing_transcript.json`; the runner replays it step by step and reproduces
 the exact bytes.
+
+### First device: the setup QR
+
+With no enrolled device yet there is nobody to pair with, so the server operator shows a setup QR
+(`yaop-server -print-setup -public-url <url> | qrencode -t ansiutf8`). It carries exactly this
+JSON (UTF-8, compact, keys in this order):
+
+```json
+{"v":1,"server_url":"https://…","tls_fp":"<sha256-hex-32B>","token":"<master token>"}
+```
+
+- `tls_fp` as in the pairing QR; `"0"×64` for a plain-http server (no certificate, the check is
+  skipped). An https server whose fingerprint does not match aborts.
+- `token` is the **master** token. The device exchanges it for its own token at once
+  (`/v1/devices/enroll`) and forgets it; the QR is as secret as `bearer.token` and is only shown
+  on the operator's terminal.
+- Strict decoding: version 1, exactly these keys, non-empty URL and token, 64 lowercase hex for
+  `tls_fp`. Fixture: `spec/fixtures/crypto/setup_qr.json`.
 
 ## Rotation
 
@@ -273,7 +304,8 @@ Notes:
 | `envelope.json` | exact v1 envelope bytes (object, chunk with chunk AAD, snapshot) and negatives (size, version, AAD, epoch) |
 | `envelope_zstd_roundtrip.json` | v2: compress, encrypt, open, decompress == original (bytes never exact) |
 | `../backup/small.yaop` + `small.json` | the `.yaop` backup container (exact bytes) |
-| `pairing_transcript.json` | the full pairing transcript, step by step, with exact bytes |
+| `pairing_transcript.json` | the full pairing transcript, step by step, with exact bytes, and the enroll key of step 7 |
+| `setup_qr.json` | the first-device setup QR: exact encoding, accepted and rejected payloads |
 
 ## What this contract does NOT allow
 

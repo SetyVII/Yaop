@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QHash>
 #include <QSet>
+#include <QSize>
 #include <QObject>
 #include <functional>
 #include <memory>
@@ -161,6 +162,9 @@ public:
     // minutes = local time of creation for "created", -1 otherwise.
     Q_INVOKABLE QVariantList calendarItems(const QString &fromIso, const QString &toIso) const;
     Q_INVOKABLE QString ensureMediaObject(const QString &assetId);
+    // Pixel size of a local image file, read from its header (EXIF orientation applied); invalid
+    // when unreadable. Lets the editor size an image block before the picture decodes.
+    Q_INVOKABLE QSize imageFileSize(const QString &localPath) const;
     Q_INVOKABLE QString createWebLinkFromUrl(const QString &url, const QString &sourceObjectId = QString(),
                                              const QString &sourceBlockId = QString());
     Q_INVOKABLE void setWebCoverUrl(const QString &objectId, const QString &imageUrl);

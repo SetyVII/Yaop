@@ -42,6 +42,11 @@
       "pairing_id": "8f14e45fceea167a5a36dedd4bea2543",
       "vk": "11223344556677889900aabbccddeeff00112233445566778899aabbccddeeff",
       "vk_transfer_key": "b842440ffd5f02c8cc779753918a4c937bb9caa4eebfbcd598543a8d00d99032"
+    },
+    {
+      "desc": "both derive the enroll key; A sends it with the transfer, B redeems it for a device token",
+      "enroll_key": "2bb7c5e34c38d7a42a0745afd22e96997ee87d07c7fbece00519f380485351ae",
+      "n": 7
     }
   ]
 }
