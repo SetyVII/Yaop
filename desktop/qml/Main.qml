@@ -42,6 +42,7 @@ ApplicationWindow {
         }
         lastLocation = location
         storeTab()
+        Qt.callLater(ensureFocus)
     }
     function storeTab() {
         if (!tabs || !tabs[tabIndex]) return   // during start-up, before `tabs` exists
@@ -228,44 +229,62 @@ ApplicationWindow {
     FontLoader { source: "../assets/fonts/Inter-SemiBold.otf" }
     FontLoader { source: "../assets/fonts/Inter-Bold.otf" }
 
-    Shortcut {
-        sequence: "Ctrl+K"
-        onActivated: {
-            app.captureOpen = false
-            app.paletteOpen = !app.paletteOpen
+    // Global shortcuts come from the one keymap table (src/keymap.cpp, docs/keyboard.md).
+    // Editor keys that clash (Ctrl+D) win there through Keys.onShortcutOverride.
+    Instantiator {
+        model: keymap.bindings("global")
+        delegate: Shortcut {
+            required property var modelData
+            sequences: modelData.keys
+            context: modelData.appWide ? Qt.ApplicationShortcut : Qt.WindowShortcut
+            enabled: !modelData.slateOnly || Theme.slate
+            onActivated: app.runAction(modelData.id)
         }
     }
 
-    Shortcut {
-        sequence: "Ctrl+N"
-        onActivated: {
-            app.paletteOpen = false
-            app.captureOpen = true
-        }
+    // There is always a focused thing (docs/keyboard.md §3): on start, when the window comes back
+    // (Alt+Tab) and after a page change hid the focused item, focus goes to the page's default.
+    function ensureFocus() {
+        const it = app.activeFocusItem
+        if (it && it.parent && it !== app.contentItem && it.visible) return   // no parent = window root
+        const host = pages.children[pages.currentIndex]
+        const item = host && host.item !== undefined ? host.item : host
+        if (!item) return
+        if (typeof item.focusDefault === "function") item.focusDefault()
+        else item.forceActiveFocus()
     }
+    onActiveChanged: if (active) Qt.callLater(ensureFocus)
 
-    Shortcut { sequence: "Ctrl+Shift+L"; onActivated: appLock.lockNow() }
-    Shortcut { sequence: "Ctrl+Shift+H"; context: Qt.ApplicationShortcut; onActivated: Privacy.toggle() }
-    Shortcut { sequence: "Ctrl+1"; onActivated: { app.editorObjectId = ""; app.page = "home" } }
-    Shortcut { sequence: "Ctrl+2"; onActivated: { app.editorObjectId = ""; app.page = "journal" } }
-    Shortcut { sequence: "Ctrl+3"; onActivated: { app.editorObjectId = ""; app.page = "library" } }
-    Shortcut { sequence: "Ctrl+4"; onActivated: { app.editorObjectId = ""; app.page = "whiteboard" } }
-    Shortcut { sequence: "Ctrl+5"; onActivated: { app.editorObjectId = ""; app.page = "tasks" } }
-    Shortcut { sequence: "Ctrl+D"; onActivated: app.openToday() }
-    Shortcut { sequence: "Ctrl+T"; enabled: Theme.slate; onActivated: { app.newTab("p:calendar"); app.openToday() } }
-    Shortcut { sequence: "Ctrl+W"; enabled: Theme.slate; onActivated: app.closeTab(app.tabIndex) }
-    Shortcut { sequence: "Ctrl+Tab"; enabled: Theme.slate; onActivated: app.switchTab((app.tabIndex + 1) % app.tabs.length) }
-    Shortcut { sequence: "Ctrl+Shift+Tab"; enabled: Theme.slate; onActivated: app.switchTab((app.tabIndex + app.tabs.length - 1) % app.tabs.length) }
-    Shortcut { sequence: "Alt+Left"; onActivated: app.goBack() }
-    Shortcut { sequence: "Alt+Right"; onActivated: app.goForward() }
-    Shortcut { sequence: "Ctrl+J"; onActivated: { app.editorObjectId = ""; app.page = "journal" } }
-    Shortcut { sequence: "Ctrl+L"; onActivated: { app.editorObjectId = ""; app.page = "library" } }
-    Shortcut {
-        sequence: "Escape"
-        onActivated: {
-            app.paletteOpen = false
-            app.captureOpen = false
-            settingsSheet.close()
+    function showPage(p) { editorObjectId = ""; page = p }
+    function runAction(id) {
+        if (id.startsWith("tab.") && Number(id.substring(4)) > 0) {
+            const n = Number(id.substring(4))
+            switchTab(n === 9 ? tabs.length - 1 : n - 1)   // 9 = last, like browsers
+            return
+        }
+        if (id.startsWith("page.")) { showPage(id.substring(5)); return }
+        switch (id) {
+        case "palette":
+            captureOpen = false
+            palette.paneMode = false
+            paletteOpen = !paletteOpen
+            break
+        case "capture":
+            paletteOpen = false
+            captureOpen = true
+            break
+        case "today": openToday(); break
+        case "back": goBack(); break
+        case "forward": goForward(); break
+        case "tab.new": newTab("p:calendar"); openToday(); break
+        case "tab.close": closeTab(tabIndex); break
+        case "tab.next": switchTab((tabIndex + 1) % tabs.length); break
+        case "tab.prev": switchTab((tabIndex + tabs.length - 1) % tabs.length); break
+        case "sidebar": sidebarOpen = !sidebarOpen; break
+        case "settings": settingsSheet.open(); break
+        case "lock": appLock.lockNow(); break
+        case "privacy": Privacy.toggle(); break
+        default: console.warn("keymap: no action for", id)
         }
     }
 
@@ -371,6 +390,7 @@ ApplicationWindow {
                 sidebarHidden: !app.sidebarOpen
                 canBack: app.backStack.length > 0
                 canForward: app.forwardStack.length > 0
+                paneOpen: app.paneOpen
                 tabs: app.tabViews
                 currentTab: app.tabIndex
                 onTabClicked: (i) => app.switchTab(i)
@@ -379,6 +399,15 @@ ApplicationWindow {
                 onBackRequested: app.goBack()
                 onForwardRequested: app.goForward()
                 onShowSidebarRequested: app.sidebarOpen = true
+                onSplitPaneRequested: {
+                    if (app.paneOpen) {
+                        app.closePane()
+                    } else {
+                        app.captureOpen = false
+                        palette.paneMode = true
+                        app.paletteOpen = true
+                    }
+                }
             }
 
             TopBar {
@@ -555,14 +584,21 @@ ApplicationWindow {
     CommandPalette {
         id: palette
         appWindow: app
-        onOpenObjectRequested: app.openObject(objectId)
-        onRequestClose: app.paletteOpen = false
+        onOpenObjectRequested: (objectId) => app.openObject(objectId)
+        onOpenInPaneRequested: (objectId) => app.openInPane(objectId)
+        onRequestClose: {
+            palette.paneMode = false
+            app.paletteOpen = false
+        }
+        // Esc / click outside close the popup itself; keep the flag in step.
+        onClosed: if (app.paletteOpen) { palette.paneMode = false; app.paletteOpen = false }
     }
 
     QuickCapture {
         id: capture
         appWindow: app
         onRequestClose: app.captureOpen = false
+        onClosed: if (app.captureOpen) app.captureOpen = false
     }
 
     SettingsSheet {
@@ -571,9 +607,12 @@ ApplicationWindow {
 
     Toast { id: toast }
 
+    FocusRing { }
+
     LockScreen { }
 
     Component.onCompleted: {
+        Qt.callLater(ensureFocus)
         if (editorObjectId.length > 0)
             page = "editor"
         if (typeof initialOverlay !== "undefined" && initialOverlay === "palette")

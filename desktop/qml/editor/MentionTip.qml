@@ -54,10 +54,10 @@ Popup {
 
             RowLayout {
                 spacing: 8
-                Rectangle {
-                    Layout.preferredWidth: 3
-                    Layout.preferredHeight: 16
-                    color: Theme.typeColor(mt.summary.typeId !== undefined ? mt.summary.typeId : "")
+                TypeBadge {
+                    typeId: mt.summary.typeId !== undefined ? mt.summary.typeId : ""
+                    emoji: mt.summary.iconEmoji || ""
+                    size: 20
                 }
                 Text {
                     text: mt.summary.title !== undefined ? mt.summary.title : qsTr("Unknown object")
@@ -85,7 +85,7 @@ Popup {
                 color: Theme.faint
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.2
+                font.letterSpacing: Theme.track(1.2)
             }
         }
 

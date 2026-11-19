@@ -48,7 +48,7 @@ Item {
         Panel {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            label: qsTr("OUTLINE")
+            label: Theme.caps(qsTr("OUTLINE"))
             padding: 10
 
             ListView {
@@ -101,7 +101,7 @@ Item {
             id: backlinksPanel
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            label: qsTr("BACKLINKS")
+            label: Theme.caps(qsTr("BACKLINKS"))
             padding: 10
 
             property var backlinks: []
@@ -133,10 +133,10 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            Rectangle {
-                                Layout.preferredWidth: 3
-                                Layout.preferredHeight: 14
-                                color: Theme.typeColor(modelData.typeId !== undefined ? modelData.typeId : "")
+                            TypeBadge {
+                                typeId: modelData.typeId !== undefined ? modelData.typeId : ""
+                                emoji: modelData.iconEmoji || ""
+                                size: 18
                             }
                             Text {
                                 Layout.fillWidth: true
@@ -221,7 +221,7 @@ Item {
         Panel {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            label: qsTr("PROPERTIES")
+            label: Theme.caps(qsTr("PROPERTIES"))
             padding: 10
 
             ColumnLayout {
@@ -346,7 +346,7 @@ Item {
                         border.width: 1
                         Text {
                             anchors.centerIn: parent
-                            text: rail.newPropKind.toUpperCase()
+                            text: Theme.caps(rail.newPropKind.toUpperCase())
                             color: Theme.dim
                             font.family: Theme.mono
                             font.pixelSize: 9
@@ -362,7 +362,7 @@ Item {
 
                     Button {
                         id: addPropBtn
-                        text: qsTr("ADD")
+                        text: Theme.caps(qsTr("ADD"))
                         small: true
                         enabled: rail.newPropName.trim().length > 0
                         function triggerAdd() {

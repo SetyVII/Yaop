@@ -356,8 +356,9 @@ Item {
                     onOpenObjectRequested: objectId => page.openObjectRequested(objectId)
                     onToastRequested: message => { if (page.appWindow) page.appWindow.showToast(message) }
 
+                    // header and trailer stop short of the scroll bar so nothing touches it
                     header: ColumnLayout {
-                        width: dayBlocks.width
+                        width: dayBlocks.width - 20
                         spacing: 0
 
                         RowLayout {
@@ -505,7 +506,7 @@ Item {
                     }
 
                     trailer: ColumnLayout {
-                        width: dayBlocks.width
+                        width: dayBlocks.width - 20
                         spacing: 4
 
                         SectionHead {

@@ -95,11 +95,11 @@ Item {
         RowLayout {
             spacing: 10
             Text {
-                text: qsTr("TABLE")
+                text: Theme.caps(qsTr("TABLE"))
                 color: Theme.faint
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1
+                font.letterSpacing: Theme.track(1)
             }
             Button {
                 text: qsTr("+ row")

@@ -75,14 +75,14 @@ Item {
                 Layout.preferredWidth: 112
                 horizontalAlignment: Text.AlignRight
                 elide: Text.ElideRight
-                text: !ws ? qsTr("OFFLINE") : !ws.connected ? qsTr("OFFLINE")
-                      : ws.syncing ? qsTr("SYNCING")
-                      : ws.pendingCount > 0 ? qsTr("%1 QUEUED").arg(ws.pendingCount)
-                      : qsTr("SYNCED · E2EE")
+                text: !ws ? Theme.caps(qsTr("OFFLINE")) : !ws.connected ? Theme.caps(qsTr("OFFLINE"))
+                      : ws.syncing ? Theme.caps(qsTr("SYNCING"))
+                      : ws.pendingCount > 0 ? Theme.caps(qsTr("%1 QUEUED")).arg(ws.pendingCount)
+                      : Theme.caps(qsTr("SYNCED · E2EE"))
                 color: Theme.dim
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1
+                font.letterSpacing: Theme.track(1)
             }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: bar.syncRequested() }
@@ -119,7 +119,7 @@ Item {
         }
 
         Button {
-            text: Theme.compact ? "+" : qsTr("CAPTURE")
+            text: Theme.compact ? "+" : Theme.caps(qsTr("CAPTURE"))
             primary: true
             onClicked: bar.captureRequested()
         }
@@ -157,7 +157,7 @@ Item {
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1
+                font.letterSpacing: Theme.track(1)
             }
         }
         HoverHandler { id: searchHover; cursorShape: Qt.PointingHandCursor }

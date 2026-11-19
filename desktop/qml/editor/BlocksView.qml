@@ -10,6 +10,8 @@ ListView {
     id: blocksView
 
     property var session: null
+    // Image blocks' side panel (open + width) by blockId: survives delegate rebuilds, not synced.
+    property var mediaPanels: ({})
     // Optional content drawn under the "+" row (the calendar's day page lists the day's objects there).
     property Component trailer: null
     property int activeRow: -1
@@ -486,6 +488,11 @@ ListView {
     keyNavigationEnabled: false
     focus: session && session.selectedCount > 0
 
+    Keys.onShortcutOverride: (event) => {
+        if (session && session.selectedCount > 0 && typeof keymap !== "undefined"
+                && keymap.owns("blocks", event.key, event.modifiers))
+            event.accepted = true
+    }
     Keys.onPressed: function(event) {
         if (!session || session.selectedCount <= 0)
             return
@@ -703,7 +710,7 @@ ListView {
                 color: Theme.faint
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 0.4
+                font.letterSpacing: Theme.track(0.4)
             }
         }
     }

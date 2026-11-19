@@ -27,8 +27,10 @@ QT_QPA_PLATFORM=offscreen ./build/yaop --profile qa --showcase --size 1280x800 -
 ./build/yaop --server https://sync.example.com --token <device-token>
 ```
 
+`--keylog` prints every key press, the items it was delivered to and the Shortcut that fired
+(why a key "misses"); shortcuts live in one table, `src/keymap.cpp` ([docs/keyboard.md](../docs/keyboard.md)).
 `tools/qa-desktop.sh <dir>` takes screenshots of every page at several window sizes.
-`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`; logs and shots in
+`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`, `keys`; logs and shots in
 `YAOP_DRIVE_DIR`); `rename` checks that a mention follows a rename of its target (run it
 with `--server`/`--token` too: a sync echo must not undo a title being typed). `rename-ui` does
 the same through keys and clicks only (`YAOP_DRIVE_DAILY=1`: in today's daily note,

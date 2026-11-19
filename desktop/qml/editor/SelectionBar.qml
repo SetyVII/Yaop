@@ -43,7 +43,7 @@ Rectangle {
             color: btn.danger ? Theme.danger : Theme.text
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 0.4
+            font.letterSpacing: Theme.track(0.4)
         }
 
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
@@ -72,7 +72,7 @@ Rectangle {
             onClicked: if (view) view.copyMultiSelection(false)
         }
         BarBtn {
-            label: qsTr("HTML")
+            label: Theme.caps(qsTr("HTML"))
             onClicked: if (view && view.session && view.session.copySelectedAs("html")) view.toastRequested(qsTr("Copied as HTML"))
         }
         BarBtn {

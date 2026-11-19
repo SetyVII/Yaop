@@ -693,6 +693,7 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
         QStringLiteral("file_name"), QStringLiteral("size"), QStringLiteral("chunks"),
         QStringLiteral("chunk_size"), QStringLiteral("total_plain_size"),
         QStringLiteral("thumbnail_url"), QStringLiteral("favicon_url"),
+        QStringLiteral("tags"),
     };
     QStringList objKeys = obj.properties.keys();
     std::sort(objKeys.begin(), objKeys.end());
@@ -730,12 +731,26 @@ void Workspace::setObjectProperty(const QString &objectId, const QString &key, c
             next.properties.remove(cleanKey);
     } else if (normKind == QLatin1String("multi_select") || cleanKey == QLatin1String("tags")) {
         QJsonArray arr;
+        QStringList tagIds;
         for (const QString &part : value.toString().split(QLatin1Char(','), Qt::SkipEmptyParts)) {
             const QString p = part.trimmed();
-            if (!p.isEmpty())
+            if (!p.isEmpty()) {
                 arr.append(p);
+                if (cleanKey == QLatin1String("tags"))
+                    tagIds.append(tagKey(p));
+            }
         }
         next.properties.insert(cleanKey, arr);
+        if (cleanKey == QLatin1String("tags")) {
+            QStringList kept;
+            for (const QString &l : std::as_const(next.propertyLinks))
+                if (!l.startsWith(QLatin1String("tag_")))
+                    kept.append(l);
+            for (const QString &tid : tagIds)
+                if (!kept.contains(tid))
+                    kept.append(tid);
+            next.propertyLinks = kept;
+        }
     } else {
         const QString s = value.toString();
         if (s.trimmed().isEmpty())
@@ -747,8 +762,11 @@ void Workspace::setObjectProperty(const QString &objectId, const QString &key, c
         addPropertyToType(next.typeId, label.trimmed().isEmpty() ? cleanKey : label.trimmed(),
                           normKind.isEmpty() ? QStringLiteral("text") : normKind);
     saveObject(next);
-    if (auto *ed = m_editors.value(objectId))
+    if (auto *ed = m_editors.value(objectId)) {
         ed->m_object.properties = next.properties;
+        ed->m_object.propertyLinks = next.propertyLinks;
+        ed->notifyCoverUpdated();
+    }
     emit objectPropertiesChanged(objectId);
 }
 

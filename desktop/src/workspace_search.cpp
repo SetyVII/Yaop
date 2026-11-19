@@ -189,51 +189,132 @@ QVariantList Workspace::tagSuggestions(const QString &query, int limit) const
     const QString cleanQuery = QString(query).remove(QLatin1Char('#')).trimmed();
     const QString lower = cleanQuery.toLower();
 
-    QHash<QString, QString> byKey; // tagKey -> display name
+    struct TagInfo {
+        QString name;
+        int count = 0;
+        QString latest;
+    };
+    QHash<QString, TagInfo> byKey; // tagKey -> info
     for (auto it = m_objects.constBegin(); it != m_objects.constEnd(); ++it) {
         const Object &o = it.value();
         if (!o.trashedAt.isEmpty())
             continue;
         if (o.typeId == TypeId::Tag) {
             const QString name = o.title.trimmed();
-            if (!name.isEmpty())
-                byKey.insert(tagKey(name), name);
+            if (!name.isEmpty()) {
+                TagInfo &info = byKey[tagKey(name)];
+                info.name = name; // Tag object's title is the canonical display name
+                if (o.updatedAt > info.latest)
+                    info.latest = o.updatedAt;
+            }
         }
         for (const QString &t : o.propertyStringList(QStringLiteral("tags"))) {
             const QString c = QString(t).remove(QLatin1Char('#')).trimmed();
-            if (!c.isEmpty() && !byKey.contains(tagKey(c)))
-                byKey.insert(tagKey(c), c);
-        }
-        for (const Block &b : o.blocks) {
-            for (const Run &r : b.runs) {
-                if (!r.tagName.isEmpty() && !byKey.contains(tagKey(r.tagName)))
-                    byKey.insert(tagKey(r.tagName), r.tagName);
-            }
+            if (c.isEmpty())
+                continue;
+            TagInfo &info = byKey[tagKey(c)];
+            if (info.name.isEmpty())
+                info.name = c;
+            ++info.count;
+            if (o.updatedAt > info.latest)
+                info.latest = o.updatedAt;
         }
     }
 
-    QStringList names = byKey.values();
-    std::sort(names.begin(), names.end(), [](const QString &a, const QString &b) {
-        return a.toLower() < b.toLower();
+    QList<TagInfo> items = byKey.values();
+    std::sort(items.begin(), items.end(), [&](const TagInfo &a, const TagInfo &b) {
+        if (!lower.isEmpty()) {
+            const bool ap = a.name.startsWith(lower, Qt::CaseInsensitive);
+            const bool bp = b.name.startsWith(lower, Qt::CaseInsensitive);
+            if (ap != bp)
+                return ap;
+        }
+        if (a.count != b.count)
+            return a.count > b.count;
+        if (a.latest != b.latest)
+            return a.latest > b.latest;
+        return a.name.toLower() < b.name.toLower();
     });
 
     QVariantList out;
     bool exactExists = false;
     const QString wantedKey = cleanQuery.isEmpty() ? QString() : tagKey(cleanQuery);
-    for (const QString &n : names) {
-        if (tagKey(n) == wantedKey)
+    for (const TagInfo &t : items) {
+        if (tagKey(t.name) == wantedKey)
             exactExists = true;
-        if (!lower.isEmpty() && !n.contains(lower, Qt::CaseInsensitive))
+        if (!lower.isEmpty() && !t.name.contains(lower, Qt::CaseInsensitive))
             continue;
-        out.append(QVariantMap{ { QStringLiteral("name"), n }, { QStringLiteral("createNew"), false } });
+        out.append(QVariantMap{ { QStringLiteral("name"), t.name },
+                                { QStringLiteral("count"), t.count },
+                                { QStringLiteral("createNew"), false } });
         if (out.size() >= qMax(1, limit))
             break;
     }
 
     if (!cleanQuery.isEmpty() && !exactExists) {
-        out.prepend(QVariantMap{ { QStringLiteral("name"), cleanQuery }, { QStringLiteral("createNew"), true } });
+        out.prepend(QVariantMap{ { QStringLiteral("name"), cleanQuery },
+                                 { QStringLiteral("count"), 0 },
+                                 { QStringLiteral("createNew"), true } });
     }
     return out;
+}
+
+QStringList Workspace::objectTags(const QString &objectId) const
+{
+    auto it = m_objects.find(objectId);
+    return it == m_objects.end() ? QStringList() : it.value().propertyStringList(QStringLiteral("tags"));
+}
+
+QString Workspace::tagColor(const QString &tagName) const
+{
+    const QString clean = QString(tagName).remove(QLatin1Char('#')).trimmed();
+    if (clean.isEmpty())
+        return QStringLiteral("#C9F2A6");
+    const QString id = tagKey(clean);
+    auto it = m_objects.find(id);
+    if (it != m_objects.end()) {
+        const QString explicitHex = it.value().icon().colorHex;
+        if (!explicitHex.isEmpty())
+            return explicitHex;
+    }
+    // Curated readable tag accents matching Theme palette
+    static const char *const kPalette[] = {
+        "#A387FF", // violet (e.g. AI)
+        "#7EA6FF", // ice blue
+        "#7AF0D0", // teal
+        "#C9F2A6", // tagGreen
+        "#FFB38A", // peach
+        "#FF8FB3", // pink
+        "#FFD166", // warm gold
+    };
+    const uint h = qHash(id);
+    return QString::fromLatin1(kPalette[h % (sizeof(kPalette) / sizeof(kPalette[0]))]);
+}
+
+void Workspace::setTagColor(const QString &tagName, const QString &colorHex)
+{
+    const QString id = ensureTagObject(tagName);
+    if (id.isEmpty())
+        return;
+    auto it = m_objects.find(id);
+    if (it == m_objects.end())
+        return;
+    Object next = it.value();
+    QJsonObject iconObj = next.properties.value(QLatin1String("icon")).toObject();
+    if (colorHex.trimmed().isEmpty()) {
+        iconObj.remove(QStringLiteral("color_hex"));
+    } else {
+        iconObj.insert(QStringLiteral("color_hex"), colorHex.trimmed());
+        if (iconObj.value(QLatin1String("emoji")).toString().isEmpty()
+            && iconObj.value(QLatin1String("icon_name")).toString().isEmpty())
+            iconObj.insert(QStringLiteral("icon_name"), QStringLiteral("tag"));
+    }
+    if (iconObj.isEmpty())
+        next.properties.remove(QStringLiteral("icon"));
+    else
+        next.properties.insert(QStringLiteral("icon"), iconObj);
+    saveObject(next);
+    emit objectPropertiesChanged(id);
 }
 
 QString Workspace::ensureTagObject(const QString &tagName)

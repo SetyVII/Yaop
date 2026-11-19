@@ -40,11 +40,11 @@ Rectangle {
             }
 
             Text {
-                text: String(root.node.type || "note").toUpperCase()
+                text: Theme.typeLabel(String(root.node.type || "note"))
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.1
+                font.letterSpacing: Theme.track(1.1)
             }
 
             Item { Layout.fillWidth: true }

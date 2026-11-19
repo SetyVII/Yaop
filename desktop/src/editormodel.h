@@ -26,6 +26,10 @@ class EditorModel : public QAbstractListModel {
     Q_PROPERTY(QString typeId READ typeId CONSTANT)
     Q_PROPERTY(QString coverAssetId READ coverAssetId NOTIFY coverChanged)
     Q_PROPERTY(QString thumbnailUrl READ thumbnailUrl NOTIFY coverChanged)
+    Q_PROPERTY(QString url READ url NOTIFY metaChanged)
+    Q_PROPERTY(QString description READ description NOTIFY metaChanged)
+    Q_PROPERTY(QString faviconUrl READ faviconUrl NOTIFY metaChanged)
+    Q_PROPERTY(QString domain READ domain NOTIFY metaChanged)
     Q_PROPERTY(QString assetId READ assetId CONSTANT)
     Q_PROPERTY(double coverCropY READ coverCropY CONSTANT)
     Q_PROPERTY(bool coverFit READ coverFit CONSTANT)
@@ -99,6 +103,10 @@ public:
     QString typeId() const { return m_object.typeId; }
     QString coverAssetId() const { return m_object.coverAssetId(); }
     QString thumbnailUrl() const;
+    QString url() const;
+    QString description() const;
+    QString faviconUrl() const;
+    QString domain() const;
     QString assetId() const { return m_object.propertyString(QStringLiteral("asset_id")); }
     double coverCropY() const;
     bool coverFit() const;
@@ -214,6 +222,7 @@ public:
 signals:
     void titleChanged();
     void coverChanged();
+    void metaChanged();
     void dirtyChanged();
     void structureChanged();
     void focusChanged();

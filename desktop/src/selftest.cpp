@@ -8,6 +8,7 @@
 #include "onboarding.h"
 #include "editormodel.h"
 #include "applock.h"
+#include "keymap.h"
 #include "outbox.h"
 #include "searchindex.h"
 #include "store.h"
@@ -532,6 +533,74 @@ void testDesktopIncrementalAndSchemas()
     CHECK(ed.rowCount() == 1 && resetCount == 0, "removeBlockAt removes block incrementally");
 }
 
+static void testWebAndTags()
+{
+    QTemporaryDir dir;
+    CHECK(dir.isValid(), "web/tags: tempdir");
+    Store store(dir.filePath(QStringLiteral("cache.db")));
+    CHECK(store.setKey(vault::randomBytes(32)) && store.open(), "web/tags: store opens");
+
+    Object web;
+    web.id = QStringLiteral("web-1");
+    web.typeId = TypeId::Web;
+    web.title = QStringLiteral("GLM Coding Plan");
+    web.properties.insert(QStringLiteral("url"), QStringLiteral("https://www.z.ai/subscribe"));
+    web.properties.insert(QStringLiteral("description"), QStringLiteral("Use GLM models for AI coding."));
+    web.properties.insert(QStringLiteral("favicon_url"), QStringLiteral("https://z.ai/favicon.ico"));
+    web.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("AI"), QStringLiteral("Coding") });
+    store.putObject(web);
+
+    CHECK(store.backlinkRows(QStringLiteral("tag_ai")).size() == 1
+              && store.backlinkRows(QStringLiteral("tag_ai"))[0].src == QLatin1String("web-1"),
+          "tags property creates backlink to tag_ai");
+    CHECK(store.backlinkRows(QStringLiteral("tag_coding")).size() == 1,
+          "tags property creates backlink to tag_coding");
+
+    EditorModel ed(nullptr);
+    ed.load(web);
+    CHECK(ed.url() == QLatin1String("https://www.z.ai/subscribe"), "EditorModel::url reads property");
+    CHECK(ed.domain() == QLatin1String("z.ai"), "EditorModel::domain strips www");
+    CHECK(ed.description() == QLatin1String("Use GLM models for AI coding."), "EditorModel::description reads property");
+    CHECK(ed.faviconUrl() == QLatin1String("https://z.ai/favicon.ico"), "EditorModel::faviconUrl reads property");
+
+    Object webFromBlock;
+    webFromBlock.id = QStringLiteral("web-2");
+    webFromBlock.typeId = TypeId::Web;
+    Block bm;
+    bm.id = QStringLiteral("bm-1");
+    bm.type = BlockType::Bookmark;
+    bm.url = QStringLiteral("https://www.youtube.com/watch?v=1VaSXlQnHfA");
+    bm.description = QStringLiteral("Video desc");
+    bm.faviconUrl = QStringLiteral("https://youtube.com/favicon.ico");
+    webFromBlock.blocks = { bm };
+    ed.load(webFromBlock);
+    CHECK(ed.url() == bm.url && ed.domain() == QLatin1String("youtube.com")
+              && ed.description() == bm.description && ed.faviconUrl() == bm.faviconUrl,
+          "EditorModel web metadata falls back to Bookmark block");
+}
+
+static void testKeymap()
+{
+    CHECK(findKeyConflict(keyBindings()).isEmpty(), "keymap: no key bound twice in one scope");
+    if (const QString c = findKeyConflict(keyBindings()); !c.isEmpty())
+        std::printf("     %s\n", qPrintable(c));
+    std::vector<KeyBinding> dup = { { "a", { "Ctrl+K" }, "global", "A" }, { "b", { "ctrl+k" }, "global", "B" } };
+    CHECK(!findKeyConflict(dup).isEmpty(), "keymap: duplicate keys in one scope are caught");
+    dup[1].scope = QStringLiteral("editor");
+    CHECK(findKeyConflict(dup).isEmpty(), "keymap: the same keys in another scope are fine");
+    bool titled = true;
+    for (const KeyBinding &b : keyBindings())
+        titled = titled && !b.id.isEmpty() && !b.title.isEmpty() && !b.keys.isEmpty();
+    CHECK(titled, "keymap: every binding has an id, a title and keys");
+
+    Keymap km;
+    CHECK(km.owns(QStringLiteral("editor"), Qt::Key_D, Qt::ControlModifier), "keymap: editor owns Ctrl+D");
+    CHECK(!km.owns(QStringLiteral("editor"), Qt::Key_K, Qt::ControlModifier), "keymap: Ctrl+K stays global");
+    CHECK(km.owns(QStringLiteral("blocks"), Qt::Key_Backtab, Qt::ShiftModifier), "keymap: Backtab matches Shift+Tab");
+    CHECK(!km.owns(QStringLiteral("editor"), Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier),
+          "keymap: Ctrl+Shift+H stays the privacy key");
+}
+
 int runAll()
 {
     std::printf("== desktop app ==\n");
@@ -545,6 +614,8 @@ int runAll()
     testAppLock();
     testMultiBlockClipboard();
     testDesktopIncrementalAndSchemas();
+    testWebAndTags();
+    testKeymap();
     if (failures == 0)
         std::printf("SELFTEST OK (0 failures)\n");
     else

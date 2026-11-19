@@ -126,6 +126,7 @@ Item {
             appWindow: pane.appWindow
             objectId: pane.shownId
             narrowRail: true
+            inSidePane: true
             onCloseRequested: pane.closeRequested()
         }
     }

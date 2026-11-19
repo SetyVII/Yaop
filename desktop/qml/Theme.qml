@@ -22,6 +22,14 @@ QtObject {
     readonly property color panel3: slate ? "#313237" : Qt.rgba(1, 1, 1, 0.20)         // hover / pressed
     readonly property color sheet: slate ? "#232427" : "#0B1A4A"                        // popups / sheets
     readonly property color ink: slate ? "#141517" : "#03081E"                          // code boxes
+    // Cards on the page: slate lifts them one step above the page panel and outlines them, so a
+    // card never melts into the gray around it.
+    readonly property color card: slate ? "#27282C" : panel
+    readonly property color cardHover: slate ? "#2E2F34" : panel2
+    readonly property color cardBorder: slate ? "#34353B" : "transparent"
+    readonly property color cardShadow: slate ? Qt.rgba(0, 0, 0, 0.32) : "transparent"
+    // Behind modal sheets: neutral in slate, ink-blue in sky.
+    readonly property color scrim: slate ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0.02, 0.04, 0.15, 0.62)
 
     // Lines
     readonly property color line: slate ? "#2D2E33" : Qt.rgba(1, 1, 1, 0.16)
@@ -40,6 +48,7 @@ QtObject {
     readonly property color accentInk: slate ? "#18191C" : "#0B1F5C"
     readonly property color accentDim: slate ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.14)
     readonly property color ice: slate ? "#7EA6FF" : "#BFE3FF"
+    readonly property color focusRing: ice   // keyboard focus (FocusRing.qml)
     readonly property color mentionPill: slate ? Qt.rgba(0.49, 0.65, 1, 0.12) : Qt.rgba(0.75, 0.89, 1, 0.12)
     readonly property color mentionPillLine: slate ? Qt.rgba(0.49, 0.65, 1, 0.36) : Qt.rgba(0.75, 0.89, 1, 0.38)
     readonly property color violet: slate ? "#A387FF" : "#8F7CFF"
@@ -66,8 +75,23 @@ QtObject {
     // as the single accent word of a screen title. Slate: Inter everywhere but code.
     readonly property string display: slate ? "Inter" : "Inter Tight"
     readonly property string body: slate ? "Inter" : "Inter Tight"
-    readonly property string mono: "IBM Plex Mono"
-    readonly property string pixel: "Doto"
+    // `mono` is the interface-label face (Plex Mono in sky, Inter in slate); `code` is for code,
+    // formulas and codes to compare, monospace in both.
+    readonly property string mono: slate ? "Inter" : "IBM Plex Mono"
+    readonly property string code: "IBM Plex Mono"
+    readonly property string pixel: slate ? "Inter" : "Doto"
+
+    // Interface labels are written in caps for sky; slate shows them in sentence case, untracked.
+    function caps(s) {
+        s = String(s)
+        if (!slate) return s
+        return s.toLowerCase().replace(/[a-z]/, c => c.toUpperCase())
+            .replace(/\bctrl[ +]([a-z0-9])\b/g, (m, k) => "Ctrl+" + k.toUpperCase())
+            .replace(/\bctrl\b/g, "Ctrl").replace(/\bshift\b/g, "Shift").replace(/\bpin\b/g, "PIN")
+            .replace(/\be2ee\b/g, "E2EE").replace(/\bpdf\b/g, "PDF").replace(/\burl\b/g, "URL")
+            .replace(/\blatex\b/g, "LaTeX").replace(/\bqr\b/g, "QR").replace(/\bid\b/g, "ID")
+    }
+    function track(n) { return slate ? 0 : n }
 
     // Metrics
     readonly property int radiusSm: slate ? 6 : 8      // block colour backgrounds, date chips
@@ -155,7 +179,8 @@ QtObject {
         }
     }
 
-    function typeLabel(t) {
+    function typeLabel(t) { return caps(typeLabelCaps(t)) }
+    function typeLabelCaps(t) {
         switch (t) {
         case "note": return "NOTE"
         case "task": return "TASK"
@@ -173,8 +198,20 @@ QtObject {
         }
     }
 
+    // "Journal", "Web link"…: the type label as words, for slate.
+    function typeName(t) {
+        const l = typeLabelCaps(t).toLowerCase()
+        return l.charAt(0).toUpperCase() + l.slice(1)
+    }
+
     function typeIcon(t) {
         switch (t) {
+        case "tag": return "tag"
+        case "set": return "filter"
+        case "web": case "weblink": case "web_link": return "world"
+        case "video": return "video"
+        case "file": return "file"
+        case "daily": return "calendar"
         case "note": return "file-text"
         case "task": return "circle-check"
         case "project": return "folder"
@@ -187,7 +224,7 @@ QtObject {
         case "pdf": return "file-type-pdf"
         case "audio": return "music"
         case "image": return "photo"
-        case "habit": return "circle-check"
+        case "habit": return "sun"
         default: return "box"
         }
     }

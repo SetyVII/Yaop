@@ -39,7 +39,7 @@ Item {
             color: Theme.text
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 0.8
+            font.letterSpacing: Theme.track(0.8)
         }
     }
 

@@ -22,6 +22,7 @@
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTimer>
+#include <QTest>
 #include <QDate>
 #include <functional>
 
@@ -535,6 +536,56 @@ void caretScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
+// Keyboard-first F0 (docs/keyboard.md): keys go through the window like real input, so global
+// Shortcuts and Keys.onShortcutOverride decide as they do in use (sendWindowKey skips both).
+void keysScenario(QQuickWindow *window)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) {
+        QCoreApplication::exit(4);
+        return;
+    }
+    auto key = [window](int k, Qt::KeyboardModifiers m = Qt::NoModifier) {
+        QTest::keyClick(static_cast<QWindow *>(window), Qt::Key(k), m);
+    };
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    window->requestActivate();
+    model->forceFocus(firstBlockId(window), 0);
+    later(400, [=]() {
+        const int before = model->blockCount();
+        key(Qt::Key_D, Qt::ControlModifier);                        // editor owns Ctrl+D
+        later(400, [=]() {
+            const bool duplicated = model->blockCount() == before + 1
+                                    && window->property("editorObjectId").toString().size() > 0;
+            dlog(QStringLiteral("DRIVE keys blocks %1 -> %2").arg(before).arg(model->blockCount()));
+            key(Qt::Key_Escape);                                      // no global Esc any more
+            key(Qt::Key_K, Qt::ControlModifier);
+            later(400, [=]() {
+                const bool paletteOpened = window->property("paletteOpen").toBool();
+                key(Qt::Key_Escape);                                  // the popup closes itself
+                later(400, [=]() {
+                    const bool paletteClosed = !window->property("paletteOpen").toBool();
+                    key(Qt::Key_1, Qt::ControlModifier);              // leave the editor (Home)
+                    later(600, [=]() {
+                    QQuickItem *focused = window->activeFocusItem();      // the page took focus
+                    key(Qt::Key_D, Qt::ControlModifier);              // outside the editor: Today
+                    later(600, [=]() {
+                        const bool today = window->property("editorObjectId").toString().isEmpty()
+                                           && window->property("page").toString() != QLatin1String("home");
+                        const bool hasFocus = focused && focused != window->contentItem();
+                        const bool ok = duplicated && paletteOpened && paletteClosed && today && hasFocus;
+                        dlog(QStringLiteral("DRIVE keys ok=%1 duplicated=%2 paletteOpened=%3 paletteClosed=%4 today=%5 focus=%6 (%7)")
+                                 .arg(ok).arg(duplicated).arg(paletteOpened).arg(paletteClosed).arg(today)
+                                 .arg(hasFocus).arg(focused ? QString::fromLatin1(focused->metaObject()->className()) : QStringLiteral("-")));
+                        QCoreApplication::exit(ok ? 0 : 6);
+                    });
+                    });
+                });
+            });
+        });
+    });
+}
+
 void dndScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -633,6 +684,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                                                               : renameUiScenario(window, ws);
             else if (scenario == QLatin1String("dnd"))
                 dndScenario(window);
+            else if (scenario == QLatin1String("keys"))
+                keysScenario(window);
             else
                 blackScenario(window);
         });
@@ -1060,6 +1113,28 @@ QString seedShowcase(Workspace *ws)
         ws->createObject(QStringLiteral("task"), QString::fromUtf8(t));
     ws->createObject(QStringLiteral("book"), QStringLiteral("The Name of the Wind"));
     ws->createObject(QStringLiteral("book"), QStringLiteral("Sapiens"));
+    {
+        Object wl;
+        wl.id = QStringLiteral("web-showcase");
+        wl.typeId = TypeId::Web;
+        wl.title = QStringLiteral("GLM Coding Plan — AI Coding Powered by GLM-5.1 & GLM-5-Turbo");
+        wl.createdAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+        wl.updatedAt = wl.createdAt;
+        wl.properties.insert(QStringLiteral("url"), QStringLiteral("https://z.ai/subscribe"));
+        wl.properties.insert(QStringLiteral("description"),
+                             QStringLiteral("Use GLM models like GLM-5.1 & GLM-5-Turbo for AI coding in Claude Code, Kilo Code, Cline, OpenCode and more."));
+        wl.properties.insert(QStringLiteral("cover"),
+                             QJsonObject{ { "asset_id", assetId }, { "crop_offset_y", 0.5 }, { "is_fit", false } });
+        wl.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("AI"), QStringLiteral("Coding") });
+        wl.properties.insert(QStringLiteral("category"), QStringLiteral(""));
+        wl.properties.insert(QStringLiteral("topic"), QStringLiteral(""));
+        wl.blocks.append(para(QStringLiteral("Notes about this web link and why it is useful.")));
+        ws->ensureTagObject(QStringLiteral("AI"));
+        ws->ensureTagObject(QStringLiteral("Coding"));
+        ws->saveObject(wl);
+        ws->addPropertyToType(QStringLiteral("web"), QStringLiteral("Category"), QStringLiteral("text"));
+        ws->addPropertyToType(QStringLiteral("web"), QStringLiteral("Topic"), QStringLiteral("text"));
+    }
     {
         const QString h1 = ws->createObject(QStringLiteral("habit"), QStringLiteral("Leer 30 min"));
         const QString h2 = ws->createObject(QStringLiteral("habit"), QStringLiteral("Beber agua"));

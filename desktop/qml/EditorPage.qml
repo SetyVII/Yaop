@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Dialogs
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtCore
 import YAOP.Core 1.0
 import "."
 import "editor"
@@ -32,6 +33,39 @@ Item {
 
     // Dock the rail only when there is room for it (the side pane never has).
     property bool narrowRail: Theme.narrow
+    property bool inSidePane: false
+
+    Settings {
+        id: layoutPrefs
+        category: "layout"
+        property string webViewMode: "embed"
+        property bool webSidePanelOpen: true
+        property real webSidePanelWidth: 420
+        property bool notesRailVisible: true
+    }
+
+    readonly property bool isWebObject: !!session && session.typeId === "web"
+    readonly property bool hasWebUrl: isWebObject && session.url.length > 0
+    readonly property bool webSplitActive: hasWebUrl && !inSidePane && width >= 680
+    readonly property bool embedMode: webSplitActive && layoutPrefs.webViewMode === "embed"
+    readonly property bool webSidePanelShown: embedMode && layoutPrefs.webSidePanelOpen
+    readonly property bool webFullPanel: embedMode && !layoutPrefs.webSidePanelOpen
+    readonly property real clampedWebSideW: Math.max(300, Math.min(Math.max(320, width - 360), layoutPrefs.webSidePanelWidth))
+    property bool resizingWebSide: false
+
+    property int tagRev: 0
+    property var tagBacklinks: []
+    function refreshTagBacklinks() {
+        if (ws && session && session.typeId === "tag")
+            tagBacklinks = ws.backlinksFor(session.objectId)
+        else
+            tagBacklinks = []
+    }
+    Connections {
+        target: ws
+        function onObjectListChanged() { editPage.tagRev++; editPage.refreshTagBacklinks() }
+        function onObjectPropertiesChanged(id) { editPage.tagRev++; if (session && session.typeId === "tag") editPage.refreshTagBacklinks() }
+    }
 
     onObjectIdChanged: {
         Privacy.noteRevealed = false
@@ -43,7 +77,10 @@ Item {
         }
         if (objectId.length > 0) {
             session = ws.openObject(objectId)
+            refreshTagBacklinks()
             scrollToPendingBlock()
+        } else {
+            tagBacklinks = []
         }
     }
     onPendingBlockIdChanged: scrollToPendingBlock()
@@ -84,10 +121,17 @@ Item {
 
     clip: true
     property bool railOpen: false
+    readonly property bool showDockedRail: !editPage.narrowRail && !editPage.embedMode && (!editPage.webSplitActive || layoutPrefs.notesRailVisible)
     // One text column for title, breadcrumb and blocks (spec §6: 640 px max, centred).
-    readonly property real mainW: width - (editPage.narrowRail ? 0 : Theme.railWidth)
-    readonly property real colW: Math.min(Theme.editorWidth, mainW - 2 * Theme.pagePad)
-    readonly property real colMargin: Math.max(Theme.pagePad, (mainW - Theme.editorWidth) / 2)
+    readonly property real mainW: editPage.webSidePanelShown ? editPage.clampedWebSideW
+                                : (width - (editPage.showDockedRail ? Theme.railWidth : 0))
+    readonly property real sidePad: editPage.webSidePanelShown ? 20 : Theme.pagePad
+    readonly property real colW: editPage.webSidePanelShown
+                                 ? Math.max(220, mainW - 2 * sidePad)
+                                 : Math.min(Theme.editorWidth, mainW - 2 * sidePad)
+    readonly property real colMargin: editPage.webSidePanelShown
+                                      ? sidePad
+                                      : Math.max(sidePad, (mainW - Theme.editorWidth) / 2)
 
     // file picker (media insert)
     FileDialog {
@@ -117,14 +161,224 @@ Item {
         }
     }
 
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // ---------------- main column ----------------
-        Item {
+        // ---------------- Web link top bar (Embed | Notes + side panel toggle) ----------------
+        Rectangle {
+            visible: editPage.webSplitActive
             Layout.fillWidth: true
+            Layout.preferredHeight: 44
+            color: Theme.bg2
+
+            Item {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 10
+
+                // Centered segmented switch: [ <> Embed | ≡ Notes ]
+                Rectangle {
+                    anchors.centerIn: parent
+                    implicitWidth: segRow.implicitWidth + 6
+                    implicitHeight: 30
+                    radius: Theme.radius
+                    color: Theme.panel
+                    border.width: 1
+                    border.color: Theme.line
+
+                    Row {
+                        id: segRow
+                        anchors.centerIn: parent
+                        spacing: 2
+
+                        Rectangle {
+                            id: embedBtn
+                            implicitWidth: embedLblRow.implicitWidth + 18
+                            implicitHeight: 24
+                            radius: Theme.radiusSm
+                            color: editPage.embedMode ? Theme.panel2 : (embedHover.hovered ? Theme.cardHover : "transparent")
+                            border.width: editPage.embedMode ? 1 : 0
+                            border.color: Theme.line2
+                            Row {
+                                id: embedLblRow
+                                anchors.centerIn: parent
+                                spacing: 6
+                                TintedIcon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    name: "code"
+                                    size: 13
+                                    color: editPage.embedMode ? Theme.text : Theme.muted
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("Embed")
+                                    color: editPage.embedMode ? Theme.text : Theme.dim
+                                    font.family: Theme.body
+                                    font.pixelSize: 13
+                                    font.weight: editPage.embedMode ? Font.Medium : Font.Normal
+                                }
+                            }
+                            HoverHandler { id: embedHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: layoutPrefs.webViewMode = "embed" }
+                        }
+
+                        Rectangle {
+                            id: notesBtn
+                            implicitWidth: notesLblRow.implicitWidth + 18
+                            implicitHeight: 24
+                            radius: Theme.radiusSm
+                            color: !editPage.embedMode ? Theme.panel2 : (notesHover.hovered ? Theme.cardHover : "transparent")
+                            border.width: !editPage.embedMode ? 1 : 0
+                            border.color: Theme.line2
+                            Row {
+                                id: notesLblRow
+                                anchors.centerIn: parent
+                                spacing: 6
+                                TintedIcon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    name: "list"
+                                    size: 13
+                                    color: !editPage.embedMode ? Theme.text : Theme.muted
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("Notes")
+                                    color: !editPage.embedMode ? Theme.text : Theme.dim
+                                    font.family: Theme.body
+                                    font.pixelSize: 13
+                                    font.weight: !editPage.embedMode ? Font.Medium : Font.Normal
+                                }
+                            }
+                            HoverHandler { id: notesHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: layoutPrefs.webViewMode = "notes" }
+                        }
+                    }
+                }
+
+                // Right actions + new side panel toggle
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    Button {
+                        visible: editPage.width >= 820
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Theme.caps(qsTr("COVER"))
+                        small: true
+                        onClicked: webCoverPopup.open()
+                    }
+                    Button {
+                        visible: editPage.width >= 820
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Theme.caps(qsTr("TRASH"))
+                        small: true
+                        onClicked: editPage.requestTrashCurrent()
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "asterisk"
+                        onClicked: if (session) ws.togglePinned(session.objectId)
+                        ToolTip.visible: hovered; ToolTip.text: qsTr("Pin object"); ToolTip.delay: 500
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "arrow-back"
+                        onClicked: editPage.closeRequested()
+                        ToolTip.visible: hovered; ToolTip.text: qsTr("Close"); ToolTip.delay: 500
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "layout-sidebar-right"
+                        active: editPage.embedMode
+                                ? layoutPrefs.webSidePanelOpen
+                                : (editPage.narrowRail ? editPage.railOpen : layoutPrefs.notesRailVisible)
+                        onClicked: {
+                            if (editPage.embedMode) {
+                                layoutPrefs.webSidePanelOpen = !layoutPrefs.webSidePanelOpen
+                            } else if (editPage.narrowRail) {
+                                editPage.railOpen = !editPage.railOpen
+                            } else {
+                                layoutPrefs.notesRailVisible = !layoutPrefs.notesRailVisible
+                            }
+                        }
+                        ToolTip.visible: hovered
+                        ToolTip.text: editPage.embedMode
+                                      ? (layoutPrefs.webSidePanelOpen ? qsTr("Hide notes side panel") : qsTr("Show notes side panel"))
+                                      : qsTr("Toggle inspector rail")
+                        ToolTip.delay: 500
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Theme.line
+            }
+        }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        spacing: 0
+
+        // ---------------- web view panel (Embed mode) ----------------
+        WebEmbedView {
+            id: webEmbedPane
+            visible: editPage.embedMode
+            Layout.fillWidth: editPage.embedMode
+            Layout.preferredWidth: editPage.embedMode ? 1 : 0
             Layout.fillHeight: true
+            url: editPage.embedMode && editPage.session ? editPage.session.url : ""
+            title: editPage.session ? editPage.session.title : ""
+            description: editPage.session ? editPage.session.description : ""
+            domain: editPage.session ? editPage.session.domain : ""
+            faviconUrl: editPage.session ? editPage.session.faviconUrl : ""
+            thumbnailUrl: editPage.session ? editPage.session.thumbnailUrl : ""
+            coverAssetId: editPage.session ? editPage.session.coverAssetId : ""
+        }
+
+        // Resizable divider between Web view and the new Notes side panel
+        Item {
+            visible: editPage.webSidePanelShown
+            Layout.preferredWidth: 6
+            Layout.fillHeight: true
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 1
+                height: parent.height
+                color: gripMouse.containsMouse || editPage.resizingWebSide ? Theme.line3 : Theme.line
+            }
+            MouseArea {
+                id: gripMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.SplitHCursor
+                onPressed: editPage.resizingWebSide = true
+                onReleased: editPage.resizingWebSide = false
+                onCanceled: editPage.resizingWebSide = false
+                onPositionChanged: (mouse) => {
+                    if (!pressed) return
+                    const p = mapToItem(editPage, mouse.x, 0).x
+                    layoutPrefs.webSidePanelWidth = Math.max(300, Math.min(editPage.width - 360, editPage.width - p))
+                }
+            }
+        }
+
+        // ---------------- main column (also acts as the Web view's Notes side panel) ----------------
+        Rectangle {
+            id: mainCol
+            visible: !editPage.webFullPanel
+            Layout.fillWidth: !editPage.webSidePanelShown && !editPage.webFullPanel
+            Layout.preferredWidth: editPage.webFullPanel ? 0
+                                 : editPage.webSidePanelShown ? editPage.clampedWebSideW : 1
+            Layout.fillHeight: true
+            color: editPage.webSidePanelShown ? (Theme.slate ? Theme.bg2 : Theme.panel) : "transparent"
             clip: true
 
             Flickable {
@@ -135,7 +389,7 @@ Item {
                 height: 156
                 contentWidth: width
                 clip: true
-                visible: coverImage.visible
+                visible: !!editPage.session && editPage.session.coverAssetId.length > 0 && !editPage.hasWebUrl
                 interactive: false
 
                 // cover
@@ -143,8 +397,7 @@ Item {
                     inObject: true
                     id: coverImage
                     anchors.fill: parent
-                    visible: session && session.coverAssetId.length > 0
-                    source: visible ? "file://" + ws.assetLocalPath(session.coverAssetId) : ""
+                    source: headFlick.visible ? "file://" + ws.assetLocalPath(editPage.session.coverAssetId) : ""
                     sourceSize: Qt.size(1600, 320)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
@@ -163,7 +416,7 @@ Item {
 
             Rectangle {
                 anchors.top: headFlick.visible ? headFlick.bottom : parent.top
-                anchors.topMargin: headFlick.visible ? 0 : 10
+                anchors.topMargin: headFlick.visible ? 0 : (editPage.webSidePanelShown ? 0 : 10)
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -173,12 +426,48 @@ Item {
                     anchors.fill: parent
                     spacing: 0
 
-                    // object type breadcrumb
+                    // slate: the type as a chip (icon + name); a click lists that type
+                    Rectangle {
+                        visible: !!session && Theme.slate
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.topMargin: editPage.webSidePanelShown ? 14 : 18
+                        readonly property string tid: session ? session.typeId : ""
+                        readonly property var info: ws && tid ? ws.typeInfo(tid) : null
+                        implicitWidth: typeChipRow.implicitWidth + 16
+                        implicitHeight: 28
+                        radius: Theme.radiusSm
+                        color: typeChipHover.hovered ? Theme.cardHover : Theme.card
+                        border.width: 1
+                        border.color: Theme.cardBorder
+                        Row {
+                            id: typeChipRow
+                            anchors.centerIn: parent
+                            spacing: 6
+                            TypeBadge { anchors.verticalCenter: parent.verticalCenter; typeId: parent.parent.tid; size: 18 }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: parent.parent.info && parent.parent.info.name ? parent.parent.info.name : Theme.typeName(parent.parent.tid)
+                                color: Theme.dim
+                                font.family: Theme.body
+                                font.pixelSize: 12
+                                font.weight: Font.Medium
+                            }
+                        }
+                        HoverHandler { id: typeChipHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler {
+                            onTapped: if (editPage.appWindow) {
+                                editPage.appWindow.libraryType = parent.tid
+                                editPage.appWindow.navigate("library")
+                            }
+                        }
+                    }
+
+                    // object type breadcrumb (sky)
                     Text {
                         id: typeIdLabel
                         Layout.leftMargin: editPage.colMargin
                         Layout.topMargin: 14
-                        visible: !!session
+                        visible: !!session && !Theme.slate
                         text: {
                             const info = ws.typeInfo(session ? session.typeId : "")
                             const label = info.name !== undefined ? info.name.toUpperCase()
@@ -188,65 +477,229 @@ Item {
                         color: Theme.muted
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1.6
+                        font.letterSpacing: Theme.track(1.6)
                         font.weight: Font.Medium
                     }
 
-                    // Title
+                    // Web link preview card (shown above Title for Web link objects, matching design)
                     Rectangle {
+                        id: webHeaderCard
+                        visible: editPage.hasWebUrl
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 64
-                        color: "transparent"
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.topMargin: 10
+                        Layout.preferredHeight: webThumbBox.visible ? (editPage.webSidePanelShown ? 132 : 156) : 36
+                        Layout.minimumHeight: Layout.preferredHeight
+                        radius: Theme.radiusLg
+                        color: Theme.card
+                        border.width: 1
+                        border.color: Theme.cardBorder
+                        clip: true
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Rectangle {
+                                id: webThumbBox
+                                visible: !!editPage.session && (editPage.session.coverAssetId.length > 0 || editPage.session.thumbnailUrl.length > 0)
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                color: Theme.ink
+                                clip: true
+
+                                // Soft ambient backdrop from the thumbnail + crisp contained preview
+                                PrivateImage {
+                                    inObject: true
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectCrop
+                                    sourceSize: Qt.size(240, 120)
+                                    asynchronous: true
+                                    cache: true
+                                    opacity: 0.22
+                                    source: webThumbMain.source
+                                }
+                                PrivateImage {
+                                    id: webThumbMain
+                                    inObject: true
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    fillMode: Image.PreserveAspectFit
+                                    sourceSize: Qt.size(960, 320)
+                                    asynchronous: true
+                                    cache: true
+                                    source: {
+                                        if (!editPage.session) return ""
+                                        if (editPage.session.coverAssetId.length > 0) {
+                                            const p = ws.assetLocalPath(editPage.session.coverAssetId)
+                                            if (p.length > 0) return "file://" + p
+                                        }
+                                        return editPage.session.thumbnailUrl
+                                    }
+                                }
+
+                                HoverHandler { id: webCoverHover }
+                                Rectangle {
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 8
+                                    width: 28
+                                    height: 28
+                                    radius: Theme.radiusSm
+                                    color: Qt.rgba(0, 0, 0, 0.55)
+                                    border.width: 1
+                                    border.color: Theme.line2
+                                    visible: webCoverHover.hovered
+                                    TintedIcon { anchors.centerIn: parent; name: "pencil"; size: 13; color: Theme.text }
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                                    TapHandler { onTapped: webCoverPopup.open() }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 36
+                                color: Theme.panel2
+
+                                Rectangle {
+                                    visible: webThumbBox.visible
+                                    anchors.top: parent.top
+                                    width: parent.width
+                                    height: 1
+                                    color: Theme.line
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Item {
+                                        Layout.preferredWidth: 16
+                                        Layout.preferredHeight: 16
+                                        Image {
+                                            id: headerFav
+                                            anchors.fill: parent
+                                            visible: !!editPage.session && editPage.session.faviconUrl.length > 0 && status === Image.Ready
+                                            source: editPage.session ? editPage.session.faviconUrl : ""
+                                            sourceSize: Qt.size(32, 32)
+                                            fillMode: Image.PreserveAspectFit
+                                            asynchronous: true
+                                            cache: true
+                                        }
+                                        TintedIcon {
+                                            anchors.centerIn: parent
+                                            visible: !headerFav.visible
+                                            name: "world"
+                                            size: 14
+                                            color: Theme.muted
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: editPage.session ? editPage.session.url : ""
+                                        color: Theme.dim
+                                        font.family: Theme.body
+                                        font.pixelSize: 12
+                                        elide: Text.ElideRight
+                                    }
+
+                                    IconButton {
+                                        icon: "external-link"
+                                        onClicked: if (editPage.session && editPage.session.url) Qt.openUrlExternally(editPage.session.url)
+                                        ToolTip.visible: hovered; ToolTip.text: qsTr("Open in browser"); ToolTip.delay: 500
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Title (wraps across lines for long web link titles)
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 10
+                        Layout.bottomMargin: 4
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        implicitHeight: Math.max(40, titleRow.implicitHeight)
 
                         RowLayout {
                             id: titleRow
                             anchors.fill: parent
-                            anchors.leftMargin: editPage.colMargin
-                            anchors.rightMargin: editPage.colMargin
                             spacing: 12
 
-                            TextInput {
+                            TextEdit {
                                 id: titleInput
                                 objectName: "titleInput"
                                 Layout.fillWidth: true
-                                Layout.preferredWidth: 1   // shares the row instead of claiming the whole title
-                                Layout.preferredHeight: 40
-                                autoScroll: activeFocus    // unfocused, a long title shows its start
+                                Layout.preferredWidth: 1
+                                Layout.alignment: Qt.AlignVCenter
+                                wrapMode: TextEdit.WordWrap
                                 text: session ? session.title : ""
                                 color: Theme.text
                                 selectionColor: Qt.rgba(0.75, 0.89, 1, 0.38)
                                 selectedTextColor: Theme.text
                                 font.family: Theme.display
-                                font.pixelSize: 28
+                                font.pixelSize: editPage.webSidePanelShown ? 22 : 28
                                 font.weight: Font.DemiBold
                                 font.letterSpacing: -0.4
                                 selectByMouse: true
-                                clip: true
-                                verticalAlignment: TextInput.AlignVCenter
 
-                                onTextEdited: if (session) session.title = text // the Q_PROPERTY setter (setTitle is not invokable)
+                                function end() { cursorPosition = length }
+
+                                onTextChanged: {
+                                    if (!session) return
+                                    if (text.indexOf("\n") >= 0 || text.indexOf("\r") >= 0) {
+                                        const clean = text.replace(/[\r\n]+/g, " ")
+                                        text = clean
+                                        return
+                                    }
+                                    if (activeFocus && session.title !== text)
+                                        session.title = text
+                                }
+                                Keys.onReturnPressed: (event) => {
+                                    event.accepted = true
+                                    if (session && session.blockCount > 0)
+                                        blocks.forceActiveFocus()
+                                }
+                                Keys.onEnterPressed: (event) => {
+                                    event.accepted = true
+                                    if (session && session.blockCount > 0)
+                                        blocks.forceActiveFocus()
+                                }
+
+                                Text {
+                                    visible: titleInput.length === 0
+                                    text: qsTr("Untitled")
+                                    color: Theme.faint
+                                    font: titleInput.font
+                                }
                             }
 
                             Button {
-                                visible: !Theme.compact && editPage.width >= 620
-                                text: qsTr("COVER")
+                                visible: !editPage.webSplitActive && !Theme.compact && editPage.width >= 620
+                                text: Theme.caps(qsTr("COVER"))
                                 small: true
                                 onClicked: webCoverPopup.open()
                             }
                             Button {
-                                visible: !Theme.compact && editPage.width >= 620
-                                text: qsTr("SHARE")
+                                visible: !editPage.webSplitActive && !Theme.compact && editPage.width >= 620
+                                text: Theme.caps(qsTr("SHARE"))
                                 small: true
                                 onClicked: appWindow.showToast(qsTr("Link copied."))
                             }
                             Button {
-                                text: qsTr("TRASH")
+                                visible: !editPage.webSplitActive
+                                text: Theme.caps(qsTr("TRASH"))
                                 small: true
                                 onClicked: editPage.requestTrashCurrent()
                             }
                             IconButton {
                                 // outline / backlinks rail: docked when wide, on demand when narrow
-                                visible: editPage.narrowRail
+                                visible: !editPage.webSplitActive && editPage.narrowRail
                                 icon: "adjustments-horizontal"
                                 onClicked: editPage.railOpen = !editPage.railOpen
                             }
@@ -258,12 +711,77 @@ Item {
                                 onClicked: Privacy.noteRevealed = !Privacy.noteRevealed
                             }
                             IconButton {
+                                visible: !editPage.webSplitActive
                                 icon: "asterisk"
                                 onClicked: if (session) ws.togglePinned(session.objectId)
                             }
                             IconButton {
+                                visible: !editPage.webSplitActive
                                 icon: "arrow-back"
                                 onClicked: editPage.closeRequested()
+                            }
+                        }
+                    }
+
+                    // Web link OpenGraph description
+                    Text {
+                        visible: editPage.isWebObject && !!editPage.session && editPage.session.description.length > 0
+                        Layout.fillWidth: true
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.bottomMargin: 10
+                        text: editPage.session ? editPage.session.description : ""
+                        color: Theme.dim
+                        font.family: Theme.body
+                        font.pixelSize: 13
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: editPage.webSidePanelShown ? 3 : 4
+                        elide: Text.ElideRight
+                    }
+
+                    // tags of the object (not on a tag itself)
+                    TagRow {
+                        visible: !!editPage.session && editPage.session.typeId !== "tag"
+                        Layout.fillWidth: true
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.bottomMargin: 10
+                        objectId: visible ? editPage.session.objectId : ""
+                        onOpenTagRequested: (id) => { if (id && editPage.appWindow) editPage.appWindow.openObject(id) }
+                    }
+
+                    // Tag color selector when viewing a Tag object
+                    Row {
+                        visible: !!editPage.session && editPage.session.typeId === "tag"
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.bottomMargin: 12
+                        spacing: 8
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Tag color")
+                            color: Theme.muted
+                            font.family: Theme.body
+                            font.pixelSize: 12
+                        }
+                        Repeater {
+                            model: ["#A387FF", "#7EA6FF", "#7AF0D0", "#C9F2A6", "#FFB38A", "#FF8FB3", "#FFD166"]
+                            delegate: Rectangle {
+                                required property string modelData
+                                readonly property bool current: {
+                                    editPage.tagRev
+                                    return editPage.session && ws && ws.tagColor(editPage.session.title) === modelData
+                                }
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 18
+                                height: 18
+                                radius: 9
+                                color: modelData
+                                border.width: current ? 2 : 0
+                                border.color: Theme.text
+                                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                                TapHandler {
+                                    onTapped: if (editPage.session && ws) ws.setTagColor(editPage.session.title, modelData)
+                                }
                             }
                         }
                     }
@@ -278,6 +796,23 @@ Item {
                         objectId: visible ? editPage.session.objectId : ""
                     }
 
+                    // Inline property table (Name | Value, "Empty" when blank)
+                    PropertyTable {
+                        id: propTable
+                        property bool allowed: !!editPage.session && (Theme.slate || editPage.webSidePanelShown)
+                        visible: allowed && entries.length > 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: false
+                        Layout.preferredHeight: visible ? implicitHeight : 0
+                        Layout.minimumHeight: Layout.preferredHeight
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.bottomMargin: 10
+                        objectId: allowed ? editPage.session.objectId : ""
+                        hideWebHeaderProps: editPage.isWebObject
+                        labelWidth: editPage.webSidePanelShown ? 104 : 132
+                    }
+
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
@@ -286,10 +821,62 @@ Item {
                         color: Theme.line
                     }
 
-                    // object cover banner (web cover URL or local cover asset, for non-image objects)
+                    // Tagged objects list when viewing a Tag object
+                    ColumnLayout {
+                        visible: !!editPage.session && editPage.session.typeId === "tag" && editPage.tagBacklinks.length > 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: false
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.topMargin: 10
+                        Layout.bottomMargin: 6
+                        spacing: 6
+
+                        Text {
+                            text: Theme.caps(qsTr("TAGGED OBJECTS (%1)").arg(editPage.tagBacklinks.length))
+                            color: Theme.muted
+                            font.family: Theme.mono
+                            font.pixelSize: 11
+                            font.letterSpacing: Theme.track(1.0)
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            Repeater {
+                                model: editPage.tagBacklinks
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    height: 28
+                                    width: blRow.implicitWidth + 16
+                                    radius: Theme.radiusSm
+                                    color: blHover.hovered ? Theme.cardHover : Theme.card
+                                    border.width: 1
+                                    border.color: Theme.cardBorder
+                                    Row {
+                                        id: blRow
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        TypeBadge { anchors.verticalCenter: parent.verticalCenter; typeId: modelData.typeId || ""; emoji: modelData.iconEmoji || ""; size: 16 }
+                                        Text {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.title || qsTr("Untitled")
+                                            color: Theme.text
+                                            font.family: Theme.body
+                                            font.pixelSize: 13
+                                        }
+                                    }
+                                    HoverHandler { id: blHover; cursorShape: Qt.PointingHandCursor }
+                                    TapHandler { onTapped: if (editPage.appWindow) editPage.appWindow.openObject(modelData.id) }
+                                }
+                            }
+                        }
+                    }
+
+                    // object cover banner (web cover URL or local cover asset, for non-image & non-web objects)
                     Rectangle {
                         visible: !!editPage.session
                                  && editPage.session.typeId !== "image"
+                                 && !editPage.hasWebUrl
                                  && (editPage.session.coverAssetId.length > 0 || editPage.session.thumbnailUrl.length > 0)
                         Layout.fillWidth: true
                         Layout.preferredHeight: 168
@@ -409,11 +996,11 @@ Item {
                                     spacing: 3
                                     Layout.fillWidth: true
                                     Text {
-                                        text: qsTr("AUDIO")
+                                        text: Theme.caps(qsTr("AUDIO"))
                                         color: Theme.faint
                                         font.family: Theme.mono
                                         font.pixelSize: 11
-                                        font.letterSpacing: 1.2
+                                        font.letterSpacing: Theme.track(1.2)
                                     }
                                     Text {
                                         text: {
@@ -440,6 +1027,7 @@ Item {
                     Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        Layout.minimumHeight: 140
                         Layout.leftMargin: 2
                         Layout.rightMargin: 2
 
@@ -486,14 +1074,14 @@ Item {
         // ---------------- rail ----------------
         Item {
             id: railHost
-            visible: !!session
+            visible: !!session && !editPage.embedMode && (!editPage.webSplitActive || layoutPrefs.notesRailVisible || editPage.narrowRail)
             // Wide windows dock the rail; narrow ones give it no width and float it over the page.
-            Layout.preferredWidth: editPage.narrowRail ? 0 : Theme.railWidth
+            Layout.preferredWidth: editPage.showDockedRail ? Theme.railWidth : 0
             Layout.fillHeight: true
             z: 20
 
             Rectangle {
-                visible: !editPage.narrowRail || editPage.railOpen
+                visible: editPage.showDockedRail || (editPage.narrowRail && editPage.railOpen)
                 width: Theme.railWidth
                 height: parent.height
                 x: editPage.narrowRail ? -Theme.railWidth : 0
@@ -524,6 +1112,7 @@ Item {
             }
         }
     }
+    } // outer ColumnLayout
 
     Popup {
         id: webCoverPopup
@@ -547,11 +1136,11 @@ Item {
         contentItem: ColumnLayout {
             spacing: 12
             Text {
-                text: qsTr("SET WEB COVER")
+                text: Theme.caps(qsTr("SET WEB COVER"))
                 color: Theme.text
                 font.family: Theme.mono
                 font.pixelSize: 12
-                font.letterSpacing: 1.4
+                font.letterSpacing: Theme.track(1.4)
             }
             Rectangle {
                 Layout.fillWidth: true
@@ -584,10 +1173,10 @@ Item {
                 Layout.fillWidth: true
                 spacing: 8
                 Item { Layout.fillWidth: true }
-                Button { text: qsTr("CANCEL"); small: true; onClicked: webCoverPopup.close() }
+                Button { text: Theme.caps(qsTr("CANCEL")); small: true; onClicked: webCoverPopup.close() }
                 Button {
                     id: setWebCoverBtn
-                    text: qsTr("SET COVER")
+                    text: Theme.caps(qsTr("SET COVER"))
                     small: true
                     enabled: webCoverInput.text.trim().length > 0
                     function applyCover() {
@@ -624,11 +1213,11 @@ Item {
             spacing: 12
 
             Text {
-                text: qsTr("MOVE TO TRASH")
+                text: Theme.caps(qsTr("MOVE TO TRASH"))
                 color: Theme.text
                 font.family: Theme.mono
                 font.pixelSize: 12
-                font.letterSpacing: 1.4
+                font.letterSpacing: Theme.track(1.4)
             }
 
             Text {
@@ -684,12 +1273,12 @@ Item {
                 spacing: 10
                 Item { Layout.fillWidth: true }
                 Button {
-                    text: qsTr("CANCEL")
+                    text: Theme.caps(qsTr("CANCEL"))
                     small: true
                     onClicked: trashPopup.close()
                 }
                 Button {
-                    text: qsTr("MOVE TO TRASH")
+                    text: Theme.caps(qsTr("MOVE TO TRASH"))
                     small: true
                     onClicked: {
                         trashPopup.close()

@@ -38,7 +38,26 @@ Item {
     // Height of the image split row. Fixed (not derived from the async-loaded
     // image size): a height that changes when the asset arrives makes the
     // ListView keep stale delegate positions and blocks overlap.
-    readonly property real imagePaneH: blockType === "image" ? 400 : 0
+    readonly property real imagePaneH: blockType === "image" ? 520 : 0
+
+    // Image side pane: closed by default so the picture gets the full width.
+    property bool panelOpen: false
+    property real panelWidth: 240
+    function rememberPanel() {
+        if (mb.view && mb.view.mediaPanels !== undefined && mb.blockId.length > 0)
+            mb.view.mediaPanels[mb.blockId] = { open: mb.panelOpen, width: mb.panelWidth }
+    }
+    function setPanelOpen(open) {
+        mb.panelOpen = open
+        mb.rememberPanel()
+    }
+    Component.onCompleted: {
+        const st = (mb.view && mb.view.mediaPanels) ? mb.view.mediaPanels[mb.blockId] : undefined
+        if (st) {
+            mb.panelWidth = st.width
+            mb.panelOpen = st.open
+        }
+    }
 
     implicitHeight: contentCol.implicitHeight + 12
 
@@ -72,19 +91,28 @@ Item {
         anchors.rightMargin: 26
         spacing: 6
 
-        // ---------------- image: split view, big preview + editor pane ----------------
-        RowLayout {
+        // ---------------- image: big preview; click slides the editor pane in ----------------
+        Item {
             id: imageSplit
             visible: blockType === "image"
             Layout.fillWidth: true
             Layout.preferredHeight: mb.imagePaneH
-            spacing: 8
 
-            // big preview pane (always visible)
+            // Animated width actually taken by the pane (0 when closed).
+            property real shownW: mb.panelOpen ? Math.min(mb.panelWidth, width * 0.6) : 0
+            Behavior on shownW {
+                enabled: !splitDrag.active
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
+            readonly property real gap: Math.min(8, shownW)
+
+            // big preview pane
             Rectangle {
                 id: imgPane
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width - imageSplit.shownW - imageSplit.gap
                 radius: Theme.radius
                 color: Theme.panel
                 clip: true
@@ -100,7 +128,7 @@ Item {
                     visible: mb.assetReady && status === Image.Ready
                     fillMode: Image.PreserveAspectFit
                     source: mb.assetReady ? "file://" + mb.assetPath : ""
-                    sourceSize.width: 1600
+                    sourceSize.width: 2400
                     smooth: true
                     // Cached so a block rebuilt by a structural edit shows the picture at once
                     // instead of flashing empty while it decodes again.
@@ -117,21 +145,89 @@ Item {
                     font.pixelSize: 11
                 }
 
+                // Pane toggle hint: shown on hover or while the pane is open.
+                Rectangle {
+                    id: panelToggle
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 8
+                    width: 26
+                    height: 26
+                    radius: Theme.radius
+                    color: toggleHover.hovered ? Theme.panel3 : Theme.panel2
+                    opacity: (imgHover.hovered || mb.panelOpen) ? 0.95 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+                    TintedIcon {
+                        anchors.centerIn: parent
+                        name: "layout-sidebar-right"
+                        size: 14
+                        color: mb.panelOpen ? Theme.accent : Theme.muted
+                    }
+                    HoverHandler { id: toggleHover }
+                }
+
                 HoverHandler { id: imgHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     id: imgTap
-                    onTapped: {
+                    onSingleTapped: (eventPoint, button) => {
                         if (imgTap.point.modifiers & (Qt.ControlModifier | Qt.MetaModifier))
                             mb.openImageObject()
+                        else
+                            mb.setPanelOpen(!mb.panelOpen)
                     }
                     onDoubleTapped: mb.openImageObject()
                 }
             }
 
-            // editor pane (always visible next to the preview)
+            // Drag handle between preview and pane: resizes the pane.
+            Item {
+                id: splitHandle
+                visible: imageSplit.shownW > 0
+                x: imgPane.width
+                width: imageSplit.gap
+                height: parent.height
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 2
+                    height: 36
+                    radius: 1
+                    color: (splitHover.hovered || splitDrag.active) ? Theme.accent : Theme.line2
+                }
+                HoverHandler { id: splitHover; cursorShape: Qt.SplitHCursor }
+                DragHandler {
+                    id: splitDrag
+                    target: null
+                    xAxis.enabled: true
+                    yAxis.enabled: false
+                    property real startW: 0
+                    onActiveChanged: {
+                        if (active)
+                            startW = imageSplit.shownW
+                        else
+                            mb.rememberPanel()
+                    }
+                    onTranslationChanged: {
+                        if (active)
+                            mb.panelWidth = Math.max(180, Math.min(imageSplit.width * 0.6,
+                                                                   startW - translation.x))
+                    }
+                }
+            }
+
+            // editor pane (slides in from the right)
+            Item {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: imageSplit.shownW
+                visible: width > 0.5
+                clip: true
+
             Rectangle {
-                Layout.preferredWidth: 200
-                Layout.fillHeight: true
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: Math.min(mb.panelWidth, imageSplit.width * 0.6)
                 radius: Theme.radius
                 color: Theme.panel
 
@@ -141,11 +237,11 @@ Item {
                     spacing: 8
 
                     Text {
-                        text: qsTr("IMAGE")
+                        text: Theme.caps(qsTr("IMAGE"))
                         color: Theme.faint
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1.2
+                        font.letterSpacing: Theme.track(1.2)
                     }
                     Text {
                         visible: mb.fileName.length > 0
@@ -160,11 +256,11 @@ Item {
                     RowLayout {
                         spacing: 6
                         Text {
-                            text: qsTr("WIDTH")
+                            text: Theme.caps(qsTr("WIDTH"))
                             color: Theme.faint
                             font.family: Theme.mono
                             font.pixelSize: 11
-                            font.letterSpacing: 1
+                            font.letterSpacing: Theme.track(1)
                         }
                         Repeater {
                             model: [0.5, 0.75, 1.0]
@@ -189,12 +285,12 @@ Item {
                     RowLayout {
                         spacing: 6
                         Button {
-                            text: qsTr("OPEN")
+                            text: Theme.caps(qsTr("OPEN"))
                             small: true
                             onClicked: mb.openImageObject()
                         }
                         Button {
-                            text: qsTr("REMOVE")
+                            text: Theme.caps(qsTr("REMOVE"))
                             small: true
                             onClicked: {
                                 if (mb.view && mb.view.session)
@@ -204,11 +300,11 @@ Item {
                     }
 
                     Text {
-                        text: qsTr("CAPTION")
+                        text: Theme.caps(qsTr("CAPTION"))
                         color: Theme.faint
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1
+                        font.letterSpacing: Theme.track(1)
                     }
                     TextEdit {
                         id: imgCaptionEdit
@@ -267,6 +363,7 @@ Item {
                             }
                         }
                     }
+                }
                 }
             }
         }
@@ -373,11 +470,11 @@ Item {
                     RowLayout {
                         spacing: 8
                         Text {
-                            text: qsTr("AUDIO")
+                            text: Theme.caps(qsTr("AUDIO"))
                             color: Theme.faint
                             font.family: Theme.mono
                             font.pixelSize: 11
-                            font.letterSpacing: 1.2
+                            font.letterSpacing: Theme.track(1.2)
                         }
                         Text {
                             text: {

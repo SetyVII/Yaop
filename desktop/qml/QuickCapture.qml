@@ -30,7 +30,7 @@ Popup {
     property var kinds: []
     function refreshKinds() {
         const list = (typeof ws !== "undefined" && ws) ? ws.allTypes() : []
-        kinds = list.map(t => ({ type: t.id, label: String(t.name || t.id).toUpperCase() }))
+        kinds = list.map(t => ({ type: t.id, label: Theme.slate ? String(t.name || t.id) : String(t.name || t.id).toUpperCase() }))
     }
     Connections {
         target: typeof ws !== "undefined" ? ws : null
@@ -48,7 +48,7 @@ Popup {
     }
 
     // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle { color: Qt.rgba(0.02, 0.04, 0.15, 0.62) }
+    Overlay.modal: Rectangle { color: Theme.scrim }
 
     background: Rectangle {
         radius: Theme.radiusLg
@@ -75,22 +75,35 @@ Popup {
 
                     delegate: Rectangle {
                         required property var modelData
-                        width: chipLabel.implicitWidth + 26
-                        height: 28
-                        radius: 14
-                        color: Theme.panel
-                        border.color: capture.selectedTypeId === modelData.type ? Theme.ice : "transparent"
+                        readonly property bool on: capture.selectedTypeId === modelData.type
+                        width: chipRow.implicitWidth + (Theme.slate ? 18 : 26)
+                        height: Theme.slate ? 30 : 28
+                        radius: Theme.slate ? Theme.radius : 14
+                        color: Theme.slate ? (on ? Theme.panel2 : Theme.card) : Theme.panel
+                        border.color: on ? (Theme.slate ? Theme.line3 : Theme.ice) : Theme.slate ? Theme.cardBorder : "transparent"
                         border.width: 1
 
+                        Row {
+                            id: chipRow
+                            anchors.centerIn: parent
+                            spacing: 6
+                        TypeBadge {
+                            visible: Theme.slate
+                            anchors.verticalCenter: parent.verticalCenter
+                            typeId: modelData.type
+                            size: 18
+                        }
                         Text {
                             id: chipLabel
-                            anchors.centerIn: parent
+                            anchors.verticalCenter: parent.verticalCenter
                             text: modelData.label
-                            color: capture.selectedTypeId === modelData.type ? Theme.ice : Theme.dim
+                            color: parent.parent.on ? (Theme.slate ? Theme.text : Theme.ice) : Theme.dim
                             font.family: Theme.mono
-                            font.pixelSize: 10
-                            font.letterSpacing: 1.0
+                            font.pixelSize: Theme.slate ? 12 : 10
+                            font.letterSpacing: Theme.track(1.0)
                         }
+                        }
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: capture.selectedTypeId = modelData.type }
                     }
                 }
@@ -140,13 +153,13 @@ Popup {
 
             Item { Layout.fillWidth: true }
             Button {
-                text: qsTr("CANCEL")
+                text: Theme.caps(qsTr("CANCEL"))
                 small: true
                 onClicked: requestClose()
             }
             Button {
                 small: true
-                text: capture.mediaSelected ? qsTr("PICK FILE") : qsTr("CREATE")
+                text: capture.mediaSelected ? Theme.caps(qsTr("PICK FILE")) : Theme.caps(qsTr("CREATE"))
                 enabled: capture.mediaSelected || input.text.trim().length > 0
                 onClicked: submit()
             }
@@ -188,6 +201,14 @@ Popup {
             }
         } else if (selectedTypeId === "tag") {
             id = ws.ensureTagObject(title)
+        } else if (selectedTypeId === "web") {
+            const looksUrl = /^https?:\/\//i.test(title) || /^[^\s]+\.[a-z]{2,}(\/.*)?$/i.test(title)
+            if (looksUrl) {
+                const fullUrl = /^https?:\/\//i.test(title) ? title : "https://" + title
+                id = ws.createWebLinkFromUrl(fullUrl)
+            } else {
+                id = ws.createObject("web", title)
+            }
         } else {
             id = ws.createObject(selectedTypeId, title)
         }

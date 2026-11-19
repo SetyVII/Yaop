@@ -19,7 +19,7 @@ Popup {
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle { color: Qt.rgba(0.02, 0.04, 0.15, 0.62) }
+    Overlay.modal: Rectangle { color: Theme.scrim }
 
     background: Rectangle {
         radius: Theme.radiusLg
@@ -44,11 +44,11 @@ Popup {
         spacing: 14
 
         Text {
-            text: qsTr("APPEARANCE")
+            text: Theme.caps(qsTr("APPEARANCE"))
             color: Theme.ice
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
         }
         // This device only; both looks share every screen.
         RowLayout {
@@ -82,11 +82,11 @@ Popup {
         }
 
         Text {
-            text: qsTr("SERVER")
+            text: Theme.caps(qsTr("SERVER"))
             color: Theme.ice
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
         }
 
         // sync status row
@@ -124,11 +124,11 @@ Popup {
             Layout.fillWidth: true
 
             Text {
-                text: qsTr("SERVER URL")
+                text: Theme.caps(qsTr("SERVER URL"))
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.2
+                font.letterSpacing: Theme.track(1.2)
             }
             Rectangle {
                 Layout.fillWidth: true
@@ -157,11 +157,11 @@ Popup {
             Layout.fillWidth: true
 
             Text {
-                text: qsTr("BEARER TOKEN")
+                text: Theme.caps(qsTr("BEARER TOKEN"))
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.2
+                font.letterSpacing: Theme.track(1.2)
             }
             Rectangle {
                 Layout.fillWidth: true
@@ -194,26 +194,26 @@ Popup {
         }
 
         Text {
-            text: qsTr("VAULT")
+            text: Theme.caps(qsTr("VAULT"))
             color: Theme.ice
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
         }
 
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
             Button {
-                text: phraseText.visible ? qsTr("HIDE PHRASE") : qsTr("SHOW RECOVERY PHRASE")
+                text: phraseText.visible ? Theme.caps(qsTr("HIDE PHRASE")) : Theme.caps(qsTr("SHOW RECOVERY PHRASE"))
                 onClicked: { phraseText.visible = !phraseText.visible; phraseText.text = phraseText.visible && ws ? ws.recoveryPhrase() : "" }
             }
             Button {
-                text: qsTr("ADD A DEVICE")
+                text: Theme.caps(qsTr("ADD A DEVICE"))
                 onClicked: pairing.hostStart()
             }
             Button {
-                text: qsTr("DEVICES")
+                text: Theme.caps(qsTr("DEVICES"))
                 onClicked: { if (ws) ws.refreshDevices() }
             }
         }
@@ -230,11 +230,11 @@ Popup {
 
         // ---- backup (.yaop, spec §15.6)
         Text {
-            text: qsTr("BACKUP")
+            text: Theme.caps(qsTr("BACKUP"))
             color: Theme.ice
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
         }
         Text {
             Layout.fillWidth: true
@@ -246,8 +246,8 @@ Popup {
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Button { text: qsTr("EXPORT BACKUP"); onClicked: exportDialog.open() }
-            Button { text: qsTr("RESTORE FROM BACKUP"); onClicked: restoreDialog.open() }
+            Button { text: Theme.caps(qsTr("EXPORT BACKUP")); onClicked: exportDialog.open() }
+            Button { text: Theme.caps(qsTr("RESTORE FROM BACKUP")); onClicked: restoreDialog.open() }
         }
         Text {
             id: backupStatus
@@ -306,14 +306,14 @@ Popup {
             Text {
                 visible: pairing.state === "compare"
                 text: pairing.code
-                color: Theme.ice; font.family: Theme.mono; font.pixelSize: 32
+                color: Theme.ice; font.family: Theme.code; font.pixelSize: 32
             }
             Text { visible: pairing.state === "done"; text: qsTr("Device added."); color: Theme.ice; font.family: Theme.body; font.pixelSize: 12 }
             Text { visible: pairing.state === "failed"; text: pairing.error; color: Theme.danger; font.family: Theme.body; font.pixelSize: 12 }
             RowLayout {
                 spacing: 10
-                Button { visible: pairing.state === "compare"; text: qsTr("THEY MATCH"); primary: true; onClicked: pairing.hostApprove() }
-                Button { text: qsTr("CANCEL"); small: true; onClicked: pairing.cancel() }
+                Button { visible: pairing.state === "compare"; text: Theme.caps(qsTr("THEY MATCH")); primary: true; onClicked: pairing.hostApprove() }
+                Button { text: Theme.caps(qsTr("CANCEL")); small: true; onClicked: pairing.cancel() }
             }
         }
 
@@ -336,7 +336,7 @@ Popup {
                 Button {
                     visible: !modelData.mine && !modelData.revoked
                     small: true
-                    text: qsTr("REVOKE")
+                    text: Theme.caps(qsTr("REVOKE"))
                     onClicked: ws.revokeDevice(modelData.id)
                 }
             }
@@ -345,34 +345,34 @@ Popup {
 
         // ---- local lock (spec §15.5): PIN at start and after N idle minutes
         Text {
-            text: qsTr("LOCK")
+            text: Theme.caps(qsTr("LOCK"))
             color: Theme.ice
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
         }
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            OnbField { id: pinCurrent; visible: appLock.hasPin; Layout.fillWidth: true; label: qsTr("CURRENT PIN") }
-            OnbField { id: pinNew; Layout.fillWidth: true; label: appLock.hasPin ? qsTr("NEW PIN (4+)") : qsTr("SET A PIN (4+)") }
+            OnbField { id: pinCurrent; visible: appLock.hasPin; Layout.fillWidth: true; label: Theme.caps(qsTr("CURRENT PIN")) }
+            OnbField { id: pinNew; Layout.fillWidth: true; label: appLock.hasPin ? Theme.caps(qsTr("NEW PIN (4+)")) : Theme.caps(qsTr("SET A PIN (4+)")) }
         }
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
             Button {
-                text: appLock.hasPin ? qsTr("CHANGE PIN") : qsTr("ENABLE LOCK")
+                text: appLock.hasPin ? Theme.caps(qsTr("CHANGE PIN")) : Theme.caps(qsTr("ENABLE LOCK"))
                 onClicked: pinMsg.text = appLock.setPin(pinNew.text, pinCurrent.text)
                                          ? qsTr("PIN saved.") : qsTr("Could not save: check the current PIN and use 4+ characters.")
             }
             Button {
                 visible: appLock.hasPin
-                text: qsTr("REMOVE")
+                text: Theme.caps(qsTr("REMOVE"))
                 onClicked: pinMsg.text = appLock.clearPin(pinCurrent.text) ? qsTr("Lock removed.") : qsTr("Wrong current PIN.")
             }
             Button {
                 visible: appLock.hasPin
-                text: qsTr("LOCK NOW")
+                text: Theme.caps(qsTr("LOCK NOW"))
                 onClicked: { settingsSheet.close(); appLock.lockNow() }
             }
         }
@@ -380,9 +380,9 @@ Popup {
             visible: appLock.hasPin
             Layout.fillWidth: true
             spacing: 8
-            Text { text: qsTr("AUTO-LOCK"); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 11; font.letterSpacing: 1.2 }
+            Text { text: Theme.caps(qsTr("AUTO-LOCK")); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 11; font.letterSpacing: Theme.track(1.2) }
             Repeater {
-                model: [ { m: 1, l: "1 MIN" }, { m: 5, l: "5 MIN" }, { m: 15, l: "15 MIN" }, { m: 30, l: "30 MIN" }, { m: 0, l: qsTr("START ONLY") } ]
+                model: [ { m: 1, l: "1 MIN" }, { m: 5, l: "5 MIN" }, { m: 15, l: "15 MIN" }, { m: 30, l: "30 MIN" }, { m: 0, l: Theme.caps(qsTr("START ONLY")) } ]
                 delegate: Chip {
                     required property var modelData
                     text: modelData.l
@@ -398,7 +398,7 @@ Popup {
             spacing: 10
 
             Button {
-                text: qsTr("SAVE & RESYNC")
+                text: Theme.caps(qsTr("SAVE & RESYNC"))
                 onClicked: {
                     if (ws) {
                         if (urlInput.text.trim().length > 0 && urlInput.text !== ws.serverUrl)
@@ -411,7 +411,7 @@ Popup {
                 }
             }
             Button {
-                text: qsTr("FULL RESYNC")
+                text: Theme.caps(qsTr("FULL RESYNC"))
                 onClicked: {
                     if (ws)
                         ws.triggerFullSync()
@@ -419,7 +419,7 @@ Popup {
                 }
             }
             Button {
-                text: qsTr("PULLCHECK")
+                text: Theme.caps(qsTr("PULLCHECK"))
                 onClicked: {
                     if (ws)
                         ws.debugPullCheck()
@@ -427,7 +427,7 @@ Popup {
             }
             Item { Layout.fillWidth: true }
             Button {
-                text: qsTr("CLOSE")
+                text: Theme.caps(qsTr("CLOSE"))
                 small: true
                 onClicked: settingsSheet.close()
             }

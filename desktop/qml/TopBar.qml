@@ -31,20 +31,20 @@ Item {
         Text {
             text: {
                 switch (bar.page) {
-                case "home": return qsTr("HOME")
-                case "journal": return qsTr("DAILY")
-                case "library": return qsTr("SPACES")
-                case "whiteboard": return qsTr("WHITEBOARD")
-                case "tasks": return qsTr("TASKS")
-                case "sets": return qsTr("SETS")
-                case "editor": return qsTr("OBJECT")
+                case "home": return Theme.caps(qsTr("HOME"))
+                case "journal": return Theme.caps(qsTr("DAILY"))
+                case "library": return Theme.caps(qsTr("SPACES"))
+                case "whiteboard": return Theme.caps(qsTr("WHITEBOARD"))
+                case "tasks": return Theme.caps(qsTr("TASKS"))
+                case "sets": return Theme.caps(qsTr("SETS"))
+                case "editor": return Theme.caps(qsTr("OBJECT"))
                 default: return ""
                 }
             }
             color: Theme.dim
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 1.6
+            font.letterSpacing: Theme.track(1.6)
             font.weight: Font.Medium
         }
 

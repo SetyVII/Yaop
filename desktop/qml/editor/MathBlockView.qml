@@ -103,11 +103,11 @@ Item {
             spacing: 8
 
             Text {
-                text: qsTr("LATEX")
+                text: Theme.caps(qsTr("LATEX"))
                 color: Theme.accent
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.4
+                font.letterSpacing: Theme.track(1.4)
             }
 
             Rectangle {
@@ -126,7 +126,7 @@ Item {
                     wrapMode: TextEdit.WrapAnywhere
                     selectByMouse: true
                     color: Theme.text
-                    font.family: Theme.mono
+                    font.family: Theme.code
                     font.pixelSize: 13
                     clip: true
                     Keys.onPressed: function(event) {

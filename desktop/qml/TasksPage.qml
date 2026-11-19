@@ -30,7 +30,7 @@ Item {
             // quick add
             Panel {
                 Layout.fillWidth: true
-                label: qsTr("QUICK ADD")
+                label: Theme.caps(qsTr("QUICK ADD"))
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -56,7 +56,7 @@ Item {
                         }
                     }
                     Button {
-                        text: qsTr("ADD")
+                        text: Theme.caps(qsTr("ADD"))
                         small: true
                         enabled: taskInput.text.trim().length > 0
                         onClicked: {
@@ -71,9 +71,9 @@ Item {
             Repeater {
                 id: sectionsRepeater
                 model: [
-                    { key: "today", label: qsTr("TODAY"), emptyText: qsTr("nothing due today") },
-                    { key: "upcoming", label: qsTr("UPCOMING"), emptyText: qsTr("nothing upcoming") },
-                    { key: "done", label: qsTr("DONE"), emptyText: qsTr("nothing completed") }
+                    { key: "today", label: Theme.caps(qsTr("TODAY")), emptyText: qsTr("nothing due today") },
+                    { key: "upcoming", label: Theme.caps(qsTr("UPCOMING")), emptyText: qsTr("nothing upcoming") },
+                    { key: "done", label: Theme.caps(qsTr("DONE")), emptyText: qsTr("nothing completed") }
                 ]
 
                 delegate: ColumnLayout {
@@ -93,7 +93,7 @@ Item {
                             color: Theme.muted
                             font.family: Theme.mono
                             font.pixelSize: 11
-                            font.letterSpacing: 1.6
+                            font.letterSpacing: Theme.track(1.6)
                             font.weight: Font.Medium
                         }
                         Rectangle {

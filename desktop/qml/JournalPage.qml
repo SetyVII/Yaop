@@ -56,7 +56,7 @@ Item {
             // strip: last 14 days
             Panel {
                 Layout.fillWidth: true
-                label: qsTr("DAILY")
+                label: Theme.caps(qsTr("DAILY"))
 
                 // Wraps onto more rows in a narrow window instead of overflowing sideways.
                 Flow {
@@ -136,7 +136,7 @@ Item {
             // selected day's journal quick-open
             Panel {
                 Layout.fillWidth: true
-                label: journalPage.selectedOffset === 0 ? qsTr("TODAY") : journalPage.selectedIso
+                label: journalPage.selectedOffset === 0 ? Theme.caps(qsTr("TODAY")) : journalPage.selectedIso
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -161,7 +161,7 @@ Item {
                     }
 
                     Button {
-                        text: journalPage.selectedOffset === 0 ? qsTr("WRITE TODAY") : qsTr("OPEN DAILY")
+                        text: journalPage.selectedOffset === 0 ? Theme.caps(qsTr("WRITE TODAY")) : Theme.caps(qsTr("OPEN DAILY"))
                         onClicked: {
                             const existing = ws.journalFor(journalPage.selectedIso)
                             if (existing && existing.length > 0)
@@ -186,7 +186,7 @@ Item {
                 }
                 visible: due.length > 0
                 Layout.fillWidth: true
-                label: qsTr("HABITS")
+                label: Theme.caps(qsTr("HABITS"))
                 Flow {
                     Layout.fillWidth: true
                     spacing: 16
@@ -214,7 +214,7 @@ Item {
             // Created on this day (parity with mobile Daily)
             Panel {
                 Layout.fillWidth: true
-                label: qsTr("CREATED ON THIS DAY (%1)").arg(journalPage.createdObjects.length)
+                label: Theme.caps(qsTr("CREATED ON THIS DAY (%1)")).arg(journalPage.createdObjects.length)
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -243,7 +243,7 @@ Item {
             // Referenced on this day (backlinks to @YYYY-MM-DD / daily-<iso>)
             Panel {
                 Layout.fillWidth: true
-                label: qsTr("REFERENCED (%1)").arg(journalPage.referencedObjects.length)
+                label: Theme.caps(qsTr("REFERENCED (%1)")).arg(journalPage.referencedObjects.length)
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -264,10 +264,10 @@ Item {
                                 anchors.rightMargin: 10
                                 spacing: 10
 
-                                Rectangle {
-                                    Layout.preferredWidth: 4
-                                    Layout.preferredHeight: 28
-                                    color: Theme.typeColor(modelData.typeId !== undefined ? modelData.typeId : "")
+                                TypeBadge {
+                                    typeId: modelData.typeId !== undefined ? modelData.typeId : ""
+                                    emoji: modelData.iconEmoji || ""
+                                    size: 26
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true

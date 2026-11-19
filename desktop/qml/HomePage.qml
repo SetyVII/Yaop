@@ -77,11 +77,11 @@ Item {
         if (isNaN(t))
             return ""
         const m = Math.max(0, Math.round((Date.now() - t) / 60000))
-        if (m < 1) return qsTr("NOW")
-        if (m < 60) return qsTr("%1 MIN AGO").arg(m)
+        if (m < 1) return Theme.caps(qsTr("NOW"))
+        if (m < 60) return Theme.caps(qsTr("%1 MIN AGO")).arg(m)
         const h = Math.round(m / 60)
-        if (h < 24) return qsTr("%1 H AGO").arg(h)
-        return qsTr("%1 D AGO").arg(Math.round(h / 24))
+        if (h < 24) return Theme.caps(qsTr("%1 H AGO")).arg(h)
+        return Theme.caps(qsTr("%1 D AGO")).arg(Math.round(h / 24))
     }
 
     Flickable {
@@ -229,8 +229,8 @@ Item {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     Layout.preferredWidth: 1
-                    label: qsTr("TASKS TODAY")
-                    action: qsTr("SEE ALL")
+                    label: Theme.caps(qsTr("TASKS TODAY"))
+                    action: Theme.caps(qsTr("SEE ALL"))
                     onActionClicked: home.pageRequested("tasks")
                     padding: 8
 
@@ -308,7 +308,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     Layout.preferredWidth: 1
-                    label: qsTr("CONTINUE")
+                    label: Theme.caps(qsTr("CONTINUE"))
                     padding: 8
 
                     Text {
@@ -369,7 +369,7 @@ Item {
                                         color: Theme.muted
                                         font.family: Theme.mono
                                         font.pixelSize: 11
-                                        font.letterSpacing: 1
+                                        font.letterSpacing: Theme.track(1)
                                     }
                                 }
                             }

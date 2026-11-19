@@ -106,12 +106,12 @@ Popup {
                 anchors.left: parent.left
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: mp.mode === "object" ? qsTr("REFERENCE AN OBJECT")
-                     : mp.mode === "tag" ? qsTr("TAG") : qsTr("DATE")
+                text: mp.mode === "object" ? Theme.caps(qsTr("REFERENCE AN OBJECT"))
+                     : mp.mode === "tag" ? Theme.caps(qsTr("TAG")) : Theme.caps(qsTr("DATE"))
                 color: mp.mode === "object" ? Theme.note : mp.mode === "tag" ? Theme.accent : Theme.journal
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.6
+                font.letterSpacing: Theme.track(1.6)
             }
         }
 
@@ -210,9 +210,9 @@ Popup {
                     anchors.verticalCenterOffset: 9
                     horizontalAlignment: Text.AlignLeft
                     text: row.modelData.createNew
-                          ? qsTr("NEW %1").arg(Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : ""))
+                          ? Theme.caps(qsTr("NEW %1")).arg(Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : ""))
                           : row.modelData.kind === "type"
-                          ? qsTr("TYPE · %1").arg(row.modelData.title)
+                          ? Theme.caps(qsTr("TYPE · %1")).arg(row.modelData.title)
                           : Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : "")
                     color: Theme.faint
                     font.family: Theme.mono

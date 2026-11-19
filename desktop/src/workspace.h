@@ -127,6 +127,10 @@ public:
     Q_INVOKABLE QVariantList mentionSearch(const QString &rawQuery, int limit = 14);
     Q_INVOKABLE QVariantList tagSuggestions(const QString &query, int limit = 16) const;
     Q_INVOKABLE QString ensureTagObject(const QString &tagName);
+    // An object's tags (spec/object.md: properties.tags = [name]), in their stored order.
+    Q_INVOKABLE QStringList objectTags(const QString &objectId) const;
+    Q_INVOKABLE QString tagColor(const QString &tagName) const;
+    Q_INVOKABLE void setTagColor(const QString &tagName, const QString &colorHex);
     Q_INVOKABLE QVariantList allTypes() const;
     Q_INVOKABLE QVariantMap typeInfo(const QString &typeId) const;
     Q_INVOKABLE QString createCustomType(const QString &name, const QString &colorNameOrHex = QString(),

@@ -16,7 +16,7 @@ ColumnLayout {
         color: Theme.muted
         font.family: Theme.mono
         font.pixelSize: 11
-        font.letterSpacing: 1.2
+        font.letterSpacing: Theme.track(1.2)
     }
     Rectangle {
         Layout.fillWidth: true

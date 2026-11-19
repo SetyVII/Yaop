@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import "."
 
@@ -9,6 +10,7 @@ Rectangle {
 
     property var summary: ({})
     signal openRequested()
+    signal openInPaneRequested()
     signal restoreRequested()
 
     implicitWidth: 0
@@ -31,11 +33,10 @@ Rectangle {
         anchors.rightMargin: 12
         spacing: 12
 
-        Rectangle {
-            Layout.preferredWidth: 8
-            Layout.preferredHeight: 8
-            radius: 4
-            color: Theme.typeColor(summary.typeId !== undefined ? summary.typeId : "")
+        TypeBadge {
+            typeId: summary.typeId !== undefined ? summary.typeId : ""
+            emoji: summary.iconEmoji || ""
+            size: 24
         }
 
         PrivateImage {
@@ -51,11 +52,13 @@ Rectangle {
 
         Text {
             Layout.preferredWidth: 90
-            text: Theme.typeLabel(summary.typeId !== undefined ? summary.typeId : "")
+            readonly property string tid: summary.typeId !== undefined ? summary.typeId : ""
+            readonly property var info: ws && tid ? ws.typeInfo(tid) : null
+            text: Theme.slate ? (info && info.name ? info.name : Theme.typeName(tid)) : Theme.typeLabel(tid)
             color: Theme.muted
-            font.family: Theme.mono
-            font.pixelSize: 11
-            font.letterSpacing: 1.2
+            font.family: Theme.slate ? Theme.body : Theme.mono
+            font.pixelSize: Theme.slate ? 12 : 11
+            font.letterSpacing: Theme.slate ? 0 : 1.2
             elide: Text.ElideRight
         }
 
@@ -66,6 +69,34 @@ Rectangle {
             font.family: Theme.body
             font.pixelSize: 15
             elide: Text.ElideRight
+        }
+
+        Row {
+            readonly property var tags: (summary.tags !== undefined && summary.tags) ? summary.tags : []
+            visible: tags.length > 0
+            spacing: 4
+            Repeater {
+                model: parent.tags.slice(0, 2)
+                delegate: Rectangle {
+                    required property string modelData
+                    readonly property color tone: ws ? ws.tagColor(modelData) : Theme.tagGreen
+                    height: 20
+                    width: rowTagLbl.implicitWidth + 12
+                    radius: Theme.radiusSm
+                    color: Qt.rgba(tone.r, tone.g, tone.b, 0.18)
+                    border.width: 1
+                    border.color: Qt.rgba(tone.r, tone.g, tone.b, 0.34)
+                    Text {
+                        id: rowTagLbl
+                        anchors.centerIn: parent
+                        text: modelData
+                        color: Theme.text
+                        font.family: Theme.body
+                        font.pixelSize: 11
+                        font.weight: Font.Medium
+                    }
+                }
+            }
         }
 
         Text {
@@ -87,6 +118,13 @@ Rectangle {
             font.pixelSize: 11
         }
 
+        IconButton {
+            visible: Theme.slate && hover.hovered && summary.trashed !== true
+            icon: "layout-columns"
+            onClicked: root.openInPaneRequested()
+            ToolTip.visible: hovered; ToolTip.text: qsTr("Open in side pane (Shift+click)"); ToolTip.delay: 400
+        }
+
         Text {
             visible: summary.pinned === true
             text: "◆"
@@ -97,11 +135,11 @@ Rectangle {
 
         Text {
             visible: summary.trashed === true
-            text: qsTr("RESTORE")
+            text: Theme.caps(qsTr("RESTORE"))
             color: Theme.accent
             font.family: Theme.mono
             font.pixelSize: 10
-            font.letterSpacing: 1.0
+            font.letterSpacing: Theme.track(1.0)
             TapHandler { onTapped: root.restoreRequested() }
         }
     }

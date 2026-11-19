@@ -77,7 +77,7 @@ Rectangle {
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.6
+                font.letterSpacing: Theme.track(1.6)
                 font.weight: Font.Medium
                 MouseArea { anchors.fill: parent; onClicked: col.typesOpen = !col.typesOpen }
             }
@@ -127,7 +127,7 @@ Rectangle {
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.6
+                font.letterSpacing: Theme.track(1.6)
                 font.weight: Font.Medium
             }
             Repeater {

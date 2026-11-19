@@ -57,11 +57,11 @@ Item {
                 Layout.fillWidth: true
 
                 Text {
-                    text: qsTr("WHITEBOARD")
+                    text: Theme.caps(qsTr("WHITEBOARD"))
                     color: Theme.board
                     font.family: Theme.mono
                     font.pixelSize: 11
-                    font.letterSpacing: 1.6
+                    font.letterSpacing: Theme.track(1.6)
                 }
                 Text {
                     text: qsTr("Infinite canvas · open to draw nodes")

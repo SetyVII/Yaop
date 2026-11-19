@@ -49,11 +49,11 @@ ApplicationWindow {
             spacing: 16
 
             Text {
-                text: qsTr("YAOP")
+                text: Theme.caps(qsTr("YAOP"))
                 color: Theme.ice
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 2
+                font.letterSpacing: Theme.track(2)
             }
 
             // ---- welcome
@@ -69,9 +69,9 @@ ApplicationWindow {
                     font.pixelSize: 18
                     wrapMode: Text.WordWrap
                 }
-                Button { text: qsTr("CREATE A NEW VAULT"); primary: true; onClicked: { onb.startCreate(); win.step = "phrase" } }
-                Button { text: qsTr("RESTORE WITH MY PHRASE"); onClicked: { win.restoreError = 0; win.step = "restore" } }
-                Button { text: qsTr("ADD THIS DEVICE FROM ANOTHER ONE"); onClicked: { pairing.cancel(); win.step = "join" } }
+                Button { text: Theme.caps(qsTr("CREATE A NEW VAULT")); primary: true; onClicked: { onb.startCreate(); win.step = "phrase" } }
+                Button { text: Theme.caps(qsTr("RESTORE WITH MY PHRASE")); onClicked: { win.restoreError = 0; win.step = "restore" } }
+                Button { text: Theme.caps(qsTr("ADD THIS DEVICE FROM ANOTHER ONE")); onClicked: { pairing.cancel(); win.step = "join" } }
             }
 
             // ---- phrase (shown once)
@@ -107,8 +107,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     spacing: 10
-                    Button { text: qsTr("I WROTE IT DOWN"); primary: true; onClicked: { win.confirmWrong = false; win.step = "confirm" } }
-                    Button { text: qsTr("BACK"); onClicked: win.step = "welcome" }
+                    Button { text: Theme.caps(qsTr("I WROTE IT DOWN")); primary: true; onClicked: { win.confirmWrong = false; win.step = "confirm" } }
+                    Button { text: Theme.caps(qsTr("BACK")); onClicked: win.step = "welcome" }
                 }
             }
 
@@ -126,7 +126,7 @@ ApplicationWindow {
                         required property int modelData
                         objectName: "confirmField"
                         Layout.fillWidth: true
-                        label: qsTr("WORD #%1").arg(modelData + 1)
+                        label: Theme.caps(qsTr("WORD #%1")).arg(modelData + 1)
                     }
                 }
                 Text {
@@ -139,7 +139,7 @@ ApplicationWindow {
                 RowLayout {
                     spacing: 10
                     Button {
-                        text: qsTr("CONTINUE")
+                        text: Theme.caps(qsTr("CONTINUE"))
                         primary: true
                         onClicked: {
                             var answers = []
@@ -149,7 +149,7 @@ ApplicationWindow {
                             else win.confirmWrong = true
                         }
                     }
-                    Button { text: qsTr("SHOW THE PHRASE AGAIN"); onClicked: win.step = "phrase" }
+                    Button { text: Theme.caps(qsTr("SHOW THE PHRASE AGAIN")); onClicked: win.step = "phrase" }
                 }
             }
 
@@ -160,7 +160,7 @@ ApplicationWindow {
                 spacing: 12
                 Text { text: qsTr("Restore your vault"); color: Theme.text; font.family: Theme.body; font.pixelSize: 18 }
                 Text { text: qsTr("Type your 24 words, separated by spaces."); color: Theme.dim; font.family: Theme.body; font.pixelSize: 12 }
-                OnbField { id: restoreField; Layout.fillWidth: true; label: qsTr("RECOVERY PHRASE"); multiline: true }
+                OnbField { id: restoreField; Layout.fillWidth: true; label: Theme.caps(qsTr("RECOVERY PHRASE")); multiline: true }
                 Text {
                     visible: win.restoreError !== 0
                     Layout.fillWidth: true
@@ -175,14 +175,14 @@ ApplicationWindow {
                 RowLayout {
                     spacing: 10
                     Button {
-                        text: qsTr("CONTINUE")
+                        text: Theme.caps(qsTr("CONTINUE"))
                         primary: true
                         onClicked: {
                             win.restoreError = onb.restore(restoreField.text)
                             if (win.restoreError === VaultOnboarding.RestoreOk) win.step = "server"
                         }
                     }
-                    Button { text: qsTr("BACK"); onClicked: win.step = "welcome" }
+                    Button { text: Theme.caps(qsTr("BACK")); onClicked: win.step = "welcome" }
                 }
             }
 
@@ -201,9 +201,9 @@ ApplicationWindow {
                         text: qsTr("On an enrolled device open Settings, Add device, then paste its code here.")
                         color: Theme.dim; font.family: Theme.body; font.pixelSize: 12; wrapMode: Text.WordWrap
                     }
-                    OnbField { id: pasteField; Layout.fillWidth: true; label: qsTr("PAIRING CODE"); multiline: true }
+                    OnbField { id: pasteField; Layout.fillWidth: true; label: Theme.caps(qsTr("PAIRING CODE")); multiline: true }
                     Text { visible: pairing.state === "failed"; text: pairing.error; color: Theme.danger; font.family: Theme.body; font.pixelSize: 12 }
-                    Button { text: qsTr("JOIN"); primary: true; onClicked: pairing.guestStart(pasteField.text) }
+                    Button { text: Theme.caps(qsTr("JOIN")); primary: true; onClicked: pairing.guestStart(pasteField.text) }
                 }
                 ColumnLayout {
                     visible: pairing.state === "compare" || pairing.state === "opening"
@@ -214,10 +214,10 @@ ApplicationWindow {
                         text: qsTr("Check that the other device shows this code, then approve there:")
                         color: Theme.dim; font.family: Theme.body; font.pixelSize: 12; wrapMode: Text.WordWrap
                     }
-                    Text { text: pairing.code; color: Theme.ice; font.family: Theme.mono; font.pixelSize: 40 }
+                    Text { text: pairing.code; color: Theme.ice; font.family: Theme.code; font.pixelSize: 40 }
                     Text { text: qsTr("Waiting for approval…"); color: Theme.faint; font.family: Theme.body; font.pixelSize: 12 }
                 }
-                Button { text: qsTr("BACK"); onClicked: { pairing.cancel(); win.step = "welcome" } }
+                Button { text: Theme.caps(qsTr("BACK")); onClicked: { pairing.cancel(); win.step = "welcome" } }
             }
 
             // ---- server (optional)
@@ -231,8 +231,8 @@ ApplicationWindow {
                     text: qsTr("Optional. You can use YAOP without a server and connect one later.")
                     color: Theme.dim; font.family: Theme.body; font.pixelSize: 12; wrapMode: Text.WordWrap
                 }
-                OnbField { id: serverUrlField; Layout.fillWidth: true; label: qsTr("SERVER URL") }
-                OnbField { id: tokenField; Layout.fillWidth: true; label: qsTr("BEARER TOKEN") }
+                OnbField { id: serverUrlField; Layout.fillWidth: true; label: Theme.caps(qsTr("SERVER URL")) }
+                OnbField { id: tokenField; Layout.fillWidth: true; label: Theme.caps(qsTr("BEARER TOKEN")) }
                 Text {
                     visible: win.commitFailed
                     Layout.fillWidth: true
@@ -246,11 +246,11 @@ ApplicationWindow {
                 RowLayout {
                     spacing: 10
                     Button {
-                        text: qsTr("CONNECT AND START")
+                        text: Theme.caps(qsTr("CONNECT AND START"))
                         primary: true
                         onClicked: win.commitFailed = !onb.commit(serverUrlField.text, tokenField.text)
                     }
-                    Button { text: qsTr("SKIP FOR NOW"); onClicked: win.commitFailed = !onb.commit("", "") }
+                    Button { text: Theme.caps(qsTr("SKIP FOR NOW")); onClicked: win.commitFailed = !onb.commit("", "") }
                 }
             }
         }

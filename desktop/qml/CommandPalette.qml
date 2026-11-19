@@ -9,7 +9,9 @@ Popup {
     id: palette
 
     property var appWindow: null
+    property bool paneMode: false
     signal openObjectRequested(string objectId)
+    signal openInPaneRequested(string objectId)
     signal requestClose()
 
     x: (parent.width - width) / 2
@@ -38,7 +40,7 @@ Popup {
     }
 
     // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle { color: Qt.rgba(0.02, 0.04, 0.15, 0.62) }
+    Overlay.modal: Rectangle { color: Theme.scrim }
 
     background: Rectangle {
         radius: Theme.radiusLg
@@ -73,7 +75,7 @@ Popup {
                     font.pixelSize: 16
                     clip: true
 
-                    Text { anchors.verticalCenter: parent.verticalCenter; visible: searchInput.length === 0; text: qsTr("Search or create…"); color: Theme.muted; font: searchInput.font }
+                    Text { anchors.verticalCenter: parent.verticalCenter; visible: searchInput.length === 0; text: palette.paneMode ? qsTr("Open a second object in side pane…") : qsTr("Search or create…"); color: Theme.muted; font: searchInput.font }
 
                     onTextEdited: palette.query = text
 
@@ -83,15 +85,19 @@ Popup {
                             requestClose()
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             event.accepted = true
+                            const usePane = palette.paneMode || (event.modifiers & Qt.ShiftModifier)
                             if (palette.results.length > 0) {
-                                palette.openObjectRequested(palette.results[0].id)
+                                if (usePane) palette.openInPaneRequested(palette.results[0].id)
+                                else palette.openObjectRequested(palette.results[0].id)
                                 requestClose()
                             } else if (text.trim().length > 0) {
                                 // create on the fly
                                 const id = ws.createObject("note", text.trim())
                                 requestClose()
-                                if (id.length > 0)
-                                    palette.openObjectRequested(id)
+                                if (id.length > 0) {
+                                    if (usePane) palette.openInPaneRequested(id)
+                                    else palette.openObjectRequested(id)
+                                }
                             }
                         }
                     }
@@ -125,10 +131,10 @@ Popup {
                     anchors.rightMargin: 16
                     spacing: 10
 
-                    Rectangle {
-                        Layout.preferredWidth: 3
-                        Layout.preferredHeight: 18
-                        color: Theme.typeColor(modelData.typeId !== undefined ? modelData.typeId : "")
+                    TypeBadge {
+                        typeId: modelData.typeId !== undefined ? modelData.typeId : ""
+                        emoji: modelData.iconEmoji || ""
+                        size: 22
                     }
                     Text {
                         Layout.fillWidth: true
@@ -144,10 +150,22 @@ Popup {
                         font.family: Theme.mono
                         font.pixelSize: 11
                     }
+                    IconButton {
+                        visible: Boolean(Theme.slate && (resultRow.hovered || palette.paneMode))
+                        icon: "layout-columns"
+                        onClicked: {
+                            palette.openInPaneRequested(modelData.id)
+                            requestClose()
+                        }
+                        ToolTip.visible: hovered; ToolTip.text: qsTr("Open in side pane"); ToolTip.delay: 400
+                    }
                 }
 
                 onClicked: {
-                    palette.openObjectRequested(modelData.id)
+                    if (palette.paneMode || (ws && (ws.keyModifiers() & Qt.ShiftModifier)))
+                        palette.openInPaneRequested(modelData.id)
+                    else
+                        palette.openObjectRequested(modelData.id)
                     requestClose()
                 }
             }

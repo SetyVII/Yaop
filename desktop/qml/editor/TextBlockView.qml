@@ -235,6 +235,12 @@ Item {
             pillTimer.restart()
         }
 
+        // Editor keys beat a global Shortcut with the same keys (Ctrl+D duplicates here).
+        Keys.onShortcutOverride: (event) => {
+            if (typeof keymap !== "undefined" && keymap.owns("editor", event.key, event.modifiers))
+                event.accepted = true
+        }
+
         // ------------------- structure keys -------------------
         Keys.onPressed: function(event) {
             // Text typed against a chip (before "@" or right after it) goes outside it as plain text.
@@ -306,8 +312,12 @@ Item {
                     return
                 }
                 if (event.key === Qt.Key_D) {
+                    // Commit pending typing first; the reset rebuilds delegates, so ask for the caret back.
                     event.accepted = true
-                    view.session.duplicateBlocks([model.blockId])
+                    const caret = edit.cursorPosition
+                    view.session.commitRichText(tb.row, edit.textDocument, caret)
+                    view.session.duplicateBlocks([tb.blockId])
+                    view.session.forceFocus(tb.blockId, caret)
                     return
                 }
                 return

@@ -52,11 +52,11 @@ Rectangle {
         }
 
         Text {
-            text: root.task.tag ? String(root.task.tag).toUpperCase() : ""
+            text: root.task.tag ? (Theme.slate ? String(root.task.tag) : String(root.task.tag).toUpperCase()) : ""
             color: Theme.muted
             font.family: Theme.mono
             font.pixelSize: 11
-            font.letterSpacing: 0.8
+            font.letterSpacing: Theme.track(0.8)
         }
 
         Text {

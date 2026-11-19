@@ -12,6 +12,7 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QUrl>
 
 namespace pkm {
 
@@ -70,6 +71,8 @@ void EditorModel::load(const Object &object)
     rebuildVisible();
     endResetModel();
     emit titleChanged();
+    emit coverChanged();
+    emit metaChanged();
     emit dirtyChanged();
     emit structureChanged();
     emit selectionChanged();
@@ -489,9 +492,57 @@ QString EditorModel::thumbnailUrl() const
     return {};
 }
 
+QString EditorModel::url() const
+{
+    const QString u = m_object.propertyString(QStringLiteral("url"));
+    if (!u.isEmpty())
+        return u;
+    for (const Block &b : m_blocks) {
+        if (b.type == BlockType::Bookmark && !b.url.isEmpty())
+            return b.url;
+    }
+    return {};
+}
+
+QString EditorModel::description() const
+{
+    const QString d = m_object.propertyString(QStringLiteral("description"));
+    if (!d.isEmpty())
+        return d;
+    for (const Block &b : m_blocks) {
+        if (b.type == BlockType::Bookmark && !b.description.isEmpty())
+            return b.description;
+    }
+    return {};
+}
+
+QString EditorModel::faviconUrl() const
+{
+    const QString f = m_object.propertyString(QStringLiteral("favicon_url"));
+    if (!f.isEmpty())
+        return f;
+    for (const Block &b : m_blocks) {
+        if (b.type == BlockType::Bookmark && !b.faviconUrl.isEmpty())
+            return b.faviconUrl;
+    }
+    return {};
+}
+
+QString EditorModel::domain() const
+{
+    const QString u = url();
+    if (u.isEmpty())
+        return {};
+    QString host = QUrl(u).host();
+    if (host.startsWith(QLatin1String("www.")))
+        host = host.mid(4);
+    return host;
+}
+
 void EditorModel::notifyCoverUpdated()
 {
     emit coverChanged();
+    emit metaChanged();
 }
 
 bool EditorModel::coverFit() const
@@ -1608,8 +1659,10 @@ void EditorModel::applyBookmarkPreview(const QString &weblinkId, const QString &
                                ThumbnailUrlRole, FaviconUrlRole, ObjectEmbedRole });
         }
     }
-    if (anyChanged)
+    if (anyChanged) {
         markDirty();
+        emit metaChanged();
+    }
 }
 
 void EditorModel::forceFocus(const QString &blockId, int position)

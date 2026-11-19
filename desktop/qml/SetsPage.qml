@@ -168,11 +168,11 @@ Item {
             spacing: 6
 
             Text {
-                text: qsTr("SETS")
+                text: Theme.caps(qsTr("SETS"))
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 10
-                font.letterSpacing: 1.4
+                font.letterSpacing: Theme.track(1.4)
                 Layout.bottomMargin: 4
             }
 
@@ -215,7 +215,7 @@ Item {
 
             Button {
                 Layout.fillWidth: true
-                text: qsTr("+ NEW SET")
+                text: Theme.caps(qsTr("+ NEW SET"))
                 small: true
                 onClicked: {
                     const id = ws.createSet(qsTr("New set"), { version: 1 })
@@ -250,7 +250,7 @@ Item {
                         color: Theme.tag
                         font.family: Theme.mono
                         font.pixelSize: 10
-                        font.letterSpacing: 1.2
+                        font.letterSpacing: Theme.track(1.2)
                     }
                 }
                 Text {
@@ -262,7 +262,7 @@ Item {
                     font.pixelSize: 11
                 }
                 Button {
-                    text: setsPage.editingQuery ? qsTr("DONE") : qsTr("EDIT QUERY")
+                    text: setsPage.editingQuery ? Theme.caps(qsTr("DONE")) : Theme.caps(qsTr("EDIT QUERY"))
                     small: true
                     primary: setsPage.editingQuery
                     onClicked: setsPage.editingQuery = !setsPage.editingQuery
@@ -298,7 +298,7 @@ Item {
                     anchors.margins: 12
                     spacing: 10
 
-                    Text { text: qsTr("TYPES"); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                    Text { text: Theme.caps(qsTr("TYPES")); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: Theme.track(1.2) }
                     Flow {
                         Layout.fillWidth: true
                         spacing: 6
@@ -322,7 +322,7 @@ Item {
 
                     RowLayout {
                         spacing: 8
-                        Text { text: qsTr("FILTERS"); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { text: Theme.caps(qsTr("FILTERS")); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: Theme.track(1.2) }
                         Chip {
                             visible: (setsPage.query.filters || []).length > 1
                             text: (setsPage.query.match || "all") === "any" ? qsTr("match any") : qsTr("match all")
@@ -419,7 +419,7 @@ Item {
                     RowLayout {
                         spacing: 8
                         Button {
-                            text: qsTr("+ FILTER")
+                            text: Theme.caps(qsTr("+ FILTER"))
                             small: true
                             onClicked: {
                                 const q = setsPage.cloneQuery()
@@ -428,7 +428,7 @@ Item {
                             }
                         }
                         Item { Layout.fillWidth: true }
-                        Text { text: qsTr("SORT"); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { text: Theme.caps(qsTr("SORT")); color: Theme.muted; font.family: Theme.mono; font.pixelSize: 10; font.letterSpacing: Theme.track(1.2) }
                         QueryField {
                             Layout.preferredWidth: 150
                             text: (setsPage.query.sort && setsPage.query.sort.length) ? setsPage.query.sort[0].prop : ""
@@ -477,7 +477,7 @@ Item {
                 }
                 Item { Layout.fillWidth: true }
                 Button {
-                    text: qsTr("DELETE SET")
+                    text: Theme.caps(qsTr("DELETE SET"))
                     small: true
                     onClicked: {
                         ws.deleteObject(setsPage.currentSetId)
@@ -512,6 +512,7 @@ Item {
                             height: 176
                             summary: modelData
                             onOpenRequested: setsPage.openObjectRequested(modelData.id)
+                            onOpenInPaneRequested: if (setsPage.appWindow) setsPage.appWindow.openInPane(modelData.id)
                         }
                     }
                 }
@@ -529,6 +530,7 @@ Item {
                         width: listView.width
                         summary: modelData
                         onOpenRequested: setsPage.openObjectRequested(modelData.id)
+                        onOpenInPaneRequested: if (setsPage.appWindow) setsPage.appWindow.openInPane(modelData.id)
                     }
                 }
 
@@ -558,12 +560,12 @@ Item {
                                     height: 34
                                     leftPadding: 12
                                     verticalAlignment: Text.AlignVCenter
-                                    text: setsPage.columnLabel(modelData).toUpperCase()
+                                    text: Theme.caps(setsPage.columnLabel(modelData).toUpperCase())
                                     color: Theme.muted
                                     elide: Text.ElideRight
                                     font.family: Theme.mono
                                     font.pixelSize: 10
-                                    font.letterSpacing: 1.2
+                                    font.letterSpacing: Theme.track(1.2)
                                 }
                             }
                         }

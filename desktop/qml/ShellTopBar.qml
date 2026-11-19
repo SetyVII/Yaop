@@ -11,6 +11,7 @@ Item {
     property bool sidebarHidden: false
     property bool canBack: false
     property bool canForward: false
+    property bool paneOpen: false
     property var tabs: []
     property int currentTab: 0
     signal tabClicked(int index)
@@ -19,6 +20,7 @@ Item {
     signal backRequested()
     signal forwardRequested()
     signal showSidebarRequested()
+    signal splitPaneRequested()
 
     implicitHeight: Theme.paneBarH
 
@@ -57,6 +59,14 @@ Item {
             onTabClicked: (i) => bar.tabClicked(i)
             onTabCloseRequested: (i) => bar.tabCloseRequested(i)
             onNewTabRequested: bar.newTabRequested()
+        }
+        IconButton {
+            icon: "layout-columns"
+            active: bar.paneOpen
+            onClicked: bar.splitPaneRequested()
+            ToolTip.visible: hovered
+            ToolTip.text: bar.paneOpen ? qsTr("Close side pane") : qsTr("Open second object side by side (Shift+click)")
+            ToolTip.delay: 400
         }
     }
 }

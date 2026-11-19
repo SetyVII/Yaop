@@ -68,7 +68,7 @@ Item {
                         color: Theme.dim
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1
+                        font.letterSpacing: Theme.track(1)
                     }
 
                     HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
@@ -100,7 +100,7 @@ Item {
             color: Theme.text
             selectionColor: Qt.rgba(0.75, 0.89, 1, 0.38)
             selectedTextColor: Theme.text
-            font.family: Theme.mono
+            font.family: Theme.code
             font.pixelSize: 13
             clip: true
 
@@ -147,14 +147,14 @@ Item {
                     text: "1"
                     visible: edit.length > 0
                     color: Theme.faint
-                    font.family: Theme.mono
+                    font.family: Theme.code
                     font.pixelSize: 11
                 }
                 Text {
                     text: qsTr("—")
                     visible: edit.length === 0
                     color: Theme.faint
-                    font.family: Theme.mono
+                    font.family: Theme.code
                     font.pixelSize: 11
                 }
             }

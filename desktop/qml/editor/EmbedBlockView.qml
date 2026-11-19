@@ -68,11 +68,11 @@ Item {
                 Layout.fillWidth: true
 
                 Text {
-                    text: (Theme.typeLabel(eb.embeddedType).length > 0 ? Theme.typeLabel(eb.embeddedType) : qsTr("OBJECT"))
+                    text: (Theme.typeLabel(eb.embeddedType).length > 0 ? Theme.typeLabel(eb.embeddedType) : Theme.caps(qsTr("OBJECT")))
                     color: Theme.muted
                     font.family: Theme.mono
                     font.pixelSize: 11
-                    font.letterSpacing: 1.2
+                    font.letterSpacing: Theme.track(1.2)
                 }
                 Text {
                     text: eb.displayTitle

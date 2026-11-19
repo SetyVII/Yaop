@@ -68,7 +68,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.mono
                 font.pixelSize: 18
-                font.letterSpacing: 4
+                font.letterSpacing: Theme.track(4)
                 enabled: root.retry === 0
                 onTextEdited: root.error = false
                 onAccepted: {
@@ -83,11 +83,11 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     visible: pinInput.length === 0
-                    text: qsTr("PIN")
+                    text: Theme.caps(qsTr("PIN"))
                     color: Theme.muted
                     font.family: Theme.mono
                     font.pixelSize: 12
-                    font.letterSpacing: 2
+                    font.letterSpacing: Theme.track(2)
                 }
             }
         }
@@ -104,7 +104,7 @@ Item {
 
         Button {
             Layout.alignment: Qt.AlignHCenter
-            text: qsTr("UNLOCK")
+            text: Theme.caps(qsTr("UNLOCK"))
             primary: true
             enabled: pinInput.length > 0 && root.retry === 0
             onClicked: pinInput.accepted()

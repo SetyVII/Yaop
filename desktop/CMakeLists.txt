@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Network Pdf)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Network Pdf Test)
 find_package(Qt6Keychain REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SODIUM REQUIRED IMPORTED_TARGET libsodium)
@@ -57,6 +57,10 @@ qt_add_executable(yaop-desktop
     src/syntaxhighlight.cpp
     src/audioplayback.h
     src/audioplayback.cpp
+    src/keymap.h
+    src/keymap.cpp
+    src/keyinput.h
+    src/keyinput.cpp
     src/selftest.h
     src/selftest.cpp
     third_party/qrcodegen/qrcodegen.cpp
@@ -89,6 +93,7 @@ target_link_libraries(yaop-desktop PRIVATE
     Qt6::Svg
     Qt6::Network
     Qt6::Pdf
+    Qt6::Test   # --drive keys: real key delivery through the shortcut map
     Qt6Keychain::Qt6Keychain
     PkgConfig::SODIUM
     PkgConfig::SQLCIPHER

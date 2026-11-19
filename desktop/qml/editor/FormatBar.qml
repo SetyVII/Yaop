@@ -147,11 +147,11 @@ Popup {
         contentItem: ColumnLayout {
             spacing: 8
             Text {
-                text: qsTr("LINK URL")
+                text: Theme.caps(qsTr("LINK URL"))
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1
+                font.letterSpacing: Theme.track(1)
             }
             Rectangle {
                 Layout.fillWidth: true

@@ -35,7 +35,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: Theme.pagePad
-        label: qsTr("BOARDS FROM SERVER")
+        label: Theme.caps(qsTr("BOARDS FROM SERVER"))
 
         Flow {
             Layout.fillWidth: true
@@ -164,7 +164,7 @@ Item {
                         color: Theme.muted
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1.6
+                        font.letterSpacing: Theme.track(1.6)
                         font.weight: Font.Medium
                     }
                 }
@@ -186,7 +186,7 @@ Item {
                         color: Theme.muted
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 0.9
+                        font.letterSpacing: Theme.track(0.9)
                         Layout.alignment: Qt.AlignBottom
                         Layout.bottomMargin: 5
                     }
@@ -354,7 +354,7 @@ Item {
                     color: Theme.muted
                     font.family: Theme.mono
                     font.pixelSize: 11
-                    font.letterSpacing: 1.0
+                    font.letterSpacing: Theme.track(1.0)
                 }
 
                 // Minimap

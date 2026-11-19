@@ -52,7 +52,7 @@ Popup {
         { key: "canvas", name: qsTr("Whiteboard"), hint: "", glyph: "⬚" },
         { key: "image", name: qsTr("Image…"), hint: "", glyph: "▣" },
         { key: "audio", name: qsTr("Audio…"), hint: "", glyph: "♪" },
-        { key: "pdf", name: qsTr("PDF…"), hint: "", glyph: "▤" },
+        { key: "pdf", name: Theme.caps(qsTr("PDF…")), hint: "", glyph: "▤" },
         { key: "embed", name: qsTr("Reference…"), hint: "@", glyph: "@" }
     ]
 
@@ -114,11 +114,11 @@ Popup {
                 anchors.left: parent.left
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: sm.query.length > 0 ? qsTr("/ %1").arg(sm.query.toUpperCase()) : qsTr("BLOCKS")
+                text: sm.query.length > 0 ? qsTr("/ %1").arg(sm.query.toUpperCase()) : Theme.caps(qsTr("BLOCKS"))
                 color: Theme.ice
                 font.family: Theme.mono
                 font.pixelSize: 11
-                font.letterSpacing: 1.6
+                font.letterSpacing: Theme.track(1.6)
             }
         }
 

@@ -88,6 +88,8 @@ inline QVariantMap objectToVariant(const Object &o, const Workspace::ObjectView 
     m.insert("domain", domain);
     m.insert("thumbnailUrl", thumbnailUrl);
     m.insert("faviconUrl", faviconUrl);
+    m.insert("description", o.propertyString(QStringLiteral("description")));
+    m.insert("tags", QVariant::fromValue(o.propertyStringList(QStringLiteral("tags"))));
     Q_UNUSED(localPath);
     return m;
 }

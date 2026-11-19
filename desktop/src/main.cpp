@@ -7,11 +7,15 @@
 #include "workspace.h"
 #include "onboarding.h"
 #include "applock.h"
+#include "keyinput.h"
+#include "keymap.h"
 
 #include <QCommandLineParser>
+#include <QCoreApplication>
 #include <QDir>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QLibrary>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
@@ -70,6 +74,22 @@ int main(int argc, char *argv[])
     applyProfile(argc, argv, profile);
 
     QQuickStyle::setStyle(QStringLiteral("Basic"));
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+    // Initialize QtWebEngineQuick when running the GUI so embedded web links can load pages
+    // without requiring qt6-qtwebengine-devel headers at build time.
+    auto hasCliFlag = [argc, argv](const char *flag) {
+        for (int i = 1; i < argc; ++i)
+            if (qstrcmp(argv[i], flag) == 0 || QByteArray(argv[i]).startsWith(QByteArray(flag) + '='))
+                return true;
+        return false;
+    };
+    if (!hasCliFlag("--selftest") && !hasCliFlag("--e2e") && !hasCliFlag("--pushtest")
+        && !hasCliFlag("--uploadtest") && !hasCliFlag("--pullcheck")) {
+        QLibrary webEng(QStringLiteral("Qt6WebEngineQuick"), 6);
+        if (auto initFn = reinterpret_cast<void (*)()>(webEng.resolve("_ZN16QtWebEngineQuick10initializeEv")))
+            initFn();
+    }
 
     QGuiApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("YAOP"));
@@ -117,6 +137,7 @@ int main(int argc, char *argv[])
                        QStringLiteral("path"), QString() });
     parser.addOption({ QStringLiteral("drive-out"), QStringLiteral("Directory for --drive logs and screenshots (default /tmp)"),
                        QStringLiteral("dir"), QString() });
+    parser.addOption({ QStringLiteral("keylog"), QStringLiteral("Print every key press, where it went and which shortcut fired") });
     parser.process(app);
 
     if (parser.isSet(QStringLiteral("drive-out")))
@@ -227,10 +248,15 @@ int main(int argc, char *argv[])
     // Local lock : PIN gate in front of the UI; headless modes never lock.
     pkm::AppLock appLock;
     app.installEventFilter(&appLock);
+    pkm::KeyInput keyInput(parser.isSet(QStringLiteral("keylog")));
+    app.installEventFilter(&keyInput);
+    pkm::Keymap keymap;
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("appLock"), &appLock);
     engine.rootContext()->setContextProperty(QStringLiteral("ws"), &workspace);
+    engine.rootContext()->setContextProperty(QStringLiteral("keymap"), &keymap);
+    engine.rootContext()->setContextProperty(QStringLiteral("keyInput"), &keyInput);
     engine.rootContext()->setContextProperty(QStringLiteral("initialPage"), parser.value(QStringLiteral("page")));
     engine.rootContext()->setContextProperty(QStringLiteral("initialOverlay"), parser.value(QStringLiteral("overlay")));
     engine.rootContext()->setContextProperty(QStringLiteral("initialObjectId"), parser.value(QStringLiteral("open")));
@@ -248,8 +274,8 @@ int main(int argc, char *argv[])
     workspace.initialize();
     if (parser.isSet(QStringLiteral("showcase"))) {
         const QString id = pkm::seedShowcase(&workspace);
-        // With --page the fixture only seeds data (so lists have content); alone it opens the note.
-        if (!parser.isSet(QStringLiteral("page"))) {
+        // With --page or --open the fixture only seeds data; alone it opens the showcase note.
+        if (!parser.isSet(QStringLiteral("page")) && parser.value(QStringLiteral("open")).isEmpty()) {
             engine.rootContext()->setContextProperty(QStringLiteral("initialPage"), QStringLiteral("editor"));
             engine.rootContext()->setContextProperty(QStringLiteral("initialObjectId"), id);
         }

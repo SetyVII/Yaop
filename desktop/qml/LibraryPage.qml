@@ -107,18 +107,18 @@ Item {
                                                      && library.filterType !== "trash")
                                                     ? ws.allTypes().find(t => t.id === library.filterType) : undefined
                 visible: filteredType !== undefined
-                text: filteredType ? qsTr("+ NEW %1").arg(String(filteredType.name).toUpperCase()) : ""
+                text: filteredType ? Theme.caps(qsTr("+ NEW %1")).arg(Theme.slate ? String(filteredType.name) : String(filteredType.name).toUpperCase()) : ""
                 primary: true
                 onClicked: if (library.appWindow) library.appWindow.openCaptureFor(library.filterType)
             }
 
             Button {
-                text: qsTr("TYPES")
+                text: Theme.caps(qsTr("TYPES"))
                 onClicked: typeManagerPopup.open()
             }
 
             Button {
-                text: library.gridMode ? qsTr("LIST") : qsTr("GRID")
+                text: library.gridMode ? Theme.caps(qsTr("LIST")) : Theme.caps(qsTr("GRID"))
                 onClicked: library.gridMode = !library.gridMode
             }
         }
@@ -136,6 +136,8 @@ Item {
                 delegate: Chip {
                     required property var modelData
                     text: modelData.name
+                    typeId: modelData.id !== "all" && modelData.id !== "trash" ? modelData.id : ""
+                    icon: modelData.id === "all" ? "layout-grid" : modelData.id === "trash" ? "x" : ""
                     active: library.filterType === modelData.id
                     onClicked: library.filterType = modelData.id
                 }
@@ -175,6 +177,7 @@ Item {
                             else
                                 library.openObjectRequested(modelData.id)
                         }
+                        onOpenInPaneRequested: if (library.appWindow && !modelData.trashed) library.appWindow.openInPane(modelData.id)
                         onRestoreRequested: ws.restoreObject(modelData.id)
                     }
                 }
@@ -199,6 +202,7 @@ Item {
                         else
                             library.openObjectRequested(modelData.id)
                     }
+                    onOpenInPaneRequested: if (library.appWindow && !modelData.trashed) library.appWindow.openInPane(modelData.id)
                     onRestoreRequested: ws.restoreObject(modelData.id)
                 }
             }
@@ -249,11 +253,11 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 Text {
-                    text: qsTr("TYPES & CUSTOM PROPERTIES")
+                    text: Theme.caps(qsTr("TYPES & CUSTOM PROPERTIES"))
                     color: Theme.text
                     font.family: Theme.mono
                     font.pixelSize: 12
-                    font.letterSpacing: 1.4
+                    font.letterSpacing: Theme.track(1.4)
                     Layout.fillWidth: true
                 }
                 IconButton { icon: "x"; onClicked: typeManagerPopup.close() }
@@ -309,7 +313,7 @@ Item {
                 }
 
                 Button {
-                    text: qsTr("CREATE TYPE")
+                    text: Theme.caps(qsTr("CREATE TYPE"))
                     small: true
                     enabled: typeManagerPopup.newTypeName.trim().length > 0
                     onClicked: {
@@ -341,7 +345,7 @@ Item {
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
 
             Text {
-                text: qsTr("SCHEMA PROPERTIES FOR %1").arg(typeManagerPopup.selectedTypeId.toUpperCase())
+                text: Theme.caps(qsTr("SCHEMA PROPERTIES FOR %1")).arg(typeManagerPopup.selectedTypeId.toUpperCase())
                 color: Theme.muted
                 font.family: Theme.mono
                 font.pixelSize: 11
@@ -364,7 +368,7 @@ Item {
                         anchors.leftMargin: 10
                         anchors.rightMargin: 10
                         Text { text: modelData.name; color: Theme.text; font.family: Theme.body; font.pixelSize: 13; Layout.fillWidth: true }
-                        Text { text: String(modelData.kind || "text").toUpperCase(); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 10 }
+                        Text { text: Theme.caps(String(modelData.kind || "text").toUpperCase()); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 10 }
                     }
                 }
             }
@@ -401,7 +405,7 @@ Item {
                     color: Theme.panel2
                     border.color: Theme.line
                     border.width: 1
-                    Text { anchors.centerIn: parent; text: typeManagerPopup.propKindInput.toUpperCase(); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 10 }
+                    Text { anchors.centerIn: parent; text: Theme.caps(typeManagerPopup.propKindInput.toUpperCase()); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 10 }
                     TapHandler {
                         onTapped: {
                             const order = ["text", "number", "checkbox", "date", "url"]
@@ -411,7 +415,7 @@ Item {
                     }
                 }
                 Button {
-                    text: qsTr("ADD PROP")
+                    text: Theme.caps(qsTr("ADD PROP"))
                     small: true
                     enabled: typeManagerPopup.propNameInput.trim().length > 0
                     onClicked: {

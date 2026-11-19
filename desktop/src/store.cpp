@@ -400,6 +400,8 @@ QVector<search::LinkRef> Store::linksFor(const Object &o)
     // References born from properties (relations, tags, dates).
     for (const QString &id : o.propertyLinks)
         add(id, QString());
+    for (const QString &tag : o.propertyStringList(QStringLiteral("tags")))
+        add(tagKey(tag), QString());
     return out;
 }
 

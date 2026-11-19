@@ -117,7 +117,7 @@ Item {
                         color: Theme.faint
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: 1
+                        font.letterSpacing: Theme.track(1)
                     }
                     Text {
                         visible: bb.url.length > 0
@@ -137,11 +137,11 @@ Item {
                         Text {
                             id: wlLabel
                             anchors.centerIn: parent
-                            text: qsTr("WEBLINK")
+                            text: Theme.caps(qsTr("WEBLINK"))
                             color: Theme.ice
                             font.family: Theme.mono
                             font.pixelSize: 9
-                            font.letterSpacing: 0.8
+                            font.letterSpacing: Theme.track(0.8)
                         }
                         HoverHandler { id: wlHover; cursorShape: Qt.PointingHandCursor }
                         TapHandler {

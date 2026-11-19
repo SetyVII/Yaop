@@ -12,7 +12,7 @@ Rectangle {
 
     implicitWidth: label.implicitWidth + (small ? 24 : 32)
     implicitHeight: small ? 30 : 38
-    radius: small ? 11 : Theme.radius
+    radius: Theme.slate ? Theme.radius : small ? 11 : Theme.radius
     opacity: enabled ? 1 : 0.4
     color: primary
            ? (press.pressed ? Theme.accent2 : hover.hovered ? Qt.lighter(Theme.accent, 1.0) : Theme.accent)
@@ -25,25 +25,16 @@ Rectangle {
     Behavior on border.color { ColorAnimation { duration: Theme.fast } }
     Behavior on scale { NumberAnimation { duration: 90 } }
 
-    // keyboard focus ring (ice)
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: -3
-        radius: parent.radius + 3
-        color: "transparent"
-        border.width: 2
-        border.color: Theme.ice
-        opacity: root.activeFocus ? 0.8 : 0
-        visible: opacity > 0
-    }
+    // keyboard focus: the shared sliding ring in Main (FocusRing.qml) draws around it
+    property bool focusRing: true
 
     Text {
         id: label
         anchors.centerIn: parent
-        text: root.text.toUpperCase()
+        text: Theme.slate ? Theme.caps(root.text) : root.text.toUpperCase()
         color: root.primary ? Theme.accentInk : Theme.text
         font.family: Theme.mono
-        font.pixelSize: root.small ? 10.5 : 12
+        font.pixelSize: Theme.slate ? (root.small ? 12 : 13) : (root.small ? 10.5 : 12)
         font.letterSpacing: root.small ? 0.8 : 1
         font.weight: Font.Medium
     }

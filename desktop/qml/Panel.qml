@@ -15,8 +15,10 @@ Rectangle {
     property int bodySpacing: 10
     default property alias content: body.data
 
-    // Surface card: plain fill, no border, no shadow (spec §4); cards inside lists never blur.
-    color: Theme.panel
+    // Surface card: sky = plain fill, no border (spec §4); slate = lifted and outlined like cards.
+    color: Theme.card
+    border.width: Theme.slate ? 1 : 0
+    border.color: Theme.cardBorder
     radius: Theme.radiusLg
     clip: true
     implicitHeight: panelCol.implicitHeight + 2
@@ -42,11 +44,11 @@ Rectangle {
                 Text {
                     text: root.label
                     visible: text.length > 0
-                    color: Theme.dim
+                    color: Theme.slate ? Theme.text : Theme.dim
                     font.family: Theme.mono
-                    font.pixelSize: 11
-                    font.letterSpacing: 1.6
-                    font.weight: Font.Medium
+                    font.pixelSize: Theme.slate ? 14 : 11
+                    font.letterSpacing: Theme.track(1.6)
+                    font.weight: Theme.slate ? Font.DemiBold : Font.Medium
                 }
 
                 Text {
@@ -65,8 +67,8 @@ Rectangle {
                     visible: text.length > 0
                     color: actionHover.hovered ? Theme.ice : Theme.dim
                     font.family: Theme.mono
-                    font.pixelSize: 11
-                    font.letterSpacing: 1.2
+                    font.pixelSize: Theme.slate ? 13 : 11
+                    font.letterSpacing: Theme.track(1.2)
 
                     HoverHandler { id: actionHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler { onTapped: root.actionClicked() }
