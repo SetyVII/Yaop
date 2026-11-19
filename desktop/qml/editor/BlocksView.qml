@@ -42,6 +42,12 @@ ListView {
             x = below.x
             belowY = below.y
             aboveBottom = top.y - gap
+        } else if (triggerRow >= 0 && itemAtIndex(triggerRow)) {   // block mode: under the block
+            const d = itemAtIndex(triggerRow)
+            const below = d.mapToItem(blocksView, 48, d.height + gap)
+            x = below.x
+            belowY = below.y
+            aboveBottom = d.mapToItem(blocksView, 0, 0).y - gap
         }
         const chrome = p.headerHeight + 2   // header + border
         const spaceBelow = height - belowY - margin
@@ -95,6 +101,117 @@ ListView {
     signal mediaPickRequested(string kind)
     signal mediaPasteRequested()
     signal toastRequested(string message)
+    signal exitTop()   // ↑ on the first line of the first block, Alt+↑: the page moves focus to its title
+
+    // ---------------- keyboard navigation (docs/keyboard.md §4) ----------------
+    readonly property int caretEnd: 2147483647
+    readonly property var nonTextTypes: ["code", "math", "table", "image", "audio", "pdf",
+                                         "embed", "bookmark", "canvas", "divider"]
+    function idAt(row) { return session ? session.data(session.index(row, 0), 257) : "" }      // BlockIdRole
+    function typeAt(row) { return session ? session.data(session.index(row, 0), 258) : "" }    // TypeRole
+    function isTextRow(row) { return row >= 0 && row < count && nonTextTypes.indexOf(typeAt(row)) < 0 }
+    function rowOf(blockId) {
+        for (let i = 0; i < count; ++i)
+            if (idAt(i) === blockId) return i
+        return -1
+    }
+
+    // Goal column for ↑/↓ across blocks, in view coordinates; -1 = none (reset by other keys).
+    property real goalX: -1
+    property string goalEdge: ""    // "top" | "bottom": which line of the next block to land on
+    function focusNeighborAt(row, viewX, edge) {
+        goalX = viewX
+        goalEdge = isTextRow(row) ? edge : ""
+        focusNeighbor(row, edge === "bottom" ? caretEnd : 0)
+    }
+    // A text block's TextEdit takes the pending goal column (call right after it got focus).
+    function applyGoal(edit) {
+        if (goalEdge === "" || goalX < 0) return
+        const local = edit.mapFromItem(blocksView, goalX, 0).x
+        const y = goalEdge === "bottom" ? edit.contentHeight - 4 : 4
+        edit.cursorPosition = edit.positionAt(local, y)
+        goalEdge = ""
+    }
+
+    // Block mode on one row: whole block selected, no caret; BlocksView holds the keys.
+    function selectRow(row) {
+        if (!session || count <= 0) return
+        const r = Math.max(0, Math.min(count - 1, row))
+        beginBlockSelection(r, r)
+        positionViewAtIndex(r, ListView.Contain)
+    }
+    // Enter in block mode: text blocks get the caret at the end; other blocks run their main action.
+    function activateRow(row) {
+        if (!session || row < 0 || row >= count) return
+        if (isTextRow(row)) {
+            session.clearSelection()
+            session.forceFocus(idAt(row), caretEnd)
+            return
+        }
+        const d = itemAtIndex(row)
+        if (d && d.activateBody(false)) session.clearSelection()
+    }
+    function spaceOnRow(row) {
+        const t = typeAt(row)
+        if (t === "todo") session.toggleTodo(row)
+        else if (t === "toggle") session.toggleExpand(row)
+        else if (t === "image" || t === "pdf" || t === "audio") { const d = itemAtIndex(row); if (d) d.activateBody(true) }
+    }
+    function openBlockMenu(row) {
+        const d = itemAtIndex(row)
+        if (d) d.openActions()
+    }
+    function openTurnInto(row) {
+        triggerRow = row
+        triggerEditor = null
+        triggerCaret = 0
+        triggerQuery = ""
+        triggerKind = "slash"
+    }
+    // Moves the selected blocks (block mode) and keeps them selected and in view.
+    function moveSelection(delta) {
+        const lo = Math.min(selectionAnchorRow, selectionCursorRow)
+        const hi = Math.max(selectionAnchorRow, selectionCursorRow)
+        if (lo < 0 || (delta < 0 && lo === 0) || (delta > 0 && hi >= count - 1)) return
+        session.moveBlocks(session.selectedIds(), delta)
+        selectionAnchorRow += delta
+        selectionCursorRow += delta
+        positionViewAtIndex(selectionCursorRow, ListView.Contain)
+    }
+
+    // Where the caret was in each object, so reopening it puts you back there (§4.1).
+    property var caretMemo: ({})
+    function parkCaret(blockId, pos) {
+        if (session && blockId) caretMemo[session.objectId] = { blockId: blockId, pos: pos }
+    }
+    // Focus when the page opens: last caret in this object, else the end of the first text block,
+    // else a new empty paragraph. Waits for the session and its rows when they are not there yet.
+    property bool startPending: false
+    function focusStart() { startPending = true; Qt.callLater(tryStart) }
+    function tryStart() {
+        if (!startPending || !session) return
+        startPending = false
+        if (count === 0) { session.insertBlockAfter(-1, "paragraph"); return }
+        const memo = caretMemo[session.objectId]
+        const r = memo ? rowOf(memo.blockId) : -1
+        if (r >= 0) {
+            if (isTextRow(r)) session.forceFocus(memo.blockId, memo.pos)
+            else selectRow(r)
+            return
+        }
+        for (let i = 0; i < count; ++i)
+            if (isTextRow(i)) { session.forceFocus(idAt(i), caretEnd); return }
+        selectRow(0)
+    }
+    onSessionChanged: if (startPending) Qt.callLater(tryStart)
+    onCountChanged: if (startPending) Qt.callLater(tryStart)
+    // From the title (Enter / ↓): start of the first block.
+    function enterFromTop() {
+        if (!session) return
+        if (count === 0) session.insertBlockAfter(-1, "paragraph")
+        else if (isTextRow(0)) session.forceFocus(idAt(0), 0)
+        else selectRow(0)
+    }
 
     function rowAtViewY(viewY) {
         if (count <= 0)
@@ -118,7 +235,7 @@ ListView {
         formatBar.close()
         if (activeTextEdit && activeTextEdit.selectionStart !== activeTextEdit.selectionEnd)
             activeTextEdit.deselect()
-        blocksView.forceActiveFocus()
+        holdKeys()
     }
 
     function toggleBlockSelection(row, blockId) {
@@ -129,7 +246,7 @@ ListView {
         session.toggleSelected(blockId)
         formatBar.close()
         if (session.selectedCount > 0)
-            blocksView.forceActiveFocus()
+            holdKeys()
     }
 
     function extendBlockSelection(delta) {
@@ -151,7 +268,7 @@ ListView {
         formatBar.close()
         if (activeTextEdit)
             activeTextEdit.deselect()
-        blocksView.forceActiveFocus()
+        holdKeys()
     }
 
     function copyMultiSelection(cut) {
@@ -208,8 +325,12 @@ ListView {
     }
 
     function focusNeighbor(row, cursorPos) {
-        if (row < 0 || row >= count || !session)
+        if (!session)
             return
+        if (row < 0) { goalEdge = ""; exitTop(); return }
+        if (row >= count)
+            return
+        if (!isTextRow(row)) { goalEdge = ""; selectRow(row); return }   // non-text blocks: block mode
         currentIndex = row
         const wanted = session.data(session.index(row, 0), 257) // BlockIdRole
         if (wanted === session.focusBlockId)
@@ -486,7 +607,25 @@ ListView {
     spacing: 2
     currentIndex: -1
     keyNavigationEnabled: false
-    focus: session && session.selectedCount > 0
+    // Block mode: the keys go to this sink (they bubble up to Keys below). Focusing the ListView
+    // itself is a no-op while a TextEdit inside it has the focus, and a ListView would hand its
+    // focus back to the current delegate.
+    Item { id: keySink; objectName: "blockModeKeys"; focus: false }
+    function holdKeys() {
+        currentIndex = -1
+        keySink.forceActiveFocus()
+    }
+
+    // Block mode keeps focus here; Esc clears the selection but not the focus, so ↑/↓/Enter
+    // pick the block again (see Keys below). A selection made elsewhere pulls the focus in.
+    Connections {
+        target: blocksView.session
+        ignoreUnknownSignals: true
+        function onSelectionChanged() {
+            if (blocksView.session.selectedCount > 0 && !keySink.activeFocus)
+                blocksView.holdKeys()
+        }
+    }
 
     Keys.onShortcutOverride: (event) => {
         if (session && session.selectedCount > 0 && typeof keymap !== "undefined"
@@ -494,9 +633,38 @@ ListView {
             event.accepted = true
     }
     Keys.onPressed: function(event) {
-        if (!session || session.selectedCount <= 0)
+        if (!session)
             return
         const ctrl = (event.modifiers & Qt.ControlModifier) || (event.modifiers & Qt.MetaModifier)
+        const shift = event.modifiers & Qt.ShiftModifier
+        const plain = !(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier | Qt.AltModifier))
+        // "Turn into…" from block mode: the slash menu filters with what you type here.
+        if (popupActive()) {
+            event.accepted = true
+            if (event.key === Qt.Key_Down) popupMove(1)
+            else if (event.key === Qt.Key_Up) popupMove(-1)
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Tab) popupAccept()
+            else if (event.key === Qt.Key_Escape) closePopups()
+            else if (event.key === Qt.Key_Backspace) triggerQuery = triggerQuery.slice(0, -1)
+            else if (plain && event.text.length > 0 && event.text.charCodeAt(0) > 32) triggerQuery += event.text
+            return
+        }
+        if (session.selectedCount <= 0) {
+            // Focus here with nothing selected (after Esc): ↑/↓/Enter take the last block again.
+            if (count <= 0 || !plain) return
+            const last = Math.max(0, Math.min(count - 1, selectionCursorRow >= 0 ? selectionCursorRow
+                                                         : (activeRow >= 0 ? activeRow : 0)))
+            if (event.key === Qt.Key_Up || event.key === Qt.Key_Down || event.key === Qt.Key_Home
+                    || event.key === Qt.Key_End) {
+                event.accepted = true
+                selectRow(event.key === Qt.Key_Home ? 0 : event.key === Qt.Key_End ? count - 1 : last)
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                event.accepted = true
+                activateRow(last)
+            }
+            return
+        }
+        const cur = selectionCursorRow >= 0 ? selectionCursorRow : 0
         if (ctrl && event.key === Qt.Key_C) {
             event.accepted = true
             copyMultiSelection(false)
@@ -509,8 +677,7 @@ ListView {
         }
         if (ctrl && event.key === Qt.Key_V) {
             event.accepted = true
-            const targetRow = selectionCursorRow >= 0 ? selectionCursorRow : 0
-            session.pasteFromClipboard(targetRow, 0, null)
+            session.pasteFromClipboard(cur, 0, null)
             return
         }
         if (ctrl && event.key === Qt.Key_A) {
@@ -523,12 +690,23 @@ ListView {
             session.duplicateBlocks(session.selectedIds())
             return
         }
-        if ((event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_Up) {
+        if (ctrl && shift && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+            event.accepted = true
+            moveSelection(event.key === Qt.Key_Up ? -1 : 1)
+            return
+        }
+        if ((ctrl && event.key === Qt.Key_Period) || event.key === Qt.Key_Menu
+                || (shift && event.key === Qt.Key_F10)) {
+            event.accepted = true
+            openBlockMenu(cur)
+            return
+        }
+        if (shift && event.key === Qt.Key_Up) {
             event.accepted = true
             extendBlockSelection(-1)
             return
         }
-        if ((event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_Down) {
+        if (shift && event.key === Qt.Key_Down) {
             event.accepted = true
             extendBlockSelection(1)
             return
@@ -544,14 +722,30 @@ ListView {
             return
         }
         if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
+            // Block mode stays on the block above what was deleted.
             event.accepted = true
+            const top = Math.min(selectionAnchorRow, selectionCursorRow)
             session.deleteSelected()
+            Qt.callLater(selectRow, Math.max(0, top - 1))
             return
         }
         if (event.key === Qt.Key_Escape) {
             event.accepted = true
             session.clearSelection()
             return
+        }
+        if (!plain)
+            return
+        switch (event.key) {
+        case Qt.Key_Up: event.accepted = true; selectRow(cur - 1); break
+        case Qt.Key_Down: event.accepted = true; selectRow(cur + 1); break
+        case Qt.Key_Home: event.accepted = true; selectRow(0); break
+        case Qt.Key_End: event.accepted = true; selectRow(count - 1); break
+        case Qt.Key_Return:
+        case Qt.Key_Enter: event.accepted = true; activateRow(cur); break
+        case Qt.Key_Space: event.accepted = true; spaceOnRow(cur); break
+        case Qt.Key_Slash: event.accepted = true; openTurnInto(cur); break
+        default: break
         }
     }
 

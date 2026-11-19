@@ -9,6 +9,8 @@ import "../"
 Item {
     id: mb
 
+    function activate() { editPopup.open(); return false }
+
     property var view
     property int row
     property string blockId

@@ -28,6 +28,50 @@ Item {
 
     implicitHeight: edit.implicitHeight + 2
 
+    // ---- keyboard helpers (docs/keyboard.md §4.3)
+    // Same line as the first / last character (padding-proof; a y <= 0 test missed with topPadding).
+    readonly property bool onFirstLine: edit.cursorRectangle.y <= edit.positionToRectangle(0).y + 1
+    readonly property bool onLastLine: edit.cursorRectangle.y >= edit.positionToRectangle(edit.length).y - 1
+    function caretViewX() {
+        return view.goalX >= 0 ? view.goalX : edit.mapToItem(view, edit.cursorRectangle.x, 0).x
+    }
+    // Structural edits rebuild the delegates: commit the typing first, then ask for the caret back.
+    function commitNow() { view.session.commitRichText(tb.row, edit.textDocument, edit.cursorPosition) }
+    function restyle(key) {
+        const caret = edit.cursorPosition
+        commitNow()
+        view.session.convertBlock(tb.row, key)
+        view.session.forceFocus(tb.blockId, caret)
+    }
+    function moveSelf(delta) {
+        if ((delta < 0 && tb.row === 0) || (delta > 0 && tb.row >= view.count - 1)) return
+        const caret = edit.cursorPosition
+        commitNow()
+        view.session.moveBlocks([tb.blockId], delta)
+        view.session.forceFocus(tb.blockId, caret)
+    }
+    // Ctrl+Enter: todo checks, toggle folds, a mention / link under the caret opens.
+    function toggleOrOpen() {
+        if (blockType === "todo") { view.session.toggleTodo(tb.row); return }
+        if (blockType === "toggle") { view.session.toggleExpand(tb.row); return }
+        const r = edit.cursorRectangle
+        const cy = r.y + r.height / 2
+        const url = edit.linkAt(r.x + 3, cy) || edit.linkAt(Math.max(0, r.x - 3), cy)
+        if (url)
+            view.linkRequested(url, tb.row, edit.textDocument, edit.cursorPosition, false,
+                               edit.mapToItem(view, r.x, r.y + r.height))
+    }
+    // PgUp / PgDn: one screen, caret to the block now at the same height.
+    function pageJump(dir) {
+        const r = edit.cursorRectangle
+        const vy = edit.mapToItem(view, 0, r.y).y
+        const maxY = Math.max(0, view.contentHeight - view.height)
+        view.contentY = Math.max(0, Math.min(maxY, view.contentY + dir * view.height * 0.9))
+        const target = view.rowAtViewY(vy)
+        if (target >= 0)
+            view.focusNeighborAt(target, caretViewX(), dir > 0 ? "top" : "bottom")
+    }
+
     // Object mentions get a pill behind them so they read as references, not text.
     property var pills: []
     function refreshPills() {
@@ -104,6 +148,7 @@ Item {
                 && view.session.focusBlockId.length > 0) {
             edit.forceActiveFocus()
             edit.cursorPosition = Math.min(view.session.focusPosition, edit.length)
+            view.applyGoal(edit)
             view.session.clearFocusTarget(tb.blockId)
         }
     }
@@ -118,6 +163,7 @@ Item {
                 const targetPos = Math.min(view.session.focusPosition, edit.length)
                 if (edit.cursorPosition !== targetPos)
                     edit.cursorPosition = targetPos
+                view.applyGoal(edit)
                 view.session.clearFocusTarget(tb.blockId)
             }
         }
@@ -179,6 +225,8 @@ Item {
         onCursorPositionChanged: {
             tb.keepCaretOutOfMentions()
             view.refreshSelection(edit, tb.row)
+            if (activeFocus)
+                view.parkCaret(tb.blockId, cursorPosition)
         }
 
         onLinkActivated: function(url) {
@@ -277,7 +325,57 @@ Item {
                     return
                 }
             }
+            if (event.key !== Qt.Key_Up && event.key !== Qt.Key_Down && event.key !== Qt.Key_PageUp
+                    && event.key !== Qt.Key_PageDown)
+                view.goalX = -1   // any other key ends a vertical run
+            if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) {
+                event.accepted = true
+                view.exitTop()
+                return
+            }
+            if (event.key === Qt.Key_Menu || ((event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_F10)) {
+                event.accepted = true
+                view.openBlockMenu(tb.row)
+                return
+            }
             if (event.modifiers & Qt.ControlModifier || event.modifiers & Qt.MetaModifier) {
+                const shift = event.modifiers & Qt.ShiftModifier
+                if (shift && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+                    event.accepted = true
+                    tb.moveSelf(event.key === Qt.Key_Up ? -1 : 1)
+                    return
+                }
+                if (event.key === Qt.Key_Home && tb.row > 0) {
+                    event.accepted = true
+                    view.focusNeighbor(0, 0)
+                    view.positionViewAtBeginning()
+                    return
+                }
+                if (event.key === Qt.Key_End && tb.row < view.count - 1) {
+                    event.accepted = true
+                    view.focusNeighbor(view.count - 1, view.caretEnd)
+                    view.positionViewAtEnd()
+                    return
+                }
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = true
+                    tb.toggleOrOpen()
+                    return
+                }
+                if (event.key === Qt.Key_Period) {
+                    event.accepted = true
+                    view.openBlockMenu(tb.row)
+                    return
+                }
+                if (event.modifiers & Qt.AltModifier) {
+                    const styles = { [Qt.Key_0]: "paragraph", [Qt.Key_1]: "h1", [Qt.Key_2]: "h2", [Qt.Key_3]: "h3",
+                                     [Qt.Key_4]: "bullet", [Qt.Key_5]: "numbered", [Qt.Key_6]: "todo" }
+                    if (styles[event.key] !== undefined) {
+                        event.accepted = true
+                        tb.restyle(styles[event.key])
+                    }
+                    return
+                }
                 if (event.key === Qt.Key_A) {
                     if (edit.selectionStart === 0 && edit.selectionEnd === edit.length) {
                         event.accepted = true
@@ -355,32 +453,54 @@ Item {
                 view.session.indentBlocks(tb.row, -1, edit.cursorPosition)
                 break
             case Qt.Key_Up:
-                if ((event.modifiers & Qt.ShiftModifier) && edit.cursorRectangle.y <= 0 && tb.row > 0) {
+                if ((event.modifiers & Qt.ShiftModifier) && tb.onFirstLine && tb.row > 0) {
                     event.accepted = true
                     view.beginBlockSelection(tb.row, tb.row - 1)
                     return
                 }
-                if (!(event.modifiers & Qt.ShiftModifier) && edit.cursorRectangle.y <= 0) {
+                if (!(event.modifiers & Qt.ShiftModifier) && tb.onFirstLine) {
                     event.accepted = true
-                    view.focusNeighbor(tb.row - 1, 2147483647)
+                    view.focusNeighborAt(tb.row - 1, tb.caretViewX(), "bottom")   // same column
                 }
                 break
             case Qt.Key_Down:
-                if ((event.modifiers & Qt.ShiftModifier)
-                        && edit.cursorRectangle.y + edit.cursorRectangle.height >= edit.contentHeight - 2
-                        && tb.row + 1 < view.count) {
+                if ((event.modifiers & Qt.ShiftModifier) && tb.onLastLine && tb.row + 1 < view.count) {
                     event.accepted = true
                     view.beginBlockSelection(tb.row, tb.row + 1)
                     return
                 }
-                if (!(event.modifiers & Qt.ShiftModifier)
-                        && edit.cursorRectangle.y + edit.cursorRectangle.height >= edit.contentHeight - 2) {
+                if (!(event.modifiers & Qt.ShiftModifier) && tb.onLastLine && tb.row + 1 < view.count) {
+                    event.accepted = true
+                    view.focusNeighborAt(tb.row + 1, tb.caretViewX(), "top")
+                }
+                break
+            case Qt.Key_Left:
+                if (event.modifiers === Qt.NoModifier && edit.cursorPosition === 0
+                        && edit.selectionStart === edit.selectionEnd && tb.row > 0) {
+                    event.accepted = true
+                    view.focusNeighbor(tb.row - 1, view.caretEnd)
+                }
+                break
+            case Qt.Key_Right:
+                if (event.modifiers === Qt.NoModifier && edit.cursorPosition === edit.length
+                        && edit.selectionStart === edit.selectionEnd && tb.row + 1 < view.count) {
                     event.accepted = true
                     view.focusNeighbor(tb.row + 1, 0)
                 }
                 break
+            case Qt.Key_PageUp:
+            case Qt.Key_PageDown:
+                event.accepted = true
+                tb.pageJump(event.key === Qt.Key_PageDown ? 1 : -1)
+                break
             case Qt.Key_Escape:
+                // Esc: text selection first, then block mode on this block (§4.2).
+                event.accepted = true
                 view.closePopups()
+                if (edit.selectionStart !== edit.selectionEnd)
+                    edit.deselect()
+                else
+                    view.selectRow(tb.row)
                 break
             default:
                 break

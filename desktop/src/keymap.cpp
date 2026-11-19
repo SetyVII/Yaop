@@ -50,6 +50,21 @@ std::vector<KeyBinding> buildBindings()
         bind("editor.selectAll", { "Ctrl+A" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Select all (twice: all blocks)")),
         bind("editor.indent", { "Tab" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Indent")),
         bind("editor.outdent", { "Shift+Tab" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Outdent")),
+        bind("editor.moveUp", { "Ctrl+Shift+Up" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Move block up")),
+        bind("editor.moveDown", { "Ctrl+Shift+Down" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Move block down")),
+        bind("editor.docStart", { "Ctrl+Home" }, "editor", QT_TRANSLATE_NOOP("Keymap", "First block")),
+        bind("editor.docEnd", { "Ctrl+End" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Last block")),
+        bind("editor.title", { "Alt+Up" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Go to the title")),
+        bind("editor.blockMode", { "Esc" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Select the block (block mode)")),
+        bind("editor.toggle", { "Ctrl+Return" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Check todo, fold toggle, open mention")),
+        bind("editor.menu", { "Ctrl+.", "Menu", "Shift+F10" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Block actions")),
+        bind("editor.paragraph", { "Ctrl+Alt+0" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into text")),
+        bind("editor.h1", { "Ctrl+Alt+1" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into heading 1")),
+        bind("editor.h2", { "Ctrl+Alt+2" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into heading 2")),
+        bind("editor.h3", { "Ctrl+Alt+3" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into heading 3")),
+        bind("editor.bullet", { "Ctrl+Alt+4" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into bulleted list")),
+        bind("editor.numbered", { "Ctrl+Alt+5" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into numbered list")),
+        bind("editor.todo", { "Ctrl+Alt+6" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Turn into todo")),
 
         // ---- blocks: whole blocks selected (BlocksView)
         bind("blocks.copy", { "Ctrl+C" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Copy blocks")),
@@ -63,6 +78,16 @@ std::vector<KeyBinding> buildBindings()
         bind("blocks.outdent", { "Shift+Tab" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Outdent")),
         bind("blocks.delete", { "Del", "Backspace" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Delete blocks")),
         bind("blocks.clear", { "Esc" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Clear selection")),
+        bind("blocks.up", { "Up" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Previous block")),
+        bind("blocks.down", { "Down" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Next block")),
+        bind("blocks.first", { "Home" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "First block")),
+        bind("blocks.last", { "End" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Last block")),
+        bind("blocks.enter", { "Return" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Edit or open the block")),
+        bind("blocks.space", { "Space" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Check todo, fold toggle, open media")),
+        bind("blocks.turnInto", { "/" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Turn into…")),
+        bind("blocks.moveUp", { "Ctrl+Shift+Up" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Move blocks up")),
+        bind("blocks.moveDown", { "Ctrl+Shift+Down" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Move blocks down")),
+        bind("blocks.menu", { "Ctrl+.", "Menu", "Shift+F10" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Block actions")),
     };
     // Alt+1…9: go to tab N (Firefox on Linux).
     for (int n = 1; n <= 9; ++n) {

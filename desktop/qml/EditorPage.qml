@@ -85,6 +85,14 @@ Item {
     }
     onPendingBlockIdChanged: scrollToPendingBlock()
 
+    // Where the caret goes when this page opens (docs/keyboard.md §4.1): an untitled object starts
+    // in the title, any other one where you left it, else at the end of its first text block.
+    function focusDefault() {
+        if (!session) return
+        if (session.title.length === 0) { titleInput.forceActiveFocus(); titleInput.end(); return }
+        blocks.focusStart()
+    }
+
     // Inserts imported media ({assetId, name, kind}) as blocks at the end of the object.
     function insertMediaItems(items) {
         if (!session)
@@ -660,15 +668,17 @@ Item {
                                     if (activeFocus && session.title !== text)
                                         session.title = text
                                 }
-                                Keys.onReturnPressed: (event) => {
-                                    event.accepted = true
-                                    if (session && session.blockCount > 0)
-                                        blocks.forceActiveFocus()
-                                }
-                                Keys.onEnterPressed: (event) => {
-                                    event.accepted = true
-                                    if (session && session.blockCount > 0)
-                                        blocks.forceActiveFocus()
+                                // Enter / ↓ / Alt+↓: into the first block (a new one when empty).
+                                Keys.onReturnPressed: (event) => { event.accepted = true; blocks.enterFromTop() }
+                                Keys.onEnterPressed: (event) => { event.accepted = true; blocks.enterFromTop() }
+                                Keys.onDownPressed: (event) => {
+                                    const last = cursorRectangle.y >= positionToRectangle(length).y - 1
+                                    if (last || (event.modifiers & Qt.AltModifier)) {
+                                        event.accepted = true
+                                        blocks.enterFromTop()
+                                    } else {
+                                        event.accepted = false
+                                    }
                                 }
 
                                 Text {
@@ -1053,6 +1063,7 @@ Item {
                                     onOpenObjectRequested: objectId => editPage.appWindow.openObject(objectId)
                                     onMediaPasteRequested: editPage.insertMediaItems(ws.importClipboardMedia())
                                     onToastRequested: message => { if (editPage.appWindow) editPage.appWindow.showToast(message) }
+                                    onExitTop: { titleInput.forceActiveFocus(); titleInput.end() }
                                 }
 
                                 // Drag files in from the file manager or another app.

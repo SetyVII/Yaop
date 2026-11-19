@@ -134,7 +134,7 @@ New or changed:
 | Ctrl+K | Command palette (with a text selection: "link to…" as the first action). |
 | Ctrl+Shift+K | Insert link on selection (today only via format bar). |
 | Ctrl+Alt+0…3 | Turn into paragraph / H1 / H2 / H3 (Google Docs). |
-| Ctrl+Shift+7 / 8 / 9 | Turn into numbered / bulleted / todo list (Google Docs). |
+| Ctrl+Alt+4 / 5 / 6 | Turn into bulleted / numbered / todo list. |
 | Ctrl+. | Block actions menu for the current block (the ⋮ menu). Also Menu key / Shift+F10. |
 | Alt+↑ / ↓ | Go to title / to the properties table (if shown). |
 | Ctrl+F, F3, Shift+F3 | Find in object, next, previous (find exists; add the key flow). |
@@ -297,7 +297,11 @@ Per-region focus memory and F6 moved to F2 (they need focusable lists first).
 4. Fix the Esc and Ctrl+D conflicts (§7).
 5. Focus restore on window activation + per-region memory (§3). Focus ring token + component.
 
-**F1 — Editor**
+**F1 — Editor — DONE except where noted** (`--drive editor-keys`: 12 checks).
+Not yet: properties table / tags / task bar keys (§4.6, only title ↔ blocks), Ctrl+Shift+K, the
+Ctrl+F / F3 flow, caret memory per tab (it is per object), audio seek. Turn-into keys are
+Ctrl+Alt+0…6 (text, H1–H3, bullets, numbers, todo): Ctrl+Shift+7/8/9 clash with `/` `(` `)` on
+Spanish and other layouts.
 1. Caret on open (§4.1), caret memory per object/tab.
 2. Focusable shell for every block delegate; `forceFocus` handled for all block types (§4.5).
 3. Goal column on ↑/↓, ←/→ across blocks, Ctrl+Home/End, PgUp/PgDn.

@@ -9,6 +9,12 @@ import "../"
 Item {
     id: tb
 
+    function focusCell(i) {
+        const c = i >= 0 && i < cellRepeater.count ? cellRepeater.itemAt(i) : null
+        if (c) c.focusInput()
+    }
+    function activate() { focusCell(0); return true }
+
     property var view
     property int row
     property string blockId
@@ -50,6 +56,7 @@ Item {
                 rowSpacing: 0
 
                 Repeater {
+                    id: cellRepeater
                     model: {
                         const flat = []
                         for (let r = 0; r < tb.rows.length; r++)
@@ -60,6 +67,8 @@ Item {
                     delegate: Rectangle {
                         id: cell
                         required property var modelData
+                        required property int index
+                        function focusInput() { cellInput.forceActiveFocus(); cellInput.selectAll() }
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
                         Layout.preferredHeight: tb.cellH
@@ -86,6 +95,34 @@ Item {
                                     view.session.setCell(tb.row, cell.modelData.r, cell.modelData.c, text)
                             }
                             onActiveFocusChanged: view.setFocusedBlock(tb.blockId, activeFocus)
+                            // Tab / Shift+Tab: next / previous cell, ↑/↓: row, Ctrl+Enter: new row,
+                            // Esc: back to block mode on the table.
+                            Keys.onPressed: function(event) {
+                                let to = -1
+                                if (event.key === Qt.Key_Tab) to = cell.index + 1
+                                else if (event.key === Qt.Key_Backtab) to = cell.index - 1
+                                else if (event.key === Qt.Key_Down) to = cell.index + tb.cols
+                                else if (event.key === Qt.Key_Up) to = cell.index - tb.cols
+                                if (to >= 0 || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab
+                                        || event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                                    event.accepted = true
+                                    editingFinished()
+                                    tb.focusCell(to)
+                                    return
+                                }
+                                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                        && (event.modifiers & Qt.ControlModifier)) {
+                                    event.accepted = true
+                                    editingFinished()
+                                    view.session.addTableRows(tb.row, 1)
+                                    return
+                                }
+                                if (event.key === Qt.Key_Escape) {
+                                    event.accepted = true
+                                    editingFinished()
+                                    view.selectRow(tb.row)
+                                }
+                            }
                         }
                     }
                 }

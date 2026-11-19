@@ -42,7 +42,7 @@ ApplicationWindow {
         }
         lastLocation = location
         storeTab()
-        Qt.callLater(ensureFocus)
+        Qt.callLater(focusPage)
     }
     function storeTab() {
         if (!tabs || !tabs[tabIndex]) return   // during start-up, before `tabs` exists
@@ -129,10 +129,12 @@ ApplicationWindow {
         editorObjectId = ""
         page = target
     }
+    // Today = the calendar's Day view of today, with the caret in its note.
     function openToday() {
         editorObjectId = ""
         page = "calendar"
-        if (calendarLoader.item) calendarLoader.item.showToday()
+        if (calendarLoader.item) calendarLoader.item.openDay(calendarLoader.item.today())
+        Qt.callLater(focusPage)
     }
 
     // Where a place is, for the tabs.
@@ -254,6 +256,13 @@ ApplicationWindow {
         else item.forceActiveFocus()
     }
     onActiveChanged: if (active) Qt.callLater(ensureFocus)
+    // Opening a place (Enter, Ctrl+K, Ctrl+D, back, a tab) puts the caret in it: the page's default.
+    function focusPage() {
+        const host = pages.children[pages.currentIndex]
+        const item = host && host.item !== undefined ? host.item : host
+        if (item && typeof item.focusDefault === "function") item.focusDefault()
+        else ensureFocus()
+    }
 
     function showPage(p) { editorObjectId = ""; page = p }
     function runAction(id) {

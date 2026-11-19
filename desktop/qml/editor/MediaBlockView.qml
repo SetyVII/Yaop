@@ -25,6 +25,17 @@ Item {
 
     readonly property bool assetReady: assetPath.length > 0
 
+    // Enter / Space in block mode: audio plays or stops; image and PDF open their object.
+    function activate() {
+        if (blockType === "audio") {
+            if (playback.playing) playback.stop()
+            else playback.play()
+        } else {
+            openImageObject()
+        }
+        return false
+    }
+
     function openImageObject() {
         if (!mb.view || mb.assetId.length === 0)
             return

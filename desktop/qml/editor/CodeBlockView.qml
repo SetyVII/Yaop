@@ -9,6 +9,12 @@ import QtQuick.Layouts
 Item {
     id: cb
 
+    function activate() {
+        edit.forceActiveFocus()
+        edit.cursorPosition = edit.length
+        return true
+    }
+
     property var view
     property int row
     property string blockId
@@ -112,6 +118,8 @@ Item {
                 if (event.key === Qt.Key_Escape) {
                     event.accepted = true
                     view.closePopups()
+                    view.selectRow(cb.row)   // back to block mode on this block
+                    return
                 }
                 // Enter inside code: insert a real newline (only exit on esc/ctrl+enter)
                 if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)

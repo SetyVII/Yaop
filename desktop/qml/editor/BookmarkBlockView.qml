@@ -9,6 +9,13 @@ import "../"
 Item {
     id: bb
 
+    function activate(viaSpace) {
+        if (viaSpace) return false
+        if (bb.hasUrl) Qt.openUrlExternally(bb.url)
+        else if (bb.view && bb.objectId.length > 0) bb.view.openObjectRequested(bb.objectId)
+        return false
+    }
+
     property var view
     property int row
     property string objectId: ""

@@ -23,6 +23,8 @@ Item {
 
     implicitHeight: viewMode === "card" ? 86 : viewMode === "compact" ? 44 : 28
 
+    function activate(viaSpace) { if (!viaSpace) emitOpen(); return false }
+
     function emitOpen() {
         openRequested(targetObjectId)
         if (view)

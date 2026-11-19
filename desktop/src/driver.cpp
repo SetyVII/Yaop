@@ -25,6 +25,7 @@
 #include <QTest>
 #include <QDate>
 #include <functional>
+#include <memory>
 
 #include <algorithm>
 #include <cmath>
@@ -570,8 +571,10 @@ void keysScenario(QQuickWindow *window)
                     QQuickItem *focused = window->activeFocusItem();      // the page took focus
                     key(Qt::Key_D, Qt::ControlModifier);              // outside the editor: Today
                     later(600, [=]() {
+                        QQuickItem *after = window->activeFocusItem();
                         const bool today = window->property("editorObjectId").toString().isEmpty()
-                                           && window->property("page").toString() != QLatin1String("home");
+                                           && window->property("page").toString() != QLatin1String("home")
+                                           && after && after->objectName() == QLatin1String("blockEdit");   // caret in the day note
                         const bool hasFocus = focused && focused != window->contentItem();
                         const bool ok = duplicated && paletteOpened && paletteClosed && today && hasFocus;
                         dlog(QStringLiteral("DRIVE keys ok=%1 duplicated=%2 paletteOpened=%3 paletteClosed=%4 today=%5 focus=%6 (%7)")
@@ -579,6 +582,132 @@ void keysScenario(QQuickWindow *window)
                                  .arg(hasFocus).arg(focused ? QString::fromLatin1(focused->metaObject()->className()) : QStringLiteral("-")));
                         QCoreApplication::exit(ok ? 0 : 6);
                     });
+                    });
+                });
+            });
+        });
+    });
+}
+
+// Keyboard-first F1 (docs/keyboard.md §4): the editor is driven by keys only.
+void editorKeysScenario(QQuickWindow *window)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) {
+        QCoreApplication::exit(4);
+        return;
+    }
+    auto key = [window](int k, Qt::KeyboardModifiers m = Qt::NoModifier) {
+        QTest::keyClick(static_cast<QWindow *>(window), Qt::Key(k), m);
+    };
+    auto type = [window](const char *text) {
+        for (const char *c = text; *c; ++c)
+            QTest::keyClick(static_cast<QWindow *>(window), *c);
+    };
+    auto focused = [window]() {
+        QQuickItem *f = window->activeFocusItem();
+        return f ? (f->objectName().isEmpty() ? QString::fromLatin1(f->metaObject()->className()) : f->objectName())
+                 : QStringLiteral("-");
+    };
+    auto order = [model]() {
+        QStringList out;
+        for (const QJsonValue &v : QJsonDocument::fromJson(model->debugSnapshot().toUtf8()).array()) {
+            const QJsonObject o = v.toObject();
+            QString text;
+            for (const QJsonValue &r : o.value(QLatin1String("runs")).toArray())
+                text += r.toObject().value(QLatin1String("text")).toString();
+            out << o.value(QLatin1String("type")).toString() + QLatin1Char(':') + text;
+        }
+        return out.join(QLatin1Char(','));
+    };
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    auto checks = std::make_shared<QStringList>();
+    auto check = [checks](bool ok, const QString &what) {
+        dlog(QStringLiteral("DRIVE editor-keys %1 %2").arg(ok ? QStringLiteral("ok  ") : QStringLiteral("FAIL"), what));
+        if (!ok) checks->append(what);
+    };
+    window->requestActivate();
+    QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window, [=]() {
+        QQuickItem *f = window->activeFocusItem();
+        QQuickItem *p = f ? f->parentItem() : nullptr;
+        dlog(QStringLiteral("DRIVE focus -> %1 / %2 row=%3 sel=%4").arg(focused(), p ? QString::fromLatin1(p->metaObject()->className()) : QString())
+                 .arg(p ? p->property("row").toString() : QString()).arg(model->selectedCount()));
+    });
+    later(300, [=]() {
+        check(focused() == QLatin1String("blockEdit"), QStringLiteral("caret in the first block on open (focus=%1)").arg(focused()));
+        type("alpha");
+        key(Qt::Key_Return);
+        type("beta");
+        later(500, [=]() {
+            model->insertBlockAfter(1, QStringLiteral("code"));
+            later(400, [=]() {
+                // the block right after the code block takes "delta"
+                const QJsonArray arr = QJsonDocument::fromJson(model->debugSnapshot().toUtf8()).array();
+                int codeRow = -1;
+                for (int i = 0; i < arr.size(); ++i)
+                    if (arr.at(i).toObject().value(QLatin1String("type")).toString() == QLatin1String("code")) codeRow = i;
+                if (codeRow + 1 >= arr.size())
+                    model->insertBlockAfter(codeRow, QStringLiteral("paragraph"));
+                else
+                    model->forceFocus(arr.at(codeRow + 1).toObject().value(QLatin1String("id")).toString(), 0);
+            later(500, [=]() {
+                dlog(QStringLiteral("DRIVE editor-keys setup %1 selected=%2 focus=%3").arg(order()).arg(model->selectedCount()).arg(focused()));
+                type("delta");
+                key(Qt::Key_Up);   // delta -> code block: block mode
+                later(300, [=]() {
+                    check(model->selectedCount() == 1 && focused() != QLatin1String("blockEdit"),
+                          QStringLiteral("up into a code block selects it (selected=%1 focus=%2)").arg(model->selectedCount()).arg(focused()));
+                    key(Qt::Key_Up);   // beta
+                    key(Qt::Key_Return);
+                    later(300, [=]() {
+                        check(model->selectedCount() == 0 && focused() == QLatin1String("blockEdit"),
+                              QStringLiteral("enter edits the text block (focus=%1)").arg(focused()));
+                        key(Qt::Key_Escape);
+                        later(200, [=]() {
+                            check(model->selectedCount() == 1, QStringLiteral("esc selects the block"));
+                            key(Qt::Key_Up, Qt::ControlModifier | Qt::ShiftModifier);
+                            later(400, [=]() {
+                                check(order().startsWith(QLatin1String("paragraph:beta,paragraph:alpha,code")),
+                                      QStringLiteral("ctrl+shift+up moves it (%1)").arg(order()));
+                                key(Qt::Key_Return);
+                                later(300, [=]() {
+                                    key(Qt::Key_1, Qt::ControlModifier | Qt::AltModifier);
+                                    later(400, [=]() {
+                                        check(order().startsWith(QLatin1String("heading:beta")),
+                                              QStringLiteral("ctrl+alt+1 makes a heading (%1)").arg(order()));
+                                        key(Qt::Key_Up, Qt::AltModifier);
+                                        later(300, [=]() {
+                                            check(focused() == QLatin1String("titleInput"), QStringLiteral("alt+up goes to the title (focus=%1)").arg(focused()));
+                                            key(Qt::Key_Down);
+                                            later(300, [=]() {
+                                                check(focused() == QLatin1String("blockEdit"), QStringLiteral("down from the title enters the blocks (focus=%1)").arg(focused()));
+                                                key(Qt::Key_End);
+                                                key(Qt::Key_Right);   // end of beta -> start of alpha
+                                                type("X");
+                                                later(600, [=]() {
+                                                    check(order().contains(QLatin1String("paragraph:Xalpha")),
+                                                          QStringLiteral("right at the end goes to the next block (%1)").arg(order()));
+                                                    key(Qt::Key_Down);      // Xalpha -> code: block mode
+                                                    key(Qt::Key_Return);    // edit the code
+                                                    later(300, [=]() {
+                                                    check(model->selectedCount() == 0 && focused() != QLatin1String("blockModeKeys"),
+                                                          QStringLiteral("enter on a code block edits it (focus=%1)").arg(focused()));
+                                                    key(Qt::Key_Escape);
+                                                    later(300, [=]() {
+                                                    check(model->selectedCount() == 1 && focused() == QLatin1String("blockModeKeys"),
+                                                          QStringLiteral("esc in code goes back to block mode (focus=%1)").arg(focused()));
+                                                    dlog(QStringLiteral("DRIVE editor-keys done failures=%1").arg(checks->size()));
+                                                    QCoreApplication::exit(checks->isEmpty() ? 0 : 6);
+                                                    });
+                                                    });
+                                                });
+                                            });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
                     });
                 });
             });
@@ -686,6 +815,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 dndScenario(window);
             else if (scenario == QLatin1String("keys"))
                 keysScenario(window);
+            else if (scenario == QLatin1String("editor-keys"))
+                editorKeysScenario(window);
             else
                 blackScenario(window);
         });

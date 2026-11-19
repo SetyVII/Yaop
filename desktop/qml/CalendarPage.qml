@@ -98,6 +98,11 @@ Item {
         }
         if (want) session = ws.openObject(want)
     }
+    // Day view: the caret goes into the day's note (created for today) — docs/keyboard.md §3.
+    function focusDefault() {
+        if (view === "day") dayBlocks.focusStart()
+        else page.forceActiveFocus()
+    }
     onNoteIdChanged: Qt.callLater(syncSession)
     onShownChanged: Qt.callLater(syncSession)
     onIsoChanged: Qt.callLater(syncSession)

@@ -846,11 +846,10 @@ void EditorModel::moveBlocks(const QStringList &ids, int delta)
     if (ids.isEmpty())
         return;
     QSet<QString> set(ids.begin(), ids.end());
-    const Block &first = m_blocks.first();
     m_blocks = blockops::moveSelected(m_blocks, set, delta);
     applyCollapseAwareReset();
     markDirty();
-    setFocus(first.id, 0);
+    // No focus change: the caller keeps the caret (text) or the block selection (block mode).
 }
 
 void EditorModel::moveBlockTo(int fromRow, int toRow)

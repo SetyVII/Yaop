@@ -53,6 +53,14 @@ Rectangle {
 
     property bool hasBodyFocus: view && view.activeFocusedBlockId === blockId
 
+    // Keyboard (block mode, docs/keyboard.md §4.5): Enter / Space run the body's main action.
+    // Returns true when the body took the caret (code, table), so the block selection ends.
+    function activateBody(viaSpace) {
+        const b = bodyLoader.item
+        return !!b && typeof b.activate === "function" && b.activate(viaSpace) === true
+    }
+    function openActions() { blockActions.popup(blockRoot, Math.max(0, blockRoot.width - 220), 24) }
+
     opacity: view && view.dragging && view.dragFromRow === index ? 0.35 : 1
     Behavior on opacity { NumberAnimation { duration: Theme.fast } }
 

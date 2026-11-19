@@ -14,6 +14,7 @@ Item {
     property string blockId
 
     signal openBoardRequested(string blockId)
+    function activate(viaSpace) { if (!viaSpace) openBoardRequested(blockId); return false }
 
     implicitHeight: 96
 
