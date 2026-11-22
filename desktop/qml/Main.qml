@@ -799,6 +799,12 @@ ApplicationWindow {
             app.paletteOpen = true
         else if (typeof initialOverlay !== "undefined" && initialOverlay === "capture")
             app.captureOpen = true
+        else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("version:"))
+            Qt.callLater(() => editorPage.showVersion(parseInt(initialOverlay.substring(8))))
+        else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("rail:"))
+            Qt.callLater(() => editorPage.showRailTab(parseInt(initialOverlay.substring(5))))
+        else if (typeof initialOverlay !== "undefined" && initialOverlay === "objectmenu")
+            Qt.callLater(() => editorPage.openObjectMenu())
         else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("option:")) {
             const parts = initialOverlay.split(":") // option:<type>:<prop>:<value>
             Qt.callLater(() => app.openOption(parts[1], parts[2], parts.slice(3).join(":")))

@@ -64,8 +64,11 @@ mobile and desktop, then a test that both pass.
       C++ and Kotlin; desktop counts them (`blockReferenceCounts`). UI (copy reference, counter,
       jump to block) missing on both apps.
 - [ ] Version history (§16.3): desktop keeps local snapshots (one per editing session, zstd, 30 days)
-      and restores by object or block (`pkmcore/editor/history`, `workspace_history.cpp`). Missing:
-      diffs with a full snapshot every 10, syncing snapshots (needs a contract), UI, mobile.
+      and restores by object or block (`pkmcore/editor/history`, `workspace_history.cpp`); desktop UI
+      previews a version with changed/removed blocks and restores one block or all (`VersionPreview.qml`).
+      Missing: diffs with a full snapshot every 10, syncing snapshots (needs a contract), mobile.
+- [ ] Object menu "…" (Ctrl+.), "Contains" panel (objects a page mentions or embeds) and text
+      statistics with dates (`pkmcore/editor/textstats`): desktop done, mobile missing.
 - [ ] Kanban and calendar views for sets and collections; editable table columns.
 - [ ] Duplicate objects: done on desktop (`pkmcore/editor/objectops`), mobile still missing.
 - [ ] Merge objects and tags (rewrites mentions to the survivor).

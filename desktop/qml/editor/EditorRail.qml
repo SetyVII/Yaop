@@ -8,12 +8,13 @@ import "../"
 //   0. Backlinks (+ type filters + Unlinked mentions with "Link" action)
 //   1. Local Graph (ws.graphData(id, depth) rendered on Canvas, clickable nodes)
 //   2. Details (Outline, Metadata, Version History with Restore, Object actions incl. Change Type & Duplicate)
+//   3. Contains (objects this one mentions or embeds, like Capacities' "Contained objects")
 Item {
     id: rail
 
     property var session: null
     property var workspace: null
-    property int activeTab: 0         // 0=backlinks, 1=graph, 2=details
+    property int activeTab: 0         // 0=backlinks, 1=graph, 2=details, 3=contains
     property string backlinkFilter: "all"
     property int graphDepth: 1
     property int rev: 0
@@ -21,6 +22,8 @@ Item {
     property var backlinks: []
     property var unlinked: []
     property var historyList: []
+    property var contained: []
+    property var stats: ({})
     property var localGraph: ({ nodes: [], edges: [] })
 
     signal scrollToBlockRequested(string blockId)
@@ -31,11 +34,21 @@ Item {
     signal trashRequested()
     signal toastRequested(string message)
 
+    // Opens the preview of version `i` (newest = 0) once the history has loaded.
+    property int pendingVersion: -1
+    function openVersion(i) {
+        activeTab = 2
+        if (historyList.length > i) versionPreview.show(historyList[i])
+        else pendingVersion = i
+    }
+
     function refreshAll() {
         if (!workspace || !session) {
             backlinks = []
             unlinked = []
             historyList = []
+            contained = []
+            stats = ({})
             localGraph = { nodes: [], edges: [] }
             return
         }
@@ -43,6 +56,12 @@ Item {
         backlinks = workspace.backlinksFor(oid) || []
         unlinked = workspace.unlinkedMentions(oid) || []
         historyList = workspace.objectHistory(oid) || []
+        contained = workspace.containedObjects(oid) || []
+        stats = workspace.objectStats(oid) || ({})
+        if (pendingVersion >= 0 && historyList.length > pendingVersion) {
+            versionPreview.show(historyList[pendingVersion])
+            pendingVersion = -1
+        }
         localGraph = workspace.graphData(oid, graphDepth) || { nodes: [], edges: [] }
         localGraphCanvas.requestPaint()
     }
@@ -118,6 +137,7 @@ Item {
                 Repeater {
                     model: [
                         { idx: 0, label: qsTr("Backlinks") },
+                        { idx: 3, label: qsTr("Contains") },
                         { idx: 1, label: qsTr("Graph") },
                         { idx: 2, label: qsTr("Details") }
                     ]
@@ -335,6 +355,54 @@ Item {
                     }
                 }
 
+                // ===== TAB 3: CONTAINED OBJECTS =====
+                ColumnLayout {
+                    visible: rail.activeTab === 3
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        text: Theme.caps(qsTr("%1 OBJECTS IN THIS PAGE").arg(rail.contained.length))
+                        color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
+                        Layout.bottomMargin: 8
+                    }
+                    Repeater {
+                        model: rail.contained
+                        delegate: Rectangle {
+                            id: cItem
+                            required property var modelData
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            color: cHov.hovered ? Theme.panel2 : "transparent"
+                            Behavior on color { ColorAnimation { duration: Theme.fast } }
+                            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.lineSubtle }
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 4
+                                anchors.rightMargin: 4
+                                spacing: 10
+                                TypeBadge { typeId: cItem.modelData.typeId; size: 14 }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: cItem.modelData.title || qsTr("Untitled")
+                                    color: cHov.hovered ? Theme.text : Theme.bodyText
+                                    font.family: Theme.body; font.pixelSize: 13
+                                    elide: Text.ElideRight
+                                }
+                            }
+                            HoverHandler { id: cHov; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: rail.openObjectRequested(cItem.modelData.id) }
+                        }
+                    }
+                    Text {
+                        visible: rail.contained.length === 0
+                        Layout.fillWidth: true
+                        text: qsTr("Mention an object with @ or embed it, and it shows here.")
+                        color: Theme.faint; font.family: Theme.body; font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
                 // ===== TAB 1: LOCAL GRAPH (Book.dc.html) =====
                 ColumnLayout {
                     visible: rail.activeTab === 1
@@ -505,8 +573,28 @@ Item {
                         }
                     }
                     MetaRow {
+                        k: qsTr("Words")
+                        v: String(rail.stats.words || 0)
+                    }
+                    MetaRow {
+                        k: qsTr("Sentences · paragraphs")
+                        v: (rail.stats.sentences || 0) + " · " + (rail.stats.paragraphs || 0)
+                    }
+                    MetaRow {
+                        k: qsTr("Characters")
+                        v: String(rail.stats.characters || 0)
+                    }
+                    MetaRow {
+                        k: qsTr("Created")
+                        v: rail.stats.createdAt ? Qt.formatDateTime(new Date(rail.stats.createdAt), "d MMM yyyy, HH:mm") : "—"
+                    }
+                    MetaRow {
+                        k: qsTr("Updated")
+                        v: rail.stats.updatedAt ? Qt.formatDateTime(new Date(rail.stats.updatedAt), "d MMM yyyy, HH:mm") : "—"
+                    }
+                    MetaRow {
                         k: qsTr("History")
-                        v: qsTr("%1 versions · 30 days").arg(rail.historyList.length)
+                        v: (rail.historyList.length === 1 ? qsTr("1 version") : qsTr("%1 versions").arg(rail.historyList.length)) + qsTr(" · 30 days")
                     }
                     MetaRow {
                         k: qsTr("Encryption")
@@ -541,7 +629,7 @@ Item {
                         color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
                     }
                     Repeater {
-                        model: rail.historyList.slice(0, 8)
+                        model: rail.historyList.slice(0, 20)
                         delegate: Rectangle {
                             id: hRow
                             required property var modelData
@@ -569,13 +657,8 @@ Item {
                                     }
                                 }
                                 Button {
-                                    small: true; text: qsTr("Restore")
-                                    onClicked: if (rail.workspace && rail.session) {
-                                        if (rail.workspace.restoreVersion(rail.session.objectId, hRow.modelData.id)) {
-                                            rail.refreshAll()
-                                            rail.toastRequested(qsTr("Version restored"))
-                                        }
-                                    }
+                                    small: true; text: qsTr("View")
+                                    onClicked: versionPreview.show(hRow.modelData)
                                 }
                             }
                         }
@@ -588,6 +671,16 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    VersionPreview {
+        id: versionPreview
+        workspace: rail.workspace
+        session: rail.session
+        onRestored: (whole) => {
+            rail.refreshAll()
+            rail.toastRequested(whole ? qsTr("Version restored") : qsTr("Block restored"))
         }
     }
 }

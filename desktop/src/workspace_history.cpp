@@ -58,6 +58,31 @@ QVariantList Workspace::objectHistory(const QString &id) const
     return out;
 }
 
+QVariantList Workspace::versionBlocks(const QString &id, qint64 snapshotId) const
+{
+    QVariantList out;
+    if (!m_store)
+        return out;
+    QByteArray snapshot;
+    for (const Store::SnapshotRow &r : m_store->snapshots(id))
+        if (r.id == snapshotId)
+            snapshot = unpack(r.compressed);
+    if (snapshot.isEmpty())
+        return out;
+    const Object snap = Object::fromJson(QJsonDocument::fromJson(snapshot).object());
+    QHash<QString, QString> now; // current text by block id
+    for (const Block &b : objectsWithEditors().value(id).blocks)
+        now.insert(b.id, b.plainText());
+    for (const Block &b : snap.blocks) {
+        const QString text = b.plainText();
+        const QString state = !now.contains(b.id) ? QStringLiteral("removed")
+            : now.value(b.id) == text ? QStringLiteral("same") : QStringLiteral("changed");
+        out.append(QVariantMap{ { "id", b.id }, { "type", b.type }, { "level", b.level },
+                                { "text", text.left(600) }, { "state", state } });
+    }
+    return out;
+}
+
 bool Workspace::restoreVersion(const QString &id, qint64 snapshotId, const QString &blockId)
 {
     if (!m_store || !m_objects.contains(id))

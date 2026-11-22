@@ -227,6 +227,7 @@ QByteArray svgPathFor(const QString &name)
         { "pin", "M9 3h6l-1 6 4 4H6l4-4z M12 13v8" },
         { "recipe", "M6 3v8a3 3 0 0 0 6 0V3 M9 3v18 M17 3c-2 2-2 6 0 8v10" },
         { "copy", "M8 8h12v12H8z M4 16V4h12" },
+        { "dots", "M4 11h2v2H4z M11 11h2v2h-2z M18 11h2v2h-2z" },
         { "arrow-up", "M12 20V4 M5 11l7-7 7 7" },
         { "arrow-down", "M12 4v16 M5 13l7 7 7-7" },
         { "arrow-back", "M19 12H5 M12 19l-7-7 7-7" },

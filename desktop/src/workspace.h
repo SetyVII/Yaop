@@ -94,6 +94,14 @@ public:
     // Restores the whole object, or only `blockId`, from a snapshot. The current state is kept as
     // a snapshot first, so a restore can be undone by restoring again.
     Q_INVOKABLE bool restoreVersion(const QString &id, qint64 snapshotId, const QString &blockId = QString());
+    // The blocks of one snapshot, for its preview: [{id, type, level, text, state}], state being
+    // "same", "changed" or "removed" against the object as it is now.
+    Q_INVOKABLE QVariantList versionBlocks(const QString &id, qint64 snapshotId) const;
+    // Text statistics and dates (pkmcore/editor/textstats): {words, sentences, paragraphs,
+    // characters, createdAt, updatedAt}.
+    Q_INVOKABLE QVariantMap objectStats(const QString &id) const;
+    // Objects this one mentions or embeds, in reading order: [{id, title, typeId}].
+    Q_INVOKABLE QVariantList containedObjects(const QString &id) const;
     Q_INVOKABLE bool hasEditorFor(const QString &id) { return m_editors.contains(id); }
     // Keyboard modifiers of the current input event (Qt.ControlModifier, Qt.ShiftModifier…):
     // Ctrl+click opens the place in a new tab, Shift+click in the side pane.

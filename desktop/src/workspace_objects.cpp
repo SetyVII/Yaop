@@ -4,6 +4,7 @@
 #include "graph.h"
 #include "unlinked.h"
 #include "optionview.h"
+#include "textstats.h"
 #include "backup.h"
 #include "syncpolicy.h"
 #include "query.h"
@@ -223,6 +224,32 @@ QVariantList Workspace::unlinkedMentions(const QString &targetId) const
         out.append(QVariantMap{ { "objectId", m.objectId }, { "blockId", m.blockId }, { "runIndex", m.runIndex },
                                 { "runOffset", m.runOffset }, { "length", m.length }, { "snippet", m.snippet },
                                 { "title", plainTitleFor(o) }, { "typeId", o.typeId } });
+    }
+    return out;
+}
+
+QVariantMap Workspace::objectStats(const QString &id) const
+{
+    const QHash<QString, Object> objs = objectsWithEditors();
+    if (!objs.contains(id))
+        return {};
+    const Object &o = objs[id];
+    const pkm::TextStats s = pkm::textStats(o.blocks);
+    return { { "words", s.words }, { "sentences", s.sentences }, { "paragraphs", s.paragraphs },
+             { "characters", s.characters }, { "createdAt", o.createdAt }, { "updatedAt", o.updatedAt } };
+}
+
+QVariantList Workspace::containedObjects(const QString &id) const
+{
+    QVariantList out;
+    const QHash<QString, Object> objs = objectsWithEditors();
+    if (!objs.contains(id))
+        return out;
+    for (const QString &cid : pkm::containedObjectIds(objs[id].blocks, id)) {
+        const auto it = objs.constFind(cid);
+        if (it == objs.constEnd() || !it->trashedAt.isEmpty())
+            continue;
+        out.append(QVariantMap{ { "id", cid }, { "title", plainTitleFor(*it) }, { "typeId", it->typeId } });
     }
     return out;
 }

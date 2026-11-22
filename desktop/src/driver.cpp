@@ -1313,6 +1313,14 @@ QString seedShowcase(Workspace *ws)
         bb2.type = BlockType::BulletList;
         book.blocks = { bh1, bq, bb1, bb2 };
         ws->saveObject(book);
+        // one saved version, then an edit, so the history preview has something to compare
+        ws->openObject(bookId);
+        ws->closeObject(bookId);
+        Object edited = *e2eObjectById(ws, bookId);
+        edited.blocks.removeAt(3);
+        edited.blocks[1].runs = { run(QStringLiteral("Writing is the medium of all this work.")) };
+        edited.blocks[1].text = runsToPlainText(edited.blocks[1].runs);
+        ws->saveObject(edited);
     }
 
     {

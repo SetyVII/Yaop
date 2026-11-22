@@ -184,6 +184,27 @@ Item {
     }
 
     property var pendingTrashBacklinks: []
+    // Object menu (Capacities' "…"): everything you do to the object as a whole, keyboard-first.
+    function openObjectMenu(anchor) {
+        if (!session) return
+        const a = anchor || (webSplitActive ? webMoreBtn : moreBtn)
+        objectMenu.popup(a, a.width - objectMenu.width, a.height + 4)
+    }
+    function showVersion(i) {
+        showRailTab(2)
+        editorRail.openVersion(i)
+    }
+    function showRailTab(tab) {
+        if (narrowRail) railOpen = true
+        else layoutPrefs.notesRailVisible = true
+        editorRail.activeTab = tab
+    }
+    Shortcut {
+        sequence: "Ctrl+."
+        enabled: editPage.visible && !!editPage.session
+        onActivated: editPage.openObjectMenu()
+    }
+
     function requestTrashCurrent() {
         if (!session)
             return
@@ -600,16 +621,12 @@ Item {
                         }
                     }
                     IconButton {
+                        id: webMoreBtn
                         anchors.verticalCenter: parent.verticalCenter
-                        icon: "trash"
-                        tip: qsTr("Move to trash")
-                        onClicked: editPage.requestTrashCurrent()
-                    }
-                    IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon: "asterisk"
-                        onClicked: if (session) ws.togglePinned(session.objectId)
-                        ToolTip.visible: hovered; ToolTip.text: qsTr("Pin object"); ToolTip.delay: 500
+                        icon: "dots"
+                        active: objectMenu.visible
+                        tip: qsTr("More (Ctrl+.)")
+                        onClicked: editPage.openObjectMenu(webMoreBtn)
                     }
                     IconButton {
                         anchors.verticalCenter: parent.verticalCenter
@@ -1227,12 +1244,6 @@ Item {
                                     }
                                 }
                                 IconButton {
-                                    visible: !editPage.webSplitActive
-                                    icon: "trash"
-                                    tip: qsTr("Move to trash")
-                                    onClicked: editPage.requestTrashCurrent()
-                                }
-                                IconButton {
                                     // outline / backlinks rail: docked when wide, on demand when narrow
                                     visible: !editPage.webSplitActive && editPage.narrowRail
                                     icon: "adjustments-horizontal"
@@ -1255,10 +1266,12 @@ Item {
                                     onClicked: if (editPage.appWindow) editPage.appWindow.focusMode = !editPage.appWindow.focusMode
                                 }
                                 IconButton {
+                                    id: moreBtn
                                     visible: !editPage.webSplitActive
-                                    icon: "asterisk"
-                                    tip: qsTr("Pin or unpin in the sidebar")
-                                    onClicked: if (session) ws.togglePinned(session.objectId)
+                                    icon: "dots"
+                                    active: objectMenu.visible
+                                    tip: qsTr("More (Ctrl+.)")
+                                    onClicked: editPage.openObjectMenu(moreBtn)
                                 }
                                 IconButton {
                                     visible: !editPage.webSplitActive
@@ -1639,6 +1652,7 @@ Item {
                 }
 
                 EditorRail {
+                    id: editorRail
                     anchors.fill: parent
                     anchors.leftMargin: 1
                     session: editPage.session
@@ -1666,6 +1680,67 @@ Item {
         }
     }
     } // outer ColumnLayout
+
+    Menu {
+        id: objectMenu
+        width: 270
+        padding: 4
+        background: Rectangle { color: Theme.sheet; border.width: 1; border.color: Theme.line2; radius: Theme.radiusSm }
+        enter: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
+            NumberAnimation { property: "scale"; from: 0.97; to: 1; duration: Theme.fast; easing.type: Easing.OutCubic }
+        }
+        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Theme.fast } }
+        readonly property bool pinned: { ws ? ws.listRevision : 0; return !!session && !!ws && ws.objectSummary(session.objectId).pinned }
+        MenuRow {
+            text: objectMenu.pinned ? qsTr("Unpin from the sidebar") : qsTr("Pin to the sidebar")
+            onTriggered: if (session) ws.togglePinned(session.objectId)
+        }
+        MenuRow {
+            text: qsTr("Copy link to this object")
+            onTriggered: if (session) {
+                ws.copyTextToClipboard("yaop://object/" + session.objectId)
+                if (editPage.appWindow) editPage.appWindow.showToast(qsTr("Link copied."))
+            }
+        }
+        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: Theme.line } }
+        MenuRow {
+            enabled: !!session && ["image", "audio", "pdf", "video", "file", "journal", "tag"].indexOf(session.typeId) < 0
+            text: qsTr("Change type…")
+            onTriggered: changeTypePopup.openForCurrent()
+        }
+        MenuRow {
+            text: qsTr("Duplicate")
+            onTriggered: if (session) {
+                const copyId = ws.duplicateObject(session.objectId)
+                if (copyId && editPage.appWindow) {
+                    editPage.appWindow.openObject(copyId)
+                    editPage.appWindow.showToast(qsTr("Object duplicated"))
+                }
+            }
+        }
+        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: Theme.line } }
+        MenuRow {
+            text: {
+                const st = session && ws ? ws.objectStats(session.objectId) : null
+                return st ? qsTr("Details · %1 words").arg(st.words || 0) : qsTr("Details")
+            }
+            onTriggered: editPage.showRailTab(2)
+        }
+        MenuRow {
+            readonly property int count: { ws ? ws.listRevision : 0; return session && ws ? ws.objectHistory(session.objectId).length : 0 }
+            text: count > 0 ? qsTr("Version history · %1").arg(count) : qsTr("Version history")
+            onTriggered: count > 0 ? editPage.showVersion(0) : editPage.showRailTab(2)
+        }
+        MenuRow { text: qsTr("Objects in this page"); onTriggered: editPage.showRailTab(3) }
+        MenuRow { text: qsTr("Backlinks"); onTriggered: editPage.showRailTab(0) }
+        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: Theme.line } }
+        MenuRow {
+            text: qsTr("Move to trash")
+            danger: true
+            onTriggered: editPage.requestTrashCurrent()
+        }
+    }
 
     Popup {
         id: webCoverPopup
