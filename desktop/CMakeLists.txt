@@ -50,6 +50,7 @@ qt_add_executable(yaop-desktop
     src/workspace_search.cpp
     src/workspace_weblinks.cpp
     src/workspace_history.cpp
+    src/workspace_collections.cpp
     src/workspace_media.cpp
     src/workspace_sync.cpp
     src/workspace_backup.cpp

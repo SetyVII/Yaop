@@ -1282,7 +1282,7 @@ QString seedShowcase(Workspace *ws)
         col.createdAt = nowIso;
         col.updatedAt = nowIso;
         col.properties.insert(QStringLiteral("item_type_id"), QStringLiteral("book"));
-        col.properties.insert(QStringLiteral("items"), QJsonArray{ bookId });
+        col.properties.insert(QStringLiteral("items"), QJsonArray{ bookId, personId, QStringLiteral("web-showcase-2") });
         ws->saveObject(col);
     }
 
@@ -1394,7 +1394,37 @@ QString seedShowcase(Workspace *ws)
     for (const char *t : { "Read the plan", "Call the carpenter", "Renew passport" })
         ws->createObject(QStringLiteral("task"), QString::fromUtf8(t));
     ws->createObject(QStringLiteral("book"), QStringLiteral("The Name of the Wind"));
-    ws->createObject(QStringLiteral("book"), QStringLiteral("Sapiens"));
+    {
+        // a book template (product §4.3): new books can start from it
+        Object tpl;
+        tpl.id = QStringLiteral("book-template-showcase");
+        tpl.typeId = TypeId::Book;
+        tpl.title = QStringLiteral("Reading notes");
+        tpl.createdAt = nowIso;
+        tpl.updatedAt = nowIso;
+        tpl.properties.insert(QStringLiteral("is_template"), true);
+        tpl.properties.insert(QStringLiteral("status"), QStringLiteral("to_read"));
+        Block h1 = para(QStringLiteral("Why I picked it"));
+        h1.type = BlockType::Heading; h1.level = 2;
+        Block h2 = para(QStringLiteral("Key ideas"));
+        h2.type = BlockType::Heading; h2.level = 2;
+        Block b = para(QStringLiteral(""));
+        b.type = BlockType::BulletList;
+        Block h3 = para(QStringLiteral("Quotes"));
+        h3.type = BlockType::Heading; h3.level = 2;
+        tpl.blocks = { h1, para(QStringLiteral("")), h2, b, h3 };
+        ws->saveObject(tpl);
+    }
+    {
+        Object sapiens;
+        sapiens.id = QStringLiteral("book-sapiens-showcase");
+        sapiens.typeId = TypeId::Book;
+        sapiens.title = QStringLiteral("Sapiens");
+        sapiens.createdAt = nowIso;
+        sapiens.updatedAt = nowIso;
+        sapiens.blocks = { para(QString()) };
+        ws->saveObject(sapiens);
+    }
     {
         Object wl;
         wl.id = QStringLiteral("web-showcase");

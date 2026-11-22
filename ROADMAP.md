@@ -44,7 +44,10 @@ mobile and desktop, then a test that both pass.
 - [ ] Query in a page = embed block of a saved set (`spec/query.md`), live results, list /
       gallery / table, `/query` picker: desktop done; mobile shows it as a plain embed. Missing:
       "save backlinks as query", live results on mobile.
-- [ ] **Collections**: manual ordered lists of ids; add from the object menu and multi-select (§19).
+- [ ] **Collections** (§19): desktop shows items in order, reorders (Alt+↑/↓), removes, adds by
+      search and from the object menu (`pkmcore/editor/collection`, `CollectionView.qml`).
+      Missing: multi-select add, add from capture, mobile, a per-key merge for `items` (today
+      last writer wins on the whole list).
 - [ ] Day timeline: captures, shares and edits with their time (§5).
 - [ ] Editable daily template; time zone and "day starts at" setting with a shared fixture (§20).
 - [ ] Base types **File** and **Table** (§4.1).
@@ -57,7 +60,9 @@ mobile and desktop, then a test that both pass.
 
 - [ ] Mobile reads the standard types from `spec/fixtures/types/standard.json` (`spec/types.md`)
       instead of `DefaultTypes`, with a test on the same fixture. C++, desktop and Go already do.
-- [ ] Type templates in the UI; editable icon and cover per object (§4.3).
+- [ ] Type templates (§4.3): desktop marks an object as a template (menu), lists them in a
+      "Templates" tab of the type, offers "Start from" on empty objects and "Apply a template…"
+      (`pkmcore` `applyTemplate`). Missing: mobile, the daily template. Editable icon per object.
 - [ ] Change an object's type: contract `spec/schema.md` + fixture, done in Go and desktop; mobile
       still missing.
 - [ ] Rename / reorder / change the kind of a property with preview (§16.2, extend

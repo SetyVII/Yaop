@@ -82,6 +82,7 @@ inline QVariantMap objectToVariant(const Object &o, const Workspace::ObjectView 
     m.insert("title", v.title);
     m.insert("updatedAt", v.updatedAt);
     m.insert("pinned", v.pinned);
+    m.insert("isTemplate", o.isTemplate());
     m.insert("trashed", v.trashed);
     m.insert("isTask", v.isTask);
     m.insert("taskDone", v.taskDone);

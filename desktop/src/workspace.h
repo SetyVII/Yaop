@@ -188,6 +188,19 @@ public:
     Q_INVOKABLE QVariantMap resolveOption(const QString &typeId, const QString &propKey, const QString &optionId) const;
     Q_INVOKABLE QVariantMap resolvePersonByValue(const QString &raw) const;
     Q_INVOKABLE QVariantList collectionsForObject(const QString &objectId) const;
+    // Collections (product §19, workspace_collections.cpp): [{id, title, count}] by title; items in
+    // their manual order as summaries; add / remove / move (indexes of collectionItems).
+    Q_INVOKABLE QVariantList collections() const;
+    Q_INVOKABLE QVariantList collectionItems(const QString &collectionId) const;
+    Q_INVOKABLE bool addToCollection(const QString &collectionId, const QString &objectId);
+    Q_INVOKABLE bool removeFromCollection(const QString &collectionId, const QString &objectId);
+    Q_INVOKABLE bool moveInCollection(const QString &collectionId, int from, int to);
+    Q_INVOKABLE QString createCollection(const QString &title);
+    // Type templates (product §4.3): objects of the type with `is_template`, oldest first.
+    Q_INVOKABLE QVariantList templatesFor(const QString &typeId) const;
+    Q_INVOKABLE void setIsTemplate(const QString &objectId, bool on);
+    // Fills the object from the template (pkmcore applyTemplate) and reloads its open editor.
+    Q_INVOKABLE bool applyTemplate(const QString &objectId, const QString &templateId);
     Q_INVOKABLE QVariantMap projectProgress(const QString &projectId) const;
     Q_INVOKABLE QString clipboardText() const;
     Q_INVOKABLE QVariantList typeProperties(const QString &typeId) const;
@@ -304,6 +317,7 @@ public:
 private:
     void loadFromStore();
     void captureSnapshot(const QString &id); // one per editing session, when content changed
+    bool writeCollection(const QString &collectionId, const QStringList &items);
     void purgeOldSnapshots();                // older than 30 days
     // ---- /v1 transport pieces (spec/sync.md) ----
     void bootstrapVault();          // VaultKey + subkeys + SQLCipher open

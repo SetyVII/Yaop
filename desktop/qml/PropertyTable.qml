@@ -36,7 +36,7 @@ Item {
         const raw = ws.objectPropertyEntries(objectId)
         const skip = hideWebHeaderProps
                    ? ["tags", "url", "description", "thumbnail_url", "favicon_url", "cover_image", "is_bookmark"]
-                   : ["tags"]
+                   : (objectTypeId === "collection" ? ["tags", "items"] : ["tags"]) // items: CollectionView
         const filtered = raw.filter(e => skip.indexOf(e.key) < 0)
         entries = filtered
         definedEntries = filtered.filter(e => !e.loose)

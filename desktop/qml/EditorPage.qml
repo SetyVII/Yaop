@@ -1572,6 +1572,25 @@ Item {
                         }
                     }
 
+                    TemplateStrip {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        session: editPage.session
+                        appWindow: editPage.appWindow
+                    }
+
+                    CollectionView {
+                        visible: !!editPage.session && editPage.session.typeId === "collection"
+                        Layout.fillWidth: true
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        Layout.bottomMargin: visible ? 16 : 0
+                        Layout.preferredHeight: visible ? implicitHeight : 0
+                        collectionId: visible ? editPage.session.objectId : ""
+                        appWindow: editPage.appWindow
+                    }
+
                     HabitPanel {
                         Layout.fillWidth: true
                         Layout.leftMargin: editPage.colMargin
@@ -1719,6 +1738,27 @@ Item {
                 }
             }
         }
+        MenuRow {
+            enabled: !!session && session.typeId !== "collection"
+            text: qsTr("Add to collection…")
+            onTriggered: collectionPicker.open()
+        }
+        MenuRow {
+            readonly property bool isTpl: { ws ? ws.listRevision : 0; return !!session && !!ws && ws.objectSummary(session.objectId).isTemplate === true }
+            enabled: !!session && ["image", "audio", "pdf", "video", "file", "journal", "tag", "set"].indexOf(session.typeId) < 0
+            text: isTpl ? qsTr("Stop being a template") : qsTr("Use as a template for this type")
+            onTriggered: if (session) {
+                ws.setIsTemplate(session.objectId, !isTpl)
+                if (editPage.appWindow) editPage.appWindow.showToast(isTpl ? qsTr("No longer a template")
+                                                                         : qsTr("New ones of this type can start from it"))
+            }
+        }
+        MenuRow {
+            readonly property var tpls: { ws ? ws.listRevision : 0; return session && ws ? ws.templatesFor(session.typeId).filter(t => t.id !== session.objectId) : [] }
+            enabled: tpls.length > 0
+            text: tpls.length > 0 ? qsTr("Apply a template… · %1").arg(tpls.length) : qsTr("Apply a template…")
+            onTriggered: templatePicker.open()
+        }
         MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: Theme.line } }
         MenuRow {
             text: {
@@ -1739,6 +1779,46 @@ Item {
             text: qsTr("Move to trash")
             danger: true
             onTriggered: editPage.requestTrashCurrent()
+        }
+    }
+
+    PickList {
+        id: collectionPicker
+        placeholder: qsTr("Add to a collection, or type a new name…")
+        source: function (f) {
+            if (!ws) return []
+            const mine = session ? ws.collectionsForObject(session.objectId).map(c => c.id) : []
+            const all = ws.collections().filter(c => c.id !== (session ? session.objectId : ""))
+            const lf = f.toLowerCase()
+            const out = all.filter(c => lf.length === 0 || c.title.toLowerCase().indexOf(lf) >= 0)
+                           .map(c => ({ id: c.id, label: c.title, icon: "folder", color: Theme.label,
+                                        hint: mine.indexOf(c.id) >= 0 ? qsTr("already in") : String(c.count) }))
+            if (f.length > 0 && !all.some(c => c.title.toLowerCase() === lf))
+                out.push({ id: "", label: qsTr("New collection “%1”").arg(f), name: f, icon: "plus", color: Theme.accent })
+            return out
+        }
+        onPicked: (e) => {
+            if (!session) return
+            const colId = e.id.length > 0 ? e.id : ws.createCollection(e.name)
+            const ok = ws.addToCollection(colId, session.objectId)
+            if (editPage.appWindow)
+                editPage.appWindow.showToast(ok ? qsTr("Added to “%1”").arg(e.name || e.label) : qsTr("Already in “%1”").arg(e.label))
+        }
+    }
+    PickList {
+        id: templatePicker
+        placeholder: qsTr("Apply a template…")
+        source: function (f) {
+            if (!ws || !session) return []
+            const lf = f.toLowerCase()
+            return ws.templatesFor(session.typeId)
+                     .filter(t => t.id !== session.objectId && (lf.length === 0 || t.title.toLowerCase().indexOf(lf) >= 0))
+                     .map(t => ({ id: t.id, label: t.title, icon: Theme.typeIcon(session.typeId), color: Theme.typeColor(session.typeId),
+                                  hint: qsTr("%1 blocks").arg(t.blockCount) }))
+        }
+        onPicked: (e) => {
+            if (session && ws.applyTemplate(session.objectId, e.id) && editPage.appWindow)
+                editPage.appWindow.showToast(qsTr("Applied “%1”").arg(e.label))
         }
     }
 

@@ -774,8 +774,8 @@ QVariantList Workspace::objectsByType(const QString &typeId, int limit) const
     for (const Object &o : m_objects) {
         if (limit > 0 && out.size() >= limit)
             break;
-        if (!o.trashedAt.isEmpty() || o.typeId != typeId)
-            continue;
+        if (!o.trashedAt.isEmpty() || o.typeId != typeId || o.isTemplate())
+            continue; // templates live in their own tab (templatesFor), like queries skip them
         out.append(objectToVariant(o, viewFor(o), QString()));
     }
     return out;

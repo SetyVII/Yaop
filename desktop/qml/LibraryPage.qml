@@ -34,6 +34,15 @@ Item {
     property string currentViewId: ""
     readonly property bool typeScoped: filterType !== "all" && filterType !== "trash"
     readonly property var typeViewList: { dataRev; return ws && typeScoped ? ws.typeViews(filterType) : [] }
+    readonly property int templateCount: { dataRev; return ws && typeScoped ? ws.templatesFor(filterType).length : 0 }
+    // A new template of this type, opened to edit (product §4.3).
+    function newTemplate() {
+        if (!ws || !typeScoped) return
+        const info = ws.typeInfo(filterType)
+        const id = ws.createObject(filterType, qsTr("%1 template").arg(info && info.name ? info.name : Theme.typeName(filterType)))
+        ws.setIsTemplate(id, true)
+        openObjectRequested(id)
+    }
     Settings {
         id: libPrefs
         category: "library"
@@ -45,7 +54,9 @@ Item {
     function selectView(id) {
         currentViewId = id
         if (typeScoped) setPref("lastViews", filterType, id)
-        if (id.length > 0) {
+        if (id === "@templates") {
+            viewMode = "list"
+        } else if (id.length > 0) {
             const v = typeViewList.find(x => x.id === id)
             viewMode = v && v.kind ? v.kind : "gallery"
         } else {
@@ -55,6 +66,7 @@ Item {
     }
     function pickViewMode(kind) {
         viewMode = kind
+        if (currentViewId === "@templates") return
         if (currentViewId.length > 0) ws.setSetActiveView(currentViewId, kind)
         else if (typeScoped) setPref("allViewModes", filterType, kind)
     }
@@ -199,6 +211,8 @@ Item {
                 const list = ws.objectsByType(types[i], 0)
                 for (let j = 0; j < list.length; j++) base.push(list[j])
             }
+        } else if (currentViewId === "@templates") {
+            base = ws.templatesFor(filterType).map(t => ws.objectSummary(t.id))
         } else if (currentViewId.length > 0) {
             const r = ws.runSet(currentViewId)
             base = r.items || ws.objectsByType(filterType, 0)
@@ -472,11 +486,26 @@ Item {
                         }
                     }
                     ViewTab {
+                        visible: library.templateCount > 0
+                        height: viewTabs.height
+                        title: qsTr("Templates · %1").arg(library.templateCount)
+                        fixed: true
+                        current: library.currentViewId === "@templates"
+                        onPicked: library.selectView("@templates")
+                    }
+                    ViewTab {
                         height: viewTabs.height
                         title: "+ " + qsTr("New view")
                         fixed: true
                         muted: true
                         onPicked: library.saveCurrentAsView("")
+                    }
+                    ViewTab {
+                        height: viewTabs.height
+                        title: "+ " + qsTr("New template")
+                        fixed: true
+                        muted: true
+                        onPicked: library.newTemplate()
                     }
                 }
             }
