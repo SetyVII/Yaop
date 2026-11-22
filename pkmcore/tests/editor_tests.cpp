@@ -10,6 +10,7 @@
 #include "objectops.h"
 #include "graph.h"
 #include "unlinked.h"
+#include "optionview.h"
 #include "history.h"
 #include <QImage>
 #include <QPainter>
@@ -931,6 +932,39 @@ static void testGraph()
 
 
 // Unlinked mentions: whole-word title/alias matches in plain runs of other objects; linking splits the run.
+static void testOptionNeighborhood()
+{
+    QHash<QString, Object> all;
+    auto web = [&](const QString &id, const QString &cat, QJsonArray topics, QJsonArray tags) {
+        Object o; o.id = id; o.typeId = TypeId::Web;
+        o.properties.insert("category", cat);
+        o.properties.insert("topics", topics);
+        o.properties.insert("tags", tags);
+        all.insert(id, o);
+    };
+    web("a", "video", { "programming", "design" }, { "pkm" });
+    web("b", "Video", { "programming" }, {});
+    web("c", "tutorial", { "programming" }, { "pkm" });
+    Object gone = all["a"]; gone.id = "z"; gone.trashedAt = "2026-11-01T00:00:00Z"; all.insert("z", gone);
+    Object book; book.id = "k"; book.typeId = TypeId::Book; book.properties.insert("category", "video"); all.insert("k", book);
+
+    const auto n = pkm::optionNeighborhood(all, TypeId::Web, "category", "video", { "category", "topics", "tags" });
+    CHECK(n.objectIds == QStringList({ "a", "b" }), "select value matches case-insensitively; trash and other types skipped");
+    CHECK(n.related.size() == 3 && n.related[0].prop == "topics" && n.related[0].value == "programming"
+              && n.related[0].objectIds == QStringList({ "a", "b" }),
+          "most shared related value first");
+    bool hasSelf = false;
+    for (const auto &r : n.related) hasSelf = hasSelf || (r.prop == "category");
+    CHECK(!hasSelf, "the centre value is not its own neighbour");
+
+    const auto t = pkm::optionNeighborhood(all, TypeId::Web, "topics", "programming", { "category", "topics" });
+    CHECK(t.objectIds == QStringList({ "a", "b", "c" }), "multi_select value matches inside the list");
+    CHECK(!t.related.isEmpty() && t.related[0].prop == "category" && t.related[0].value.toLower() == "video"
+              && t.related[0].objectIds.size() == 2,
+          "related values merge case variants");
+    CHECK(pkm::optionNeighborhood(all, TypeId::Web, "topics", "  ", { "topics" }).objectIds.isEmpty(), "empty value matches nothing");
+}
+
 static void testUnlinkedMentions()
 {
     auto para = [](const QString &id, QVector<Run> runs) { Block b = Block::makeParagraph(id); b.runs = runs; b.text = runsToPlainText(runs); return b; };
@@ -1191,6 +1225,7 @@ int runEditorTests()
     testMoveBlocksToObject();
     testGraph();
     testUnlinkedMentions();
+    testOptionNeighborhood();
     testBlockReferenceCounts();
     testHistory();
     testConformanceMergeAssoc();

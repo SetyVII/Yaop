@@ -46,6 +46,13 @@ Rectangle {
     readonly property bool isProject: (summary.typeId || "") === "project"
     readonly property bool isPdf: (summary.typeId || "") === "pdf"
     readonly property bool isAudio: (summary.typeId || "") === "audio"
+    // a press on a category / topic chip opens that value, not the card
+    property bool chipTap: false
+    function openOption(key, value) {
+        chipTap = false
+        const w = root.Window.window
+        if (w && w.openOption) w.openOption(summary.typeId || "", key, value)
+    }
     // Minimal #050505 geometric hero band (TypeHeroes.dc.html / WebLinks.dc.html)
     readonly property bool hasHeroBand: Theme.noir && (hasCover || isWeb || isBook || isPerson || isTag)
     readonly property var webCatOpt: (isWeb && ws && summary.category) ? ws.resolveOption("web", "category", summary.category) : null
@@ -319,18 +326,28 @@ Rectangle {
                 Rectangle {
                     visible: !!root.webCatOpt
                     height: 22; width: wCatRow.implicitWidth + 12
-                    color: "transparent"; border.width: 1; border.color: Theme.line2
+                    color: "transparent"; border.width: 1; border.color: wCatHov.hovered ? Theme.line3 : Theme.line2
                     Row {
                         id: wCatRow; anchors.centerIn: parent; spacing: 5
                         Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; color: root.webCatOpt ? Theme.paletteColor(root.webCatOpt.color || "blue") : Theme.dim }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: root.webCatOpt ? root.webCatOpt.label : ""; color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 11 }
                     }
+                    HoverHandler { id: wCatHov; cursorShape: Qt.PointingHandCursor }
+                    TapHandler {
+                        onPressedChanged: if (pressed) root.chipTap = true
+                        onTapped: root.openOption("category", root.webCatOpt.id)
+                    }
                 }
                 Rectangle {
                     visible: !!root.webTopicOpt
                     height: 22; width: wTopTxt.implicitWidth + 12
-                    color: "transparent"; border.width: 1; border.color: Theme.line2
-                    Text { id: wTopTxt; anchors.centerIn: parent; text: root.webTopicOpt ? root.webTopicOpt.label : ""; color: Theme.muted; font.family: Theme.body; font.pixelSize: 11 }
+                    color: "transparent"; border.width: 1; border.color: wTopHov.hovered ? Theme.line3 : Theme.line2
+                    Text { id: wTopTxt; anchors.centerIn: parent; text: root.webTopicOpt ? root.webTopicOpt.label : ""; color: wTopHov.hovered ? Theme.text : Theme.muted; font.family: Theme.body; font.pixelSize: 11 }
+                    HoverHandler { id: wTopHov; cursorShape: Qt.PointingHandCursor }
+                    TapHandler {
+                        onPressedChanged: if (pressed) root.chipTap = true
+                        onTapped: root.openOption("topics", root.webTopicOpt.id)
+                    }
                 }
             }
 
@@ -386,5 +403,5 @@ Rectangle {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: openRequested() }
+    TapHandler { onTapped: { if (root.chipTap) { root.chipTap = false; return } openRequested() } }
 }

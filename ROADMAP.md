@@ -87,6 +87,9 @@ mobile and desktop, then a test that both pass.
 
 - [ ] Unlinked mentions (text that names an object without linking it, no AI): data and "link it"
       on desktop (`pkmcore/editor/unlinked`); not yet in `docs/product.md`, UI and mobile missing.
+- [ ] Value view: clicking a topic, category or other select value shows the objects that carry it
+      and the values they share, as a radial graph, and saves it as a query. Desktop done
+      (`pkmcore/editor/optionview`, `OptionView.qml`); mobile missing.
 - [ ] Global and local graph (§10): data done on desktop (`pkmcore/editor/graph`, `Workspace::graphData`); UI and mobile missing.
 - [ ] Verify: pasting an image in the desktop editor creates an Image object (§8.2).
 - [ ] OCR to suggest image titles; reading progress for web links and PDFs.

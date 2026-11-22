@@ -121,6 +121,10 @@ public:
     // Block references (spec/text.md): blockId -> how many runs point at that block of objectId.
     Q_INVOKABLE QVariantMap blockReferenceCounts(const QString &objectId) const;
     Q_INVOKABLE QVariantList unlinkedMentions(const QString &targetId) const;
+    // Objects of `typeId` whose `propKey` (select, multi_select or "tags") holds `value`, and the
+    // other values they share: {center, objects:[{id,title,typeId}], related:[{prop, propName,
+    // id, label, color, objectIds}]} (pkmcore/editor/optionview).
+    Q_INVOKABLE QVariantMap optionNeighborhood(const QString &typeId, const QString &propKey, const QString &value) const;
     Q_INVOKABLE bool linkUnlinkedMention(const QString &targetId, const QVariantMap &match);
     QHash<QString, Object> objectsWithEditors() const; // stored objects with unsaved editor edits
     // Moves blocks (with their children) to the end of another object; returns how many moved.

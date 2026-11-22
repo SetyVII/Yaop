@@ -3,6 +3,7 @@
 #include "objectops.h"
 #include "graph.h"
 #include "unlinked.h"
+#include "optionview.h"
 #include "backup.h"
 #include "syncpolicy.h"
 #include "query.h"
@@ -224,6 +225,50 @@ QVariantList Workspace::unlinkedMentions(const QString &targetId) const
                                 { "title", plainTitleFor(o) }, { "typeId", o.typeId } });
     }
     return out;
+}
+
+QVariantMap Workspace::optionNeighborhood(const QString &typeId, const QString &propKey, const QString &value) const
+{
+    const QString tid = typeId.isEmpty() ? QString() : normalizeTypeId(typeId);
+    const QString key = normalizePropertyKey(propKey);
+    // related values come from every select / multi_select of the type, plus tags
+    QStringList props;
+    QHash<QString, QString> propNames;
+    for (const QVariant &pv : typeProperties(tid)) {
+        const QVariantMap p = pv.toMap();
+        const QString kind = p.value(QStringLiteral("kind")).toString();
+        if (kind != QLatin1String("select") && kind != QLatin1String("multi_select"))
+            continue;
+        const QString k = normalizePropertyKey(p.value(QStringLiteral("key")).toString());
+        props << k;
+        propNames.insert(k, p.value(QStringLiteral("name")).toString());
+    }
+    if (!props.contains(QStringLiteral("tags")))
+        props << QStringLiteral("tags");
+    propNames.insert(QStringLiteral("tags"), tr("Tags"));
+
+    auto describe = [&](const QString &prop, const QString &v) {
+        QVariantMap m = prop == QLatin1String("tags")
+            ? QVariantMap{ { "id", v }, { "label", v }, { "color", QStringLiteral("tag") } }
+            : resolveOption(tid, prop, v);
+        m.insert(QStringLiteral("prop"), prop);
+        m.insert(QStringLiteral("propName"), propNames.value(prop, prop));
+        return m;
+    };
+
+    const pkm::OptionNeighborhood n = pkm::optionNeighborhood(m_objects, tid, key, value, props);
+    QVariantList objects;
+    for (const QString &id : n.objectIds) {
+        const Object &o = m_objects[id];
+        objects.append(QVariantMap{ { "id", id }, { "title", plainTitleFor(o) }, { "typeId", o.typeId } });
+    }
+    QVariantList related;
+    for (const pkm::RelatedValue &r : n.related) {
+        QVariantMap m = describe(r.prop, r.value);
+        m.insert(QStringLiteral("objectIds"), r.objectIds);
+        related.append(m);
+    }
+    return { { "typeId", tid }, { "center", describe(key, value) }, { "objects", objects }, { "related", related } };
 }
 
 bool Workspace::linkUnlinkedMention(const QString &targetId, const QVariantMap &match)

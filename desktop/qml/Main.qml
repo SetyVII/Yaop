@@ -231,6 +231,13 @@ ApplicationWindow {
         captureOpen = true
     }
 
+    // Everything that shares a property value (OptionView): topics, categories, tags.
+    function openOption(typeId, propKey, value) {
+        if (value === undefined || value === null || String(value).length === 0) return
+        optionView.show(typeId || "", propKey, String(value))
+    }
+    function setsPage() { return setsLoader.item }
+
     function showToast(text) {
         toast.show(text)
     }
@@ -776,6 +783,8 @@ ApplicationWindow {
         id: settingsSheet
     }
 
+    OptionView { id: optionView; appWindow: app }
+
     Toast { id: toast }
 
     FocusRing { }
@@ -790,6 +799,10 @@ ApplicationWindow {
             app.paletteOpen = true
         else if (typeof initialOverlay !== "undefined" && initialOverlay === "capture")
             app.captureOpen = true
+        else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("option:")) {
+            const parts = initialOverlay.split(":") // option:<type>:<prop>:<value>
+            Qt.callLater(() => app.openOption(parts[1], parts[2], parts.slice(3).join(":")))
+        }
     }
 
     Connections {

@@ -16,6 +16,10 @@ Item {
     property real labelWidth: 136
     property bool stacked: false   // true in Book left column (Book.dc.html)
     signal openObjectRequested(string objectId)
+    function openOption(key, value) {
+        const w = table.Window.window
+        if (w && w.openOption) w.openOption(table.objectTypeId, key, value)
+    }
 
     property int rev: 0
     property var entries: []
@@ -318,8 +322,18 @@ Item {
                             TapHandler {
                                 onTapped: table.placeOverlayPopup(
                                     optPopup, propRow, table.stacked ? 0 : table.labelWidth + 12,
-                                    Math.min(320, Math.max(1, propRow.optList.length) * 34 + 12))
+                                    Math.min(364, Math.max(1, propRow.optList.length) * 34 + 56))
                             }
+                        }
+                        IconButton {
+                            visible: propRow.selList.length > 0
+                            anchors.left: selChip.right
+                            anchors.leftMargin: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitWidth: 28; implicitHeight: 28
+                            icon: "graph"
+                            tip: propRow.selList.length > 0 ? qsTr("Everything with “%1”").arg(propRow.selList[0].label) : ""
+                            onClicked: table.openOption(propRow.modelData.key, propRow.selList[0].id)
                         }
                     }
 
@@ -355,10 +369,22 @@ Item {
                                     id: msRow; anchors.centerIn: parent; spacing: 7
                                     Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; color: Theme.paletteColor(modelData.color || "blue") }
                                     Text { anchors.verticalCenter: parent.verticalCenter; text: modelData.label || modelData.id; color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 13 }
-                                    Text { anchors.verticalCenter: parent.verticalCenter; text: "×"; color: Theme.label; font.pixelSize: 13 }
+                                    Text { id: msX; anchors.verticalCenter: parent.verticalCenter; text: "×"; color: msHov.hovered ? Theme.text : Theme.label; font.pixelSize: 13 }
                                 }
                                 HoverHandler { id: msHov; cursorShape: Qt.PointingHandCursor }
-                                TapHandler { onTapped: if (ws && table.objectId) ws.toggleOption(table.objectId, propRow.modelData.key, modelData.id, true) }
+                                // the chip shows everything with this value; only the × removes it
+                                TapHandler {
+                                    onTapped: (ev) => {
+                                        if (ev.position.x >= msRow.x + msRow.width - msX.width - 4) {
+                                            if (ws && table.objectId) ws.toggleOption(table.objectId, propRow.modelData.key, modelData.id, true)
+                                        } else {
+                                            table.openOption(propRow.modelData.key, modelData.id)
+                                        }
+                                    }
+                                }
+                                ToolTip.visible: msHov.hovered
+                                ToolTip.delay: 600
+                                ToolTip.text: qsTr("Show everything with “%1” · × removes it").arg(modelData.label || modelData.id)
                             }
                         }
 
@@ -377,7 +403,7 @@ Item {
                             TapHandler {
                                 onTapped: table.placeOverlayPopup(
                                     optPopup, propRow, table.stacked ? 0 : table.labelWidth + 12,
-                                    Math.min(320, Math.max(1, propRow.optList.length) * 34 + 12))
+                                    Math.min(364, Math.max(1, propRow.optList.length) * 34 + 56))
                             }
                         }
                     }
@@ -576,7 +602,7 @@ Item {
                 id: optPopup
                 parent: Overlay.overlay
                 width: 280
-                height: 240
+                height: 300
                 padding: 4
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                 background: Rectangle {
@@ -584,48 +610,88 @@ Item {
                     border.width: 1
                     border.color: Theme.line2
                 }
-                contentItem: ListView {
-                    id: optListView
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    model: propRow.optList
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-                    delegate: Rectangle {
-                        required property var modelData
-                        readonly property bool chosen: propRow.selList.some(s => s.id === modelData.id)
-                        width: optListView.width
-                        height: 34
-                        color: optHov.hovered ? Theme.accent : "transparent"
-                        RowLayout {
-                            anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 10
-                            Rectangle {
-                                width: 7; height: 7
-                                color: propRow.isColorSwatches ? table.colorSwatchHex(modelData.id, modelData.color)
-                                                               : Theme.paletteColor(modelData.color || "blue")
-                                border.width: optHov.hovered ? 1 : 0; border.color: "#000000"
+                property string filter: ""
+                property int cur: 0
+                readonly property var shown: {
+                    const f = filter.trim().toLowerCase()
+                    const all = propRow.optList || []
+                    return f.length === 0 ? all : all.filter(o => String(o.label || o.id).toLowerCase().indexOf(f) >= 0)
+                }
+                onShownChanged: cur = Math.min(cur, Math.max(0, shown.length - 1))
+                onOpened: { filter = ""; optSearch.text = ""; cur = 0; optSearch.forceActiveFocus() }
+                function pick(o) {
+                    if (!o) return
+                    if (ws && table.objectId)
+                        ws.toggleOption(table.objectId, propRow.modelData.key, o.id, propRow.isMulti)
+                    if (!propRow.isMulti) optPopup.close()
+                }
+                contentItem: ColumnLayout {
+                    spacing: 4
+                    TextField {
+                        id: optSearch
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Search…")
+                        color: Theme.text
+                        placeholderTextColor: Theme.faint
+                        font.family: Theme.body; font.pixelSize: 13
+                        background: Rectangle { color: Theme.panel; border.width: 1; border.color: optSearch.activeFocus ? Theme.line3 : Theme.line2 }
+                        onTextChanged: optPopup.filter = text
+                        Keys.onDownPressed: optPopup.cur = Math.min(optPopup.shown.length - 1, optPopup.cur + 1)
+                        Keys.onUpPressed: optPopup.cur = Math.max(0, optPopup.cur - 1)
+                        Keys.onReturnPressed: optPopup.pick(optPopup.shown[optPopup.cur])
+                        Keys.onEnterPressed: optPopup.pick(optPopup.shown[optPopup.cur])
+                    }
+                    ListView {
+                        id: optListView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        model: optPopup.shown
+                        currentIndex: optPopup.cur
+                        onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                        delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+                            readonly property bool chosen: propRow.selList.some(s => s.id === modelData.id)
+                            readonly property bool lit: optHov.hovered || optPopup.cur === index
+                            width: optListView.width
+                            height: 34
+                            color: lit ? Theme.accent : "transparent"
+                            Behavior on color { ColorAnimation { duration: Theme.fast } }
+                            RowLayout {
+                                anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 10
+                                Rectangle {
+                                    width: 7; height: 7
+                                    color: propRow.isColorSwatches ? table.colorSwatchHex(modelData.id, modelData.color)
+                                                                   : Theme.paletteColor(modelData.color || "blue")
+                                    border.width: lit ? 1 : 0; border.color: "#000000"
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.label || modelData.id
+                                    color: lit ? Theme.accentInk : Theme.bodyText
+                                    font.family: Theme.body; font.pixelSize: 13
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    visible: chosen
+                                    text: "✓"
+                                    color: lit ? Theme.accentInk : Theme.accent
+                                    font.family: Theme.mono; font.pixelSize: 12
+                                }
                             }
-                            Text {
-                                Layout.fillWidth: true
-                                text: modelData.label || modelData.id
-                                color: optHov.hovered ? Theme.accentInk : Theme.bodyText
-                                font.family: Theme.body; font.pixelSize: 13
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                visible: chosen
-                                text: "✓"
-                                color: optHov.hovered ? Theme.accentInk : Theme.accent
-                                font.family: Theme.mono; font.pixelSize: 12
-                            }
+                            HoverHandler { id: optHov; cursorShape: Qt.PointingHandCursor; onHoveredChanged: if (hovered) optPopup.cur = index }
+                            TapHandler { onTapped: optPopup.pick(modelData) }
                         }
-                        HoverHandler { id: optHov; cursorShape: Qt.PointingHandCursor }
-                        TapHandler {
-                            onTapped: {
-                                if (ws && table.objectId)
-                                    ws.toggleOption(table.objectId, propRow.modelData.key, modelData.id, propRow.isMulti)
-                                if (!propRow.isMulti) optPopup.close()
-                            }
-                        }
+                    }
+                    Text {
+                        visible: optPopup.shown.length === 0
+                        Layout.margins: 8
+                        text: qsTr("No option matches.")
+                        color: Theme.faint
+                        font.family: Theme.body; font.pixelSize: 12
                     }
                 }
             }
