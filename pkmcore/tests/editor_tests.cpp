@@ -12,6 +12,7 @@
 #include "unlinked.h"
 #include "optionview.h"
 #include "textstats.h"
+#include "collection.h"
 #include "history.h"
 #include <QImage>
 #include <QPainter>
@@ -933,6 +934,46 @@ static void testGraph()
 
 
 // Unlinked mentions: whole-word title/alias matches in plain runs of other objects; linking splits the run.
+static void testCollectionsAndTemplates()
+{
+    namespace col = pkm::collection;
+    const QStringList a = col::add(col::add({}, "x"), "y");
+    CHECK(a == QStringList({ "x", "y" }) && col::add(a, "x") == a && col::add(a, "") == a, "collection add keeps order, no repeats");
+    CHECK(col::remove(a, "x") == QStringList({ "y" }), "collection remove");
+    CHECK(col::move({ "a", "b", "c" }, 0, 2) == QStringList({ "b", "c", "a" })
+              && col::move({ "a", "b", "c" }, 2, 0) == QStringList({ "c", "a", "b" })
+              && col::move({ "a", "b" }, 5, 0) == QStringList({ "a", "b" })
+              && col::move({ "a", "b", "c" }, 0, 99) == QStringList({ "b", "c", "a" }),
+          "collection move clamps and ignores bad indexes");
+    CHECK(col::clean({ "a", "a", "gone", "", "b" }, [](const QString &id) { return id != "gone"; }) == QStringList({ "a", "b" }),
+          "collection clean drops repeats, blanks and dead ids");
+
+    Object tpl; tpl.id = "t"; tpl.typeId = TypeId::Book; tpl.title = "Book template";
+    tpl.properties.insert("is_template", true);
+    tpl.properties.insert("status", "to_read");
+    tpl.properties.insert("rating", 3);
+    tpl.properties.insert("tags", QJsonArray{ "reading" });
+    Block h = Block::makeParagraph("h"); h.type = BlockType::Heading; h.level = 2; h.text = "Key ideas";
+    tpl.blocks = { h, Block::makeParagraph("p") };
+    Object target; target.id = "n"; target.typeId = TypeId::Book; target.title = "Dune";
+    target.properties.insert("rating", 5);
+    target.properties.insert("tags", QJsonArray{ "scifi", "Reading" });
+    target.blocks = { Block::makeParagraph("empty") };
+    int n = 0;
+    const Object out = pkm::applyTemplate(target, tpl, [&n] { return QStringLiteral("nb%1").arg(++n); });
+    CHECK(out.title == "Dune" && out.id == "n", "template keeps the target's id and title");
+    CHECK(out.properties.value("status").toString() == "to_read" && out.properties.value("rating").toInt() == 5,
+          "template fills missing properties only");
+    CHECK(!out.properties.contains("is_template"), "the copy is not a template");
+    CHECK(out.propertyStringList("tags") == QStringList({ "scifi", "Reading" }), "tags merge case-insensitively");
+    CHECK(out.blocks.size() == 2 && out.blocks[0].id == "nb1" && out.blocks[0].type == QLatin1String(BlockType::Heading),
+          "an empty page takes the template's blocks with new ids");
+    Object busy = target; busy.blocks[0].text = "my notes";
+    busy.blocks[0].runs = {}; Run r; r.text = "my notes"; busy.blocks[0].runs << r;
+    CHECK(pkm::applyTemplate(busy, tpl, [&n] { return QStringLiteral("nb%1").arg(++n); }).blocks.size() == 3,
+          "a page with text keeps it and gets the template after");
+}
+
 static void testTextStats()
 {
     auto para = [](const QString &id, QVector<Run> runs) { Block b = Block::makeParagraph(id); b.runs = runs; b.text = runsToPlainText(runs); return b; };
@@ -1248,6 +1289,7 @@ int runEditorTests()
     testUnlinkedMentions();
     testOptionNeighborhood();
     testTextStats();
+    testCollectionsAndTemplates();
     testBlockReferenceCounts();
     testHistory();
     testConformanceMergeAssoc();

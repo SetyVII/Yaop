@@ -19,6 +19,12 @@ inline bool canDuplicateType(const QString &typeId) { return !isFixedType(typeId
 Object duplicateObject(const Object &src, const QString &newId, const QString &now,
                        const std::function<QString()> &newBlockId);
 
+// Fills `target` from template `tpl` (product §4.3, spec/object.md `is_template`): the
+// template's blocks are appended with new ids, and each template property the target does not
+// have yet is copied. Tags are merged. Special keys (pinned, is_template, icon, cover, aliases,
+// summary) are never copied. The title stays the target's unless it is empty.
+Object applyTemplate(const Object &target, const Object &tpl, const std::function<QString()> &newBlockId);
+
 // Block references (spec/text.md, product §14): for each block of `objectId`, how many runs in
 // alive objects point at it (mention runs with that object_id and block_id).
 QHash<QString, int> blockReferenceCounts(const QHash<QString, Object> &objects, const QString &objectId);

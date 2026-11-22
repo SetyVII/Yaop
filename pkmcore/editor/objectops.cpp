@@ -99,6 +99,42 @@ QHash<QString, int> blockReferenceCounts(const QHash<QString, Object> &objects, 
     return counts;
 }
 
+Object applyTemplate(const Object &target, const Object &tpl, const std::function<QString()> &newBlockId)
+{
+    Object out = target;
+    if (out.title.trimmed().isEmpty())
+        out.title = tpl.title;
+    static const QStringList kSkip = { "blocks", "pinned", "is_template", "icon", "cover", "aliases", "summary", "tags" };
+    for (auto it = tpl.properties.constBegin(); it != tpl.properties.constEnd(); ++it)
+        if (!kSkip.contains(it.key()) && !out.properties.contains(it.key()))
+            out.properties.insert(it.key(), it.value());
+    // tags: union, the target's first
+    QStringList tags = out.propertyStringList(QStringLiteral("tags"));
+    for (const QString &t : tpl.propertyStringList(QStringLiteral("tags")))
+        if (!tags.contains(t, Qt::CaseInsensitive))
+            tags << t;
+    if (!tags.isEmpty())
+        out.properties.insert(QStringLiteral("tags"), QJsonArray::fromStringList(tags));
+    // blocks: an empty single paragraph is replaced, otherwise the template goes after
+    const bool blank = out.blocks.isEmpty()
+        || (out.blocks.size() == 1 && out.blocks[0].plainText().trimmed().isEmpty()
+            && out.blocks[0].type == QLatin1String(BlockType::Paragraph));
+    if (blank)
+        out.blocks.clear();
+    QHash<QString, QString> groups;
+    for (Block b : tpl.blocks) {
+        b.id = newBlockId();
+        if (!b.groupId.isEmpty()) {
+            auto g = groups.find(b.groupId);
+            if (g == groups.end())
+                g = groups.insert(b.groupId, newBlockId());
+            b.groupId = g.value();
+        }
+        out.blocks << b;
+    }
+    return out;
+}
+
 TypeChange changeObjectType(const Object &src, const QString &to, const QStringList &toKeys)
 {
     TypeChange r;

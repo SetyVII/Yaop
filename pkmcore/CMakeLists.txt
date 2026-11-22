@@ -31,6 +31,7 @@ add_library(pkmcore STATIC
     editor/unlinked.h editor/unlinked.cpp
     editor/optionview.h editor/optionview.cpp
     editor/textstats.h editor/textstats.cpp
+    editor/collection.h editor/collection.cpp
     editor/history.h editor/history.cpp
 )
 target_include_directories(pkmcore PUBLIC editor)
