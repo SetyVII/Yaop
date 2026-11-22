@@ -172,8 +172,14 @@ ordered by **the value that produced the key** with the Order rules (`asc`: numb
   `properties.views` (list of views, below) and `properties.active_view` (id of the open
   view). Without `views`, clients show `gallery`, `table` and `list`. A set never lists itself.
   Clients that do not model these keys keep them as-is (passthrough, `spec/object.md`).
-- **Query block** (planned): block type `query` with fields `query` and `view`
-  (`spec/text.md`, in both codecs at once).
+- **Type view**: a saved set with `properties.type_view_of = "<type id>"` is one of that type's
+  named views (the tabs of the type's page, like "Overview" / "All"). Its query keeps
+  `types: ["<type id>"]`. It is still an ordinary set: clients that do not know the key list it
+  with the other sets.
+- **Query in a page**: an `embed` block whose `object_id` is a saved set (`spec/text.md`). Clients
+  that know sets show its results live in the page, with the set's active view; the others show it
+  as an ordinary object embed. There is no separate `query` block type: the query lives in the
+  set, so the same query can sit in several pages and in the sets list.
 - The query travels as **a single value**: the merge treats it like any property (`p:query`,
   last writer wins; `spec/merge.md`).
 
