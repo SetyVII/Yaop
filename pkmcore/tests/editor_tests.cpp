@@ -11,6 +11,7 @@
 #include "graph.h"
 #include "unlinked.h"
 #include "optionview.h"
+#include "textstats.h"
 #include "history.h"
 #include <QImage>
 #include <QPainter>
@@ -932,6 +933,26 @@ static void testGraph()
 
 
 // Unlinked mentions: whole-word title/alias matches in plain runs of other objects; linking splits the run.
+static void testTextStats()
+{
+    auto para = [](const QString &id, QVector<Run> runs) { Block b = Block::makeParagraph(id); b.runs = runs; b.text = runsToPlainText(runs); return b; };
+    Run a; a.text = QStringLiteral("Hola mundo. ¿Qué tal estás?");
+    Run m; m.text = QStringLiteral("Ana"); m.objectId = QStringLiteral("ana");
+    Run b; b.text = QStringLiteral(" sin punto");
+    Block math = Block::makeParagraph("m"); math.type = BlockType::Math; math.latex = QStringLiteral("x^2 + y");
+    Block embed = Block::makeParagraph("e"); embed.type = BlockType::Embed; embed.objectId = QStringLiteral("book");
+    const QVector<Block> blocks = { para("1", { a }), para("2", { m, b }), para("3", {}), math, embed,
+                                    para("4", { m }) };
+    const pkm::TextStats s = pkm::textStats(blocks);
+    CHECK(s.words == 9, "words count letters and digits, skip math");
+    CHECK(s.sentences == 4, "sentences end in . ! ? or at the end of a paragraph");
+    CHECK(s.paragraphs == 3, "empty blocks and math are not paragraphs");
+    CHECK(s.characters == blocks[0].plainText().size() + blocks[1].plainText().size() + blocks[5].plainText().size(),
+          "characters of the text, mentions as they read");
+    CHECK(pkm::containedObjectIds(blocks, "self") == QStringList({ "ana", "book" }), "mentions and embeds, first seen first, no repeats");
+    CHECK(pkm::containedObjectIds(blocks, "ana") == QStringList({ "book" }), "an object never contains itself");
+}
+
 static void testOptionNeighborhood()
 {
     QHash<QString, Object> all;
@@ -1226,6 +1247,7 @@ int runEditorTests()
     testGraph();
     testUnlinkedMentions();
     testOptionNeighborhood();
+    testTextStats();
     testBlockReferenceCounts();
     testHistory();
     testConformanceMergeAssoc();
