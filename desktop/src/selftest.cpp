@@ -1343,6 +1343,25 @@ static void testWorkspaceWebLinkEnrichment()
               "weblink e2e: topics inferred from enriched title (ai_ml)");
         CHECK(propChangedIds.contains(wlId),
               "weblink e2e: objectPropertiesChanged emitted so PropertyTable refreshes live");
+
+        // Type views (spec/query.md): a set marked type_view_of, listed for its type only.
+        const QString vId = ws.createTypeView(QStringLiteral("web"), QStringLiteral("Videos"),
+                                              QVariantMap{ { "filters", QVariantList{ QVariantMap{
+                                                  { "prop", "category" }, { "op", "eq" }, { "value", "video" } } } } },
+                                              QStringLiteral("list"));
+        const QVariantList views = ws.typeViews(QStringLiteral("web"));
+        CHECK(views.size() == 1 && views[0].toMap().value("id").toString() == vId
+                  && views[0].toMap().value("kind").toString() == QLatin1String("list"),
+              "type views: created view is listed with its kind");
+        CHECK(ws.typeViews(QStringLiteral("book")).isEmpty(), "type views: other types do not see it");
+        const QVariantList vItems = ws.runSet(vId).value("items").toList();
+        CHECK(vItems.size() == 1 && vItems[0].toMap().value("id").toString() == wlId,
+              "type views: the view's query keeps the type and its filter");
+        ws.setSetActiveView(vId, QStringLiteral("kanban"));
+        CHECK(ws.typeViews(QStringLiteral("web"))[0].toMap().value("kind").toString() == QLatin1String("kanban"),
+              "type views: switching the view kind is saved in the set");
+        ws.deleteObject(vId);
+        CHECK(ws.typeViews(QStringLiteral("web")).isEmpty(), "type views: a trashed view disappears");
         const QString coverPath = ws.assetLocalPath(ed->coverAssetId());
         CHECK(!ed->coverAssetId().isEmpty() && coverPath.endsWith(QLatin1String(".webp")),
               "weblink e2e: remote thumbnail downloaded and stored locally as .webp cover");

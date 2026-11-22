@@ -528,6 +528,44 @@ void Workspace::setSetActiveView(const QString &setId, const QString &kind)
     emit objectPropertiesChanged(setId);
 }
 
+QVariantList Workspace::typeViews(const QString &typeId) const
+{
+    const QString tid = normalizeTypeId(typeId);
+    QVector<const Object *> found;
+    for (const Object &o : m_objects)
+        if (o.trashedAt.isEmpty() && o.typeId == QLatin1String("set")
+            && o.properties.value(QLatin1String("type_view_of")).toString() == tid)
+            found << &o;
+    std::sort(found.begin(), found.end(), [](const Object *a, const Object *b) {
+        return a->createdAt != b->createdAt ? a->createdAt < b->createdAt : a->id < b->id;
+    });
+    QVariantList out;
+    for (const Object *o : found) {
+        const QVariantMap info = setInfo(o->id);
+        out.append(QVariantMap{ { "id", o->id }, { "title", o->title },
+                                { "kind", info.value(QStringLiteral("activeView")).toMap().value(QStringLiteral("kind")) } });
+    }
+    return out;
+}
+
+QString Workspace::createTypeView(const QString &typeId, const QString &name, const QVariantMap &query,
+                                  const QString &kind)
+{
+    const QString tid = normalizeTypeId(typeId);
+    QVariantMap q = query;
+    q.insert(QStringLiteral("types"), QVariantList{ tid });
+    const QString id = createSet(name, q);
+    auto it = m_objects.find(id);
+    if (it == m_objects.end())
+        return id;
+    Object next = it.value();
+    next.properties.insert(QStringLiteral("type_view_of"), tid);
+    saveObject(next);
+    if (!kind.isEmpty())
+        setSetActiveView(id, kind);
+    return id;
+}
+
 QVariantMap Workspace::runSet(const QString &setId) const
 {
     const auto it = m_objects.constFind(setId);

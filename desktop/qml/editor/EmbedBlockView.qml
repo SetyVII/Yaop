@@ -22,7 +22,24 @@ Item {
 
     signal openRequested(string objectId)
 
-    implicitHeight: viewMode === "full" ? 132 : viewMode === "card" ? 92 : viewMode === "compact" ? 56 : 32
+    // a saved query (set) shows its live results instead of a card (spec/query.md "Query in a page")
+    readonly property bool isQuery: embeddedType === "set"
+    implicitHeight: isQuery ? queryLoader.height + 4
+                  : viewMode === "full" ? 132 : viewMode === "card" ? 92 : viewMode === "compact" ? 56 : 32
+
+    Loader {
+        id: queryLoader
+        active: eb.isQuery
+        visible: active
+        y: 2
+        width: eb.width
+        height: item ? item.implicitHeight : 0
+        sourceComponent: QueryEmbed {
+            view: eb.view
+            setId: eb.targetObjectId
+            onOpenRequested: (id) => { if (eb.view) eb.view.openObjectRequested(id) }
+        }
+    }
 
     function activate(viaSpace) { if (!viaSpace) emitOpen(); return false }
     function emitOpen() {
@@ -34,7 +51,7 @@ Item {
 
     // 1. CHIP ("inline")
     Rectangle {
-        visible: eb.viewMode === "inline"
+        visible: !eb.isQuery && eb.viewMode === "inline"
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: chipRow.implicitWidth + 18
         height: 26
@@ -52,7 +69,7 @@ Item {
 
     // 2. SMALL / WIDE / FULL CARD
     Rectangle {
-        visible: eb.viewMode !== "inline"
+        visible: !eb.isQuery && eb.viewMode !== "inline"
         anchors.fill: parent
         anchors.margins: 2
         radius: Theme.radius
@@ -115,7 +132,7 @@ Item {
 
     // Hover mode switcher (Chip | Small | Wide | Full — Mentions.dc.html)
     Row {
-        visible: outerHover.hovered && !!view && !!view.session
+        visible: !eb.isQuery && outerHover.hovered && !!view && !!view.session
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 6

@@ -161,6 +161,11 @@ public:
     Q_INVOKABLE void setSetQuery(const QString &setId, const QVariantMap &query);
     Q_INVOKABLE void setSetActiveView(const QString &setId, const QString &kind);
     Q_INVOKABLE QVariantMap runSet(const QString &setId) const;
+    // Saved views of a type (spec/query.md: sets with `properties.type_view_of`), oldest first:
+    // [{id, title, kind}]. createTypeView saves `query` (types = [typeId] is added) as a new one.
+    Q_INVOKABLE QVariantList typeViews(const QString &typeId) const;
+    Q_INVOKABLE QString createTypeView(const QString &typeId, const QString &name, const QVariantMap &query,
+                                       const QString &kind);
     // Display text of one field of an object (table cells): lists joined, object refs as titles.
     Q_INVOKABLE QString fieldText(const QString &objectId, const QString &prop) const;
     Q_INVOKABLE QVariantList objectsByType(const QString &typeId, int limit = 0) const;

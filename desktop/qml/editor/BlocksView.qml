@@ -303,6 +303,13 @@ ListView {
         return false
     }
 
+    // /query: pick a saved query (or make one for a type) and place it after the current block.
+    property int queryRow: -1
+    function openQueryPicker() {
+        queryRow = activeRow
+        queryPicker.open()
+    }
+
     function probeEmbedFlow() {
         if (!triggerEditor)
             return
@@ -1129,6 +1136,15 @@ ListView {
             else if (ev.key === Qt.Key_Up) { ev.accepted = true; currentIndex = (currentIndex - 1 + choices.length) % choices.length }
             else if (ev.key === Qt.Key_Return || ev.key === Qt.Key_Enter) { ev.accepted = true; accept(choices[currentIndex].mode) }
             else if (ev.key === Qt.Key_Escape) { ev.accepted = true; close() }
+        }
+    }
+
+    QueryPicker {
+        id: queryPicker
+        onChosen: (setId) => {
+            if (!blocksView.session) return
+            blocksView.session.insertEmbedBlockAfter(Math.max(0, blocksView.queryRow), setId)
+            blocksView.toastRequested(qsTr("Query placed. Its view and filters live in the query itself."))
         }
     }
 

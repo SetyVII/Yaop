@@ -67,7 +67,8 @@ Popup {
         { key: "image", name: qsTr("Image…"), hint: "", glyph: "▣" },
         { key: "audio", name: qsTr("Audio…"), hint: "", glyph: "♪" },
         { key: "pdf", name: Theme.caps(qsTr("PDF…")), hint: "", glyph: "▤" },
-        { key: "embed", name: qsTr("Reference…"), hint: "@", glyph: "@" }
+        { key: "embed", name: qsTr("Reference…"), hint: "@", glyph: "@" },
+        { key: "query", name: qsTr("Query…"), hint: "", glyph: "⊟" }
     ]
 
     readonly property var items: {
@@ -99,6 +100,10 @@ Popup {
         if (key === "image" || key === "audio" || key === "pdf") {
             sm.selected("paragraph") // collapse the "/query" token
             sm.mediaPickRequested(key)
+        } else if (key === "query") {
+            sm.selected("paragraph")
+            if (sm.parentView && sm.parentView.openQueryPicker)
+                sm.parentView.openQueryPicker()
         } else if (key === "embed") {
             sm.selected("paragraph")
             if (sm.parentView && sm.parentView.probeEmbedFlow)

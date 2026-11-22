@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtCore
 import "."
 
 // Objects / Type browser (docs/design/mockup/WebLinks.dc.html):
@@ -28,6 +29,70 @@ Item {
     property var filterRules: []
 
     signal openObjectRequested(string objectId)
+
+    // Named views of a type (spec/query.md "Type view"): "" = every object of the type.
+    property string currentViewId: ""
+    readonly property bool typeScoped: filterType !== "all" && filterType !== "trash"
+    readonly property var typeViewList: { dataRev; return ws && typeScoped ? ws.typeViews(filterType) : [] }
+    Settings {
+        id: libPrefs
+        category: "library"
+        property string lastViews: "{}"   // type id -> view id, per device
+        property string allViewModes: "{}" // type id -> view mode of the "All" tab
+    }
+    function prefMap(name) { try { return JSON.parse(libPrefs[name] || "{}") } catch (e) { return {} } }
+    function setPref(name, key, value) { const m = prefMap(name); m[key] = value; libPrefs[name] = JSON.stringify(m) }
+    function selectView(id) {
+        currentViewId = id
+        if (typeScoped) setPref("lastViews", filterType, id)
+        if (id.length > 0) {
+            const v = typeViewList.find(x => x.id === id)
+            viewMode = v && v.kind ? v.kind : "gallery"
+        } else {
+            viewMode = prefMap("allViewModes")[filterType] || "gallery"
+        }
+        recompute()
+    }
+    function pickViewMode(kind) {
+        viewMode = kind
+        if (currentViewId.length > 0) ws.setSetActiveView(currentViewId, kind)
+        else if (typeScoped) setPref("allViewModes", filterType, kind)
+    }
+    // The current quick filters as a query (spec/query.md).
+    function currentQuery() {
+        const q = { version: 1 }
+        if (typeScoped) q.types = [filterType]
+        const filters = []
+        if (filterUnreviewedOnly) filters.push({ prop: "reviewed", op: "is_false" })
+        if (primarySelectProp && quickPropOption !== "all")
+            filters.push({ prop: primarySelectProp.key, op: "eq", value: quickPropOption })
+        if (primaryMultiProp && quickMultiOption !== "all")
+            filters.push({ prop: primaryMultiProp.key, op: "has_any", value: [quickMultiOption] })
+        for (let r = 0; r < filterRules.length; r++) {
+            const rl = filterRules[r]
+            if (!rl.value) continue
+            filters.push({ prop: rl.key, op: rl.op === "contains" ? "contains" : rl.op, value: rl.value })
+        }
+        if (filterTag.trim().length > 0) filters.push({ prop: "tags", op: "has_any", value: [filterTag.trim()] })
+        if (filters.length > 0) q.filters = filters
+        q.sort = [sortMode === "title" ? { prop: "@title", dir: "asc" } : { prop: "@updated_at", dir: "desc" }]
+        return q
+    }
+    function clearQuickFilters() {
+        quickPropOption = "all"; quickMultiOption = "all"; filterUnreviewedOnly = false
+        filterTag = ""; filterRules = []; searchQuery = ""; searchField.text = ""
+    }
+    // Saves what is on screen as a new named view of the type and opens it.
+    function saveCurrentAsView(name) {
+        if (!ws || !typeScoped) return ""
+        const n = name && name.trim().length > 0 ? name.trim()
+                : qsTr("View %1").arg(typeViewList.length + 1)
+        const id = ws.createTypeView(filterType, n, currentQuery(), viewMode)
+        clearQuickFilters()
+        Qt.callLater(() => selectView(id))
+        if (appWindow) appWindow.showToast(qsTr("Saved view “%1”").arg(n))
+        return id
+    }
 
     function update() { }
     function openTypeManager() {
@@ -134,6 +199,9 @@ Item {
                 const list = ws.objectsByType(types[i], 0)
                 for (let j = 0; j < list.length; j++) base.push(list[j])
             }
+        } else if (currentViewId.length > 0) {
+            const r = ws.runSet(currentViewId)
+            base = r.items || ws.objectsByType(filterType, 0)
         } else {
             base = ws.objectsByType(filterType, 0)
         }
@@ -181,14 +249,22 @@ Item {
                 return acc
             })
         }
-        if (sortMode === "title")
-            out.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")))
-        else
-            out.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))
+        if (currentViewId.length === 0) { // a saved view keeps its query's order
+            if (sortMode === "title")
+                out.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")))
+            else
+                out.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))
+        }
         items = out
     }
 
-    onFilterTypeChanged: { quickPropOption = "all"; quickMultiOption = "all"; filterUnreviewedOnly = false; filterRules = []; if (visible) recompute() }
+    onFilterTypeChanged: {
+        quickPropOption = "all"; quickMultiOption = "all"; filterUnreviewedOnly = false; filterRules = []
+        // reopen the view this type had last time on this device (if it still exists)
+        const last = typeScoped ? (prefMap("lastViews")[filterType] || "") : ""
+        const ok = last.length > 0 && ws && ws.typeViews(filterType).some(v => v.id === last)
+        selectView(ok ? last : "")
+    }
     onSearchQueryChanged: if (visible) recompute()
     onSortModeChanged: if (visible) recompute()
     onQuickPropOptionChanged: if (visible) recompute()
@@ -322,7 +398,7 @@ Item {
                             required property var modelData
                             icon: modelData.icon
                             active: library.viewMode === modelData.key
-                            onClicked: library.viewMode = modelData.key
+                            onClicked: library.pickViewMode(modelData.key)
                             ToolTip.visible: hovered; ToolTip.text: modelData.label; ToolTip.delay: 300
                         }
                     }
@@ -353,6 +429,54 @@ Item {
                             else
                                 library.appWindow.captureOpen = true
                         }
+                    }
+                }
+            }
+        }
+
+        // ---------------- Named views of the type (Capacities: "Overview · All") ----------------
+        Item {
+            visible: library.typeScoped
+            Layout.fillWidth: true
+            Layout.preferredHeight: visible ? 44 : 0
+
+            Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: Theme.lineSubtle }
+
+            Flickable {
+                anchors.fill: parent
+                anchors.leftMargin: 28
+                anchors.rightMargin: 28
+                contentWidth: viewTabs.implicitWidth
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+                Row {
+                    id: viewTabs
+                    height: parent.height
+                    spacing: 4
+                    Repeater {
+                        model: [{ id: "", title: qsTr("All"), fixed: true }].concat(library.typeViewList)
+                        delegate: ViewTab {
+                            required property var modelData
+                            height: viewTabs.height
+                            viewId: modelData.id
+                            title: modelData.title
+                            fixed: !!modelData.fixed
+                            current: library.currentViewId === modelData.id
+                            onPicked: library.selectView(modelData.id)
+                            onRenamed: (name) => ws.renameObject(modelData.id, name)
+                            onRemoved: {
+                                if (library.currentViewId === modelData.id) library.selectView("")
+                                ws.deleteObject(modelData.id)
+                                if (library.appWindow) library.appWindow.showToast(qsTr("View moved to trash"))
+                            }
+                        }
+                    }
+                    ViewTab {
+                        height: viewTabs.height
+                        title: "+ " + qsTr("New view")
+                        fixed: true
+                        muted: true
+                        onPicked: library.saveCurrentAsView("")
                     }
                 }
             }
@@ -689,37 +813,19 @@ Item {
                         small: true; text: qsTr("Save as view")
                         onClicked: {
                             if (!ws) return
-                            const q = { version: 1 }
-                            if (library.filterType !== "all" && library.filterType !== "trash")
-                                q.types = [library.filterType]
-                            const filters = []
-                            if (library.filterUnreviewedOnly)
-                                filters.push({ prop: "reviewed", op: "is_false" })
-                            if (library.primarySelectProp && library.quickPropOption !== "all")
-                                filters.push({ prop: library.primarySelectProp.key, op: "eq", value: library.quickPropOption })
-                            if (library.primaryMultiProp && library.quickMultiOption !== "all")
-                                filters.push({ prop: library.primaryMultiProp.key, op: "has_any", value: [library.quickMultiOption] })
-                            for (let r = 0; r < library.filterRules.length; r++) {
-                                const rl = library.filterRules[r]
-                                if (!rl.value) continue
-                                filters.push({ prop: rl.key, op: rl.op === "contains" ? "contains" : rl.op, value: rl.value })
+                            if (library.typeScoped) {
+                                library.saveCurrentAsView("")
+                                library.filterOpen = false
+                                return
                             }
-                            if (filters.length > 0) q.filters = filters
-                            const label = (library.currentTypeInfo ? library.currentTypeInfo.name : qsTr("Filtered")) + " · " + qsTr("View")
-                            ws.createSet(label, q)
+                            const label = qsTr("Filtered") + " · " + qsTr("View")
+                            ws.createSet(label, library.currentQuery())
                             if (library.appWindow) library.appWindow.showToast(qsTr("Saved view “%1”").arg(label))
                         }
                     }
                     Button {
                         small: true; text: qsTr("Clear")
-                        onClicked: {
-                            library.quickPropOption = "all"
-                            library.quickMultiOption = "all"
-                            library.filterUnreviewedOnly = false
-                            library.filterTag = ""
-                            library.filterRules = []
-                            library.searchQuery = ""
-                        }
+                        onClicked: library.clearQuickFilters()
                     }
                 }
             }

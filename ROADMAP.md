@@ -41,13 +41,15 @@ mobile and desktop, then a test that both pass.
 
 ## Journal and queries
 
-- [ ] Embedded **query block** with live results; "save backlinks as query" (contract in
-      `spec/text.md` first).
+- [ ] Query in a page = embed block of a saved set (`spec/query.md`), live results, list /
+      gallery / table, `/query` picker: desktop done; mobile shows it as a plain embed. Missing:
+      "save backlinks as query", live results on mobile.
 - [ ] **Collections**: manual ordered lists of ids; add from the object menu and multi-select (§19).
 - [ ] Day timeline: captures, shares and edits with their time (§5).
 - [ ] Editable daily template; time zone and "day starts at" setting with a shared fixture (§20).
 - [ ] Base types **File** and **Table** (§4.1).
-- [ ] Layout per type and saved views per type (§14).
+- [ ] Layout per type (§14). Saved views per type (sets with `type_view_of`, tabs on the type
+      page, rename / delete, last view remembered per device): desktop done, mobile missing.
 - [ ] Onboarding tutorial as real, deletable objects, es/en (§21.1).
 - [ ] Create types and properties from the mobile UI (desktop already can).
 

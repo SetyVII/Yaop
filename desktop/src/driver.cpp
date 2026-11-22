@@ -1500,11 +1500,36 @@ QString seedShowcase(Workspace *ws)
             ws->setHabitDay(h2, d, 3 + i);
         }
     }
-    ws->createSet(QStringLiteral("Open tasks"),
+    const QString openTasksSet = ws->createSet(QStringLiteral("Open tasks"),
                   QVariantMap{ { "types", QVariantList{ "task" } },
                                { "filters", QVariantList{ QVariantMap{ { "prop", "status" }, { "op", "neq" }, { "value", "done" } } } },
                                { "sort", QVariantList{ QVariantMap{ { "prop", "@title" }, { "dir", "asc" } } } } });
-    ws->createSet(QStringLiteral("Books"), QVariantMap{ { "types", QVariantList{ "book" } } });
+    const QString booksSet = ws->createSet(QStringLiteral("Books"), QVariantMap{ { "types", QVariantList{ "book" } } });
+    ws->setSetActiveView(booksSet, QStringLiteral("gallery"));
+    ws->setSetActiveView(openTasksSet, QStringLiteral("list"));
+    {
+        // a page with two queries in it (spec/query.md "Query in a page")
+        Object dash;
+        dash.id = QStringLiteral("dashboard-showcase");
+        dash.typeId = TypeId::Note;
+        dash.title = QStringLiteral("Reading dashboard");
+        dash.createdAt = nowIso;
+        dash.updatedAt = nowIso;
+        Block q1 = Block::makeParagraph(newUuid());
+        q1.type = BlockType::Embed;
+        q1.objectId = openTasksSet;
+        Block q2 = Block::makeParagraph(newUuid());
+        q2.type = BlockType::Embed;
+        q2.objectId = booksSet;
+        dash.blocks = { para(QStringLiteral("What is open this week:")), q1, para(QStringLiteral("Books on the shelf:")), q2 };
+        ws->saveObject(dash);
+    }
+    ws->createTypeView(QStringLiteral("web"), QStringLiteral("Videos"),
+                       QVariantMap{ { "filters", QVariantList{ QVariantMap{ { "prop", "category" }, { "op", "eq" }, { "value", "video" } } } } },
+                       QStringLiteral("list"));
+    ws->createTypeView(QStringLiteral("web"), QStringLiteral("To read"),
+                       QVariantMap{ { "filters", QVariantList{ QVariantMap{ { "prop", "reviewed" }, { "op", "is_false" } } } } },
+                       QStringLiteral("gallery"));
     return id;
 }
 

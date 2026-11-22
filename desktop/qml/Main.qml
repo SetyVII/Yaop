@@ -199,6 +199,13 @@ ApplicationWindow {
         page = "editor"
     }
     function openObject(objectId) {
+        // a saved query opens in the Queries page, with its results, not as a text page
+        const sum = ws ? ws.objectSummary(objectId) : null
+        if (sum && sum.typeId === "set") {
+            navigate("sets")
+            Qt.callLater(() => { const p = setsPage(); if (p) p.currentSetId = objectId })
+            return
+        }
         if (wantsNewTab()) newTab("o:" + objectId)
         else if (wantsPane()) openInPane(objectId)
         else showObject(objectId)
@@ -799,6 +806,12 @@ ApplicationWindow {
             app.paletteOpen = true
         else if (typeof initialOverlay !== "undefined" && initialOverlay === "capture")
             app.captureOpen = true
+        else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("libview:"))
+            Qt.callLater(() => {
+                const lib = libraryLoader.item
+                const n = parseInt(initialOverlay.substring(8))
+                if (lib && lib.typeViewList.length > n) lib.selectView(lib.typeViewList[n].id)
+            })
         else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("version:"))
             Qt.callLater(() => editorPage.showVersion(parseInt(initialOverlay.substring(8))))
         else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("rail:"))
