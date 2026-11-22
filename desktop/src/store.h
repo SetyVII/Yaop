@@ -60,6 +60,8 @@ public:
 
     // offline pending push queue (payloads live encrypted inside this DB)
     QList<PendingOp> pendingOps() const;
+    // How many ops wait to be pushed, without reading them (called after every save).
+    int pendingOpCount() const;
     void queueOp(const QString &opId, const QString &objectId, const QJsonObject &payload);
     void dequeueOp(qlonglong rowid);
     void dequeueOpsFor(const QString &objectId);

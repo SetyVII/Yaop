@@ -88,6 +88,15 @@ bool ensureSchema(sqlite3 *db, bool *usingFts5)
                  " src TEXT NOT NULL, dst TEXT NOT NULL, block_id TEXT NOT NULL,"
                  " PRIMARY KEY (dst, src, block_id)) WITHOUT ROWID",
                  nullptr, nullptr, &err);
+    // Every save deletes this object's old rows first: without these indexes each delete scanned
+    // the whole table, so saving got slower as the vault grew (O(n) per save).
+    sqlite3_exec(db,
+                 "CREATE INDEX IF NOT EXISTS backlinks_src ON backlinks(src);"
+                 "CREATE TABLE IF NOT EXISTS objects_fts_rowid (object_id TEXT PRIMARY KEY, rid INTEGER NOT NULL)",
+                 nullptr, nullptr, nullptr);
+    if (!fts5)
+        sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS search_tokens_object ON search_tokens(object_id)",
+                     nullptr, nullptr, nullptr);
     if (err) {
         qWarning("search: create backlinks schema failed: %s", err);
         sqlite3_free(err);
@@ -95,6 +104,48 @@ bool ensureSchema(sqlite3 *db, bool *usingFts5)
     if (usingFts5)
         *usingFts5 = fts5;
     return true;
+}
+
+// FTS5 cannot index its UNINDEXED object_id, so deleting by it scans the whole table. We keep
+// object_id -> rowid next to it and delete by rowid; rows written before that map existed are
+// found by the old scan, once.
+static void deleteFtsRow(sqlite3 *db, const QByteArray &id)
+{
+    sqlite3_stmt *st = nullptr;
+    sqlite3_int64 rid = -1;
+    if (sqlite3_prepare_v2(db, "SELECT rid FROM objects_fts_rowid WHERE object_id = ?", -1, &st, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, id.constData(), int(id.size()), SQLITE_TRANSIENT);
+        if (sqlite3_step(st) == SQLITE_ROW)
+            rid = sqlite3_column_int64(st, 0);
+    }
+    sqlite3_finalize(st);
+    st = nullptr;
+    const char *sql = rid >= 0 ? "DELETE FROM objects_fts WHERE rowid = ?" : "DELETE FROM objects_fts WHERE object_id = ?";
+    if (sqlite3_prepare_v2(db, sql, -1, &st, nullptr) == SQLITE_OK) {
+        if (rid >= 0)
+            sqlite3_bind_int64(st, 1, rid);
+        else
+            sqlite3_bind_text(st, 1, id.constData(), int(id.size()), SQLITE_TRANSIENT);
+        sqlite3_step(st);
+    }
+    sqlite3_finalize(st);
+    st = nullptr;
+    if (sqlite3_prepare_v2(db, "DELETE FROM objects_fts_rowid WHERE object_id = ?", -1, &st, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, id.constData(), int(id.size()), SQLITE_TRANSIENT);
+        sqlite3_step(st);
+    }
+    sqlite3_finalize(st);
+}
+
+static void rememberFtsRow(sqlite3 *db, const QByteArray &id, sqlite3_int64 rid)
+{
+    sqlite3_stmt *st = nullptr;
+    if (sqlite3_prepare_v2(db, "INSERT OR REPLACE INTO objects_fts_rowid (object_id, rid) VALUES (?, ?)", -1, &st, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, id.constData(), int(id.size()), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(st, 2, rid);
+        sqlite3_step(st);
+    }
+    sqlite3_finalize(st);
 }
 
 bool indexObject(sqlite3 *db, const Doc &doc, const QVector<LinkRef> &links, bool usingFts5)
@@ -114,12 +165,7 @@ bool indexObject(sqlite3 *db, const Doc &doc, const QVector<LinkRef> &links, boo
     const QByteArray props = doc.props.toUtf8();
 
     if (usingFts5) {
-        if (sqlite3_prepare_v2(db, "DELETE FROM objects_fts WHERE object_id = ?", -1, &del.s,
-                               nullptr)
-                != SQLITE_OK)
-            return false;
-        sqlite3_bind_text(del.s, 1, id.constData(), int(id.size()), SQLITE_TRANSIENT);
-        sqlite3_step(del.s);
+        deleteFtsRow(db, id);
         if (sqlite3_prepare_v2(db,
                                 "INSERT INTO objects_fts (object_id, title, body, props) "
                                 "VALUES (?, ?, ?, ?)",
@@ -131,6 +177,7 @@ bool indexObject(sqlite3 *db, const Doc &doc, const QVector<LinkRef> &links, boo
         sqlite3_bind_text(ins.s, 3, body.constData(), int(body.size()), SQLITE_TRANSIENT);
         sqlite3_bind_text(ins.s, 4, props.constData(), int(props.size()), SQLITE_TRANSIENT);
         sqlite3_step(ins.s);
+        rememberFtsRow(db, id, sqlite3_last_insert_rowid(db));
     } else {
         if (sqlite3_prepare_v2(db, "DELETE FROM search_tokens WHERE object_id = ?", -1, &del.s,
                                nullptr)
@@ -198,7 +245,7 @@ bool unindexObject(sqlite3 *db, const QString &objectId, bool usingFts5)
         sqlite3_finalize(st);
     };
     if (usingFts5)
-        run(db, "DELETE FROM objects_fts WHERE object_id = ?", 1);
+        deleteFtsRow(db, id);
     else
         run(db, "DELETE FROM search_tokens WHERE object_id = ?", 1);
     // only the outgoing references die with the object; rows pointing AT it

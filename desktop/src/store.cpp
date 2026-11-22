@@ -557,6 +557,16 @@ QList<PendingOp> Store::pendingOps() const
     return out;
 }
 
+int Store::pendingOpCount() const
+{
+    if (!ensureOpened())
+        return 0;
+    Stmt q;
+    if (!q.prepare(m_db, "SELECT COUNT(*) FROM pending_ops") || !q.step())
+        return 0;
+    return int(q.number(0));
+}
+
 void Store::queueOp(const QString &opId, const QString &objectId, const QJsonObject &payload)
 {
     if (!ensureOpened())
