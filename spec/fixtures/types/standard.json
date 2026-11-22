@@ -1,0 +1,2155 @@
+{
+ "version": 1,
+ "palette": [
+  "blue",
+  "purple",
+  "red",
+  "green",
+  "yellow",
+  "orange",
+  "teal",
+  "pink",
+  "ice",
+  "gray"
+ ],
+ "types": [
+  {
+   "id": "note",
+   "labels": {
+    "en": "Note",
+    "es": "Nota"
+   },
+   "properties": [
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "journal",
+   "labels": {
+    "en": "Daily note",
+    "es": "Nota diaria"
+   },
+   "properties": [
+    {
+     "key": "date",
+     "labels": {
+      "en": "Date",
+      "es": "Fecha"
+     },
+     "kind": "date",
+     "system": true
+    },
+    {
+     "key": "reviewed",
+     "labels": {
+      "en": "Reviewed",
+      "es": "Revisado"
+     },
+     "kind": "checkbox"
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "task",
+   "labels": {
+    "en": "Task",
+    "es": "Tarea"
+   },
+   "properties": [
+    {
+     "key": "status",
+     "labels": {
+      "en": "Status",
+      "es": "Estado"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "todo",
+       "labels": {
+        "en": "To do",
+        "es": "Sin empezar"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "in_progress",
+       "labels": {
+        "en": "In progress",
+        "es": "En curso"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "done",
+       "labels": {
+        "en": "Done",
+        "es": "Hecha"
+       },
+       "color": "red"
+      }
+     ]
+    },
+    {
+     "key": "due_date",
+     "labels": {
+      "en": "Due date",
+      "es": "Vence"
+     },
+     "kind": "date"
+    },
+    {
+     "key": "priority",
+     "labels": {
+      "en": "Priority",
+      "es": "Prioridad"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "low",
+       "labels": {
+        "en": "Low",
+        "es": "Baja"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "medium",
+       "labels": {
+        "en": "Medium",
+        "es": "Media"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "high",
+       "labels": {
+        "en": "High",
+        "es": "Alta"
+       },
+       "color": "red"
+      }
+     ]
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "project",
+   "labels": {
+    "en": "Project",
+    "es": "Proyecto"
+   },
+   "properties": [
+    {
+     "key": "status",
+     "labels": {
+      "en": "Status",
+      "es": "Estado"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "active",
+       "labels": {
+        "en": "Active",
+        "es": "Activo"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "on_hold",
+       "labels": {
+        "en": "On hold",
+        "es": "En pausa"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "completed",
+       "labels": {
+        "en": "Completed",
+        "es": "Completado"
+       },
+       "color": "red"
+      }
+     ]
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "person",
+   "labels": {
+    "en": "Person",
+    "es": "Persona"
+   },
+   "properties": [
+    {
+     "key": "category",
+     "labels": {
+      "en": "Category",
+      "es": "Categoría"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "friend",
+       "labels": {
+        "en": "Friend",
+        "es": "Amigo"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "family",
+       "labels": {
+        "en": "Family",
+        "es": "Familia"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "colleague",
+       "labels": {
+        "en": "Colleague",
+        "es": "Colega"
+       },
+       "color": "red"
+      },
+      {
+       "id": "author",
+       "labels": {
+        "en": "Author",
+        "es": "Autor"
+       },
+       "color": "green"
+      },
+      {
+       "id": "philosopher",
+       "labels": {
+        "en": "Philosopher",
+        "es": "Filósofo"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "politician",
+       "labels": {
+        "en": "Politician",
+        "es": "Político"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "scientist",
+       "labels": {
+        "en": "Scientist",
+        "es": "Científico"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "artist",
+       "labels": {
+        "en": "Artist",
+        "es": "Artista"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "entrepreneur",
+       "labels": {
+        "en": "Entrepreneur",
+        "es": "Emprendedor"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "academic",
+       "labels": {
+        "en": "Academic",
+        "es": "Académico"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "journalist",
+       "labels": {
+        "en": "Journalist",
+        "es": "Periodista"
+       },
+       "color": "blue"
+      }
+     ]
+    },
+    {
+     "key": "email",
+     "labels": {
+      "en": "Email",
+      "es": "Correo"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "organization",
+     "labels": {
+      "en": "Organization",
+      "es": "Organización"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "book",
+   "labels": {
+    "en": "Book",
+    "es": "Libro"
+   },
+   "properties": [
+    {
+     "key": "author",
+     "labels": {
+      "en": "Author",
+      "es": "Autor"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "status",
+     "labels": {
+      "en": "Status",
+      "es": "Estado"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "to_read",
+       "labels": {
+        "en": "To read",
+        "es": "Pendiente"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "reading",
+       "labels": {
+        "en": "Reading",
+        "es": "Leyendo"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "finished",
+       "labels": {
+        "en": "Finished",
+        "es": "Leído"
+       },
+       "color": "red"
+      },
+      {
+       "id": "abandoned",
+       "labels": {
+        "en": "Abandoned",
+        "es": "Abandonado"
+       },
+       "color": "green"
+      }
+     ]
+    },
+    {
+     "key": "genre",
+     "labels": {
+      "en": "Genre",
+      "es": "Género"
+     },
+     "kind": "multi_select",
+     "options": [
+      {
+       "id": "novel",
+       "labels": {
+        "en": "Novel",
+        "es": "Novela"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "science_fiction",
+       "labels": {
+        "en": "Science fiction",
+        "es": "Ciencia ficción"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "fantasy",
+       "labels": {
+        "en": "Fantasy",
+        "es": "Fantasía"
+       },
+       "color": "red"
+      },
+      {
+       "id": "mystery",
+       "labels": {
+        "en": "Mystery",
+        "es": "Misterio"
+       },
+       "color": "green"
+      },
+      {
+       "id": "thriller",
+       "labels": {
+        "en": "Thriller",
+        "es": "Thriller"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "horror",
+       "labels": {
+        "en": "Horror",
+        "es": "Terror"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "romance",
+       "labels": {
+        "en": "Romance",
+        "es": "Romance"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "historical",
+       "labels": {
+        "en": "Historical",
+        "es": "Histórica"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "adventure",
+       "labels": {
+        "en": "Adventure",
+        "es": "Aventura"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "classics",
+       "labels": {
+        "en": "Classics",
+        "es": "Clásicos"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "poetry",
+       "labels": {
+        "en": "Poetry",
+        "es": "Poesía"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "drama",
+       "labels": {
+        "en": "Drama",
+        "es": "Teatro"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "comics",
+       "labels": {
+        "en": "Comics",
+        "es": "Cómic"
+       },
+       "color": "red"
+      },
+      {
+       "id": "manga",
+       "labels": {
+        "en": "Manga",
+        "es": "Manga"
+       },
+       "color": "green"
+      },
+      {
+       "id": "self_help",
+       "labels": {
+        "en": "Self-help",
+        "es": "Autoayuda"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "personal_growth",
+       "labels": {
+        "en": "Personal growth",
+        "es": "Desarrollo personal"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "productivity",
+       "labels": {
+        "en": "Productivity",
+        "es": "Productividad"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "psychology",
+       "labels": {
+        "en": "Psychology",
+        "es": "Psicología"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "philosophy",
+       "labels": {
+        "en": "Philosophy",
+        "es": "Filosofía"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "essay",
+       "labels": {
+        "en": "Essay",
+        "es": "Ensayo"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "popular_science",
+       "labels": {
+        "en": "Popular science",
+        "es": "Divulgación"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "science",
+       "labels": {
+        "en": "Science",
+        "es": "Ciencia"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "history",
+       "labels": {
+        "en": "History",
+        "es": "Historia"
+       },
+       "color": "red"
+      },
+      {
+       "id": "biography",
+       "labels": {
+        "en": "Biography",
+        "es": "Biografía"
+       },
+       "color": "green"
+      },
+      {
+       "id": "memoir",
+       "labels": {
+        "en": "Memoir",
+        "es": "Memorias"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "business",
+       "labels": {
+        "en": "Business",
+        "es": "Negocios"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "economics",
+       "labels": {
+        "en": "Economics",
+        "es": "Economía"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "technology",
+       "labels": {
+        "en": "Technology",
+        "es": "Tecnología"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "programming",
+       "labels": {
+        "en": "Programming",
+        "es": "Programación"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "design",
+       "labels": {
+        "en": "Design",
+        "es": "Diseño"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "art",
+       "labels": {
+        "en": "Art",
+        "es": "Arte"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "travel",
+       "labels": {
+        "en": "Travel",
+        "es": "Viajes"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "cooking",
+       "labels": {
+        "en": "Cooking",
+        "es": "Cocina"
+       },
+       "color": "red"
+      },
+      {
+       "id": "health",
+       "labels": {
+        "en": "Health",
+        "es": "Salud"
+       },
+       "color": "green"
+      },
+      {
+       "id": "children",
+       "labels": {
+        "en": "Children",
+        "es": "Infantil"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "young_adult",
+       "labels": {
+        "en": "Young adult",
+        "es": "Juvenil"
+       },
+       "color": "orange"
+      }
+     ]
+    },
+    {
+     "key": "medium",
+     "labels": {
+      "en": "Format",
+      "es": "Formato"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "paperback",
+       "labels": {
+        "en": "Paperback",
+        "es": "Tapa blanda"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "hardcover",
+       "labels": {
+        "en": "Hardcover",
+        "es": "Tapa dura"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "ebook",
+       "labels": {
+        "en": "E-Book",
+        "es": "E-Book"
+       },
+       "color": "red"
+      },
+      {
+       "id": "audiobook",
+       "labels": {
+        "en": "Audiobook",
+        "es": "Audiolibro"
+       },
+       "color": "green"
+      }
+     ]
+    },
+    {
+     "key": "rating",
+     "labels": {
+      "en": "Rating",
+      "es": "Calificación"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "recommended_by",
+     "labels": {
+      "en": "Recommended by",
+      "es": "Recomendado por"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "web",
+   "labels": {
+    "en": "Web link",
+    "es": "Enlace web"
+   },
+   "properties": [
+    {
+     "key": "url",
+     "labels": {
+      "en": "URL",
+      "es": "URL"
+     },
+     "kind": "url",
+     "system": true
+    },
+    {
+     "key": "site_name",
+     "labels": {
+      "en": "Site",
+      "es": "Sitio"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "category",
+     "labels": {
+      "en": "Category",
+      "es": "Categoría"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "article",
+       "labels": {
+        "en": "Article",
+        "es": "Artículo"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "blog_post",
+       "labels": {
+        "en": "Blog post",
+        "es": "Entrada de blog"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "news",
+       "labels": {
+        "en": "News",
+        "es": "Noticias"
+       },
+       "color": "red"
+      },
+      {
+       "id": "documentation",
+       "labels": {
+        "en": "Documentation",
+        "es": "Documentación"
+       },
+       "color": "green"
+      },
+      {
+       "id": "tutorial",
+       "labels": {
+        "en": "Tutorial",
+        "es": "Tutorial"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "guide",
+       "labels": {
+        "en": "Guide",
+        "es": "Guía"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "video",
+       "labels": {
+        "en": "Video",
+        "es": "Vídeo"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "podcast",
+       "labels": {
+        "en": "Podcast",
+        "es": "Podcast"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "audio",
+       "labels": {
+        "en": "Audio",
+        "es": "Audio"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "tool",
+       "labels": {
+        "en": "Tool",
+        "es": "Herramienta"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "app",
+       "labels": {
+        "en": "App",
+        "es": "App"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "service",
+       "labels": {
+        "en": "Service",
+        "es": "Servicio"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "social_post",
+       "labels": {
+        "en": "Social post",
+        "es": "Publicación social"
+       },
+       "color": "red"
+      },
+      {
+       "id": "forum_thread",
+       "labels": {
+        "en": "Forum thread",
+        "es": "Hilo de foro"
+       },
+       "color": "green"
+      },
+      {
+       "id": "q_a",
+       "labels": {
+        "en": "Q&A",
+        "es": "Preguntas y respuestas"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "product",
+       "labels": {
+        "en": "Product",
+        "es": "Producto"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "shop",
+       "labels": {
+        "en": "Shop",
+        "es": "Tienda"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "marketplace",
+       "labels": {
+        "en": "Marketplace",
+        "es": "Marketplace"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "recipe",
+       "labels": {
+        "en": "Recipe",
+        "es": "Receta"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "event",
+       "labels": {
+        "en": "Event",
+        "es": "Evento"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "course",
+       "labels": {
+        "en": "Course",
+        "es": "Curso"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "webinar",
+       "labels": {
+        "en": "Webinar",
+        "es": "Webinar"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "portfolio",
+       "labels": {
+        "en": "Portfolio",
+        "es": "Portafolio"
+       },
+       "color": "red"
+      },
+      {
+       "id": "profile",
+       "labels": {
+        "en": "Profile",
+        "es": "Perfil"
+       },
+       "color": "green"
+      },
+      {
+       "id": "about_page",
+       "labels": {
+        "en": "About page",
+        "es": "Acerca de"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "repository",
+       "labels": {
+        "en": "Repository",
+        "es": "Repositorio"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "code",
+       "labels": {
+        "en": "Code",
+        "es": "Código"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "image_gallery",
+       "labels": {
+        "en": "Image gallery",
+        "es": "Galería de imágenes"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "infographic",
+       "labels": {
+        "en": "Infographic",
+        "es": "Infografía"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "other",
+       "labels": {
+        "en": "Other",
+        "es": "Otro"
+       },
+       "color": "gray"
+      }
+     ]
+    },
+    {
+     "key": "topics",
+     "labels": {
+      "en": "Topic",
+      "es": "Tema"
+     },
+     "kind": "multi_select",
+     "options": [
+      {
+       "id": "technology",
+       "labels": {
+        "en": "Technology",
+        "es": "Tecnología"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "programming",
+       "labels": {
+        "en": "Programming",
+        "es": "Programación"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "ai_ml",
+       "labels": {
+        "en": "AI/ML",
+        "es": "IA/ML"
+       },
+       "color": "red"
+      },
+      {
+       "id": "business",
+       "labels": {
+        "en": "Business",
+        "es": "Negocios"
+       },
+       "color": "green"
+      },
+      {
+       "id": "finance",
+       "labels": {
+        "en": "Finance",
+        "es": "Finanzas"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "marketing",
+       "labels": {
+        "en": "Marketing",
+        "es": "Marketing"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "science",
+       "labels": {
+        "en": "Science",
+        "es": "Ciencia"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "research",
+       "labels": {
+        "en": "Research",
+        "es": "Investigación"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "academic",
+       "labels": {
+        "en": "Academic",
+        "es": "Académico"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "health",
+       "labels": {
+        "en": "Health",
+        "es": "Salud"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "fitness",
+       "labels": {
+        "en": "Fitness",
+        "es": "Fitness"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "wellbeing",
+       "labels": {
+        "en": "Wellbeing",
+        "es": "Bienestar"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "entertainment",
+       "labels": {
+        "en": "Entertainment",
+        "es": "Entretenimiento"
+       },
+       "color": "red"
+      },
+      {
+       "id": "gaming",
+       "labels": {
+        "en": "Gaming",
+        "es": "Videojuegos"
+       },
+       "color": "green"
+      },
+      {
+       "id": "media",
+       "labels": {
+        "en": "Media",
+        "es": "Medios"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "education",
+       "labels": {
+        "en": "Education",
+        "es": "Educación"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "learning",
+       "labels": {
+        "en": "Learning",
+        "es": "Aprendizaje"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "news",
+       "labels": {
+        "en": "News",
+        "es": "Noticias"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "politics",
+       "labels": {
+        "en": "Politics",
+        "es": "Política"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "current_affairs",
+       "labels": {
+        "en": "Current affairs",
+        "es": "Actualidad"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "lifestyle",
+       "labels": {
+        "en": "Lifestyle",
+        "es": "Estilo de vida"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "travel",
+       "labels": {
+        "en": "Travel",
+        "es": "Viajes"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "food",
+       "labels": {
+        "en": "Food",
+        "es": "Comida"
+       },
+       "color": "red"
+      },
+      {
+       "id": "design",
+       "labels": {
+        "en": "Design",
+        "es": "Diseño"
+       },
+       "color": "green"
+      },
+      {
+       "id": "art",
+       "labels": {
+        "en": "Art",
+        "es": "Arte"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "creative",
+       "labels": {
+        "en": "Creative",
+        "es": "Creativo"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "productivity",
+       "labels": {
+        "en": "Productivity",
+        "es": "Productividad"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "tools",
+       "labels": {
+        "en": "Tools",
+        "es": "Herramientas"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "other",
+       "labels": {
+        "en": "Other",
+        "es": "Otro"
+       },
+       "color": "ice"
+      }
+     ]
+    },
+    {
+     "key": "reviewed",
+     "labels": {
+      "en": "Reviewed",
+      "es": "Revisado"
+     },
+     "kind": "checkbox"
+    },
+    {
+     "key": "is_bookmark",
+     "labels": {
+      "en": "Bookmark",
+      "es": "Marcador"
+     },
+     "kind": "checkbox"
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "image",
+   "labels": {
+    "en": "Image",
+    "es": "Imagen"
+   },
+   "properties": [
+    {
+     "key": "asset_id",
+     "labels": {
+      "en": "Asset",
+      "es": "Archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "file_name",
+     "labels": {
+      "en": "File name",
+      "es": "Nombre del archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "mime",
+     "labels": {
+      "en": "MIME type",
+      "es": "Tipo MIME"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "size",
+     "labels": {
+      "en": "Size",
+      "es": "Tamaño"
+     },
+     "kind": "number",
+     "system": true
+    },
+    {
+     "key": "category",
+     "labels": {
+      "en": "Category",
+      "es": "Categoría"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "document",
+       "labels": {
+        "en": "Document",
+        "es": "Documento"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "handwritten_note",
+       "labels": {
+        "en": "Handwritten note",
+        "es": "Nota manuscrita"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "receipt",
+       "labels": {
+        "en": "Receipt",
+        "es": "Recibo"
+       },
+       "color": "red"
+      },
+      {
+       "id": "book_page",
+       "labels": {
+        "en": "Book page",
+        "es": "Página de libro"
+       },
+       "color": "green"
+      },
+      {
+       "id": "cover",
+       "labels": {
+        "en": "Cover",
+        "es": "Portada"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "business_card",
+       "labels": {
+        "en": "Business card",
+        "es": "Tarjeta de presentación"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "screenshot",
+       "labels": {
+        "en": "Screenshot",
+        "es": "Captura de pantalla"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "ui_mockup",
+       "labels": {
+        "en": "UI mockup",
+        "es": "Mockup de UI"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "code",
+       "labels": {
+        "en": "Code",
+        "es": "Código"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "diagram",
+       "labels": {
+        "en": "Diagram",
+        "es": "Diagrama"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "infographic",
+       "labels": {
+        "en": "Infographic",
+        "es": "Infografía"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "map",
+       "labels": {
+        "en": "Map",
+        "es": "Mapa"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "whiteboard",
+       "labels": {
+        "en": "Whiteboard",
+        "es": "Pizarra"
+       },
+       "color": "red"
+      },
+      {
+       "id": "photo_people",
+       "labels": {
+        "en": "Photo (people)",
+        "es": "Foto (personas)"
+       },
+       "color": "green"
+      },
+      {
+       "id": "photo_animal",
+       "labels": {
+        "en": "Photo (animal)",
+        "es": "Foto (animal)"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "photo_nature",
+       "labels": {
+        "en": "Photo (nature)",
+        "es": "Foto (naturaleza)"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "photo_object",
+       "labels": {
+        "en": "Photo (object)",
+        "es": "Foto (objeto)"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "photo_food",
+       "labels": {
+        "en": "Photo (food)",
+        "es": "Foto (comida)"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "photo_architecture",
+       "labels": {
+        "en": "Photo (architecture)",
+        "es": "Foto (arquitectura)"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "photo_event",
+       "labels": {
+        "en": "Photo (event)",
+        "es": "Foto (evento)"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "illustration",
+       "labels": {
+        "en": "Illustration",
+        "es": "Ilustración"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "painting",
+       "labels": {
+        "en": "Painting",
+        "es": "Pintura"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "meme",
+       "labels": {
+        "en": "Meme",
+        "es": "Meme"
+       },
+       "color": "red"
+      },
+      {
+       "id": "logo_icon",
+       "labels": {
+        "en": "Logo/Icon",
+        "es": "Logo/icono"
+       },
+       "color": "green"
+      },
+      {
+       "id": "medical",
+       "labels": {
+        "en": "Medical",
+        "es": "Médico"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "scientific",
+       "labels": {
+        "en": "Scientific",
+        "es": "Científico"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "other",
+       "labels": {
+        "en": "Other",
+        "es": "Otro"
+       },
+       "color": "teal"
+      }
+     ]
+    },
+    {
+     "key": "colors",
+     "labels": {
+      "en": "Colors",
+      "es": "Colores"
+     },
+     "kind": "multi_select",
+     "options": [
+      {
+       "id": "black",
+       "labels": {
+        "en": "Black",
+        "es": "Negro"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "blue",
+       "labels": {
+        "en": "Blue",
+        "es": "Azul"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "cyan",
+       "labels": {
+        "en": "Cyan",
+        "es": "Cian"
+       },
+       "color": "red"
+      },
+      {
+       "id": "green",
+       "labels": {
+        "en": "Green",
+        "es": "Verde"
+       },
+       "color": "green"
+      },
+      {
+       "id": "teal",
+       "labels": {
+        "en": "Teal",
+        "es": "Verde azulado"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "turquoise",
+       "labels": {
+        "en": "Turquoise",
+        "es": "Turquesa"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "indigo",
+       "labels": {
+        "en": "Indigo",
+        "es": "Índigo"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "gray",
+       "labels": {
+        "en": "Gray",
+        "es": "Gris"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "purple",
+       "labels": {
+        "en": "Purple",
+        "es": "Morado"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "brown",
+       "labels": {
+        "en": "Brown",
+        "es": "Marrón"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "light_beige",
+       "labels": {
+        "en": "Light beige",
+        "es": "Beige claro"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "violet",
+       "labels": {
+        "en": "Violet",
+        "es": "Violeta"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "beige",
+       "labels": {
+        "en": "Beige",
+        "es": "Beige"
+       },
+       "color": "red"
+      },
+      {
+       "id": "fuchsia",
+       "labels": {
+        "en": "Fuchsia",
+        "es": "Fucsia"
+       },
+       "color": "green"
+      },
+      {
+       "id": "gold",
+       "labels": {
+        "en": "Gold",
+        "es": "Dorado"
+       },
+       "color": "yellow"
+      },
+      {
+       "id": "magenta",
+       "labels": {
+        "en": "Magenta",
+        "es": "Magenta"
+       },
+       "color": "orange"
+      },
+      {
+       "id": "orange",
+       "labels": {
+        "en": "Orange",
+        "es": "Naranja"
+       },
+       "color": "teal"
+      },
+      {
+       "id": "pink",
+       "labels": {
+        "en": "Pink",
+        "es": "Rosa"
+       },
+       "color": "pink"
+      },
+      {
+       "id": "red",
+       "labels": {
+        "en": "Red",
+        "es": "Rojo"
+       },
+       "color": "ice"
+      },
+      {
+       "id": "white",
+       "labels": {
+        "en": "White",
+        "es": "Blanco"
+       },
+       "color": "gray"
+      },
+      {
+       "id": "yellow",
+       "labels": {
+        "en": "Yellow",
+        "es": "Amarillo"
+       },
+       "color": "blue"
+      }
+     ]
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "pdf",
+   "labels": {
+    "en": "PDF",
+    "es": "PDF"
+   },
+   "properties": [
+    {
+     "key": "asset_id",
+     "labels": {
+      "en": "Asset",
+      "es": "Archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "file_name",
+     "labels": {
+      "en": "File name",
+      "es": "Nombre del archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "mime",
+     "labels": {
+      "en": "MIME type",
+      "es": "Tipo MIME"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "size",
+     "labels": {
+      "en": "Size",
+      "es": "Tamaño"
+     },
+     "kind": "number",
+     "system": true
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "audio",
+   "labels": {
+    "en": "Audio",
+    "es": "Audio"
+   },
+   "properties": [
+    {
+     "key": "asset_id",
+     "labels": {
+      "en": "Asset",
+      "es": "Archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "file_name",
+     "labels": {
+      "en": "File name",
+      "es": "Nombre del archivo"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "mime",
+     "labels": {
+      "en": "MIME type",
+      "es": "Tipo MIME"
+     },
+     "kind": "text",
+     "system": true
+    },
+    {
+     "key": "size",
+     "labels": {
+      "en": "Size",
+      "es": "Tamaño"
+     },
+     "kind": "number",
+     "system": true
+    },
+    {
+     "key": "duration",
+     "labels": {
+      "en": "Duration",
+      "es": "Duración"
+     },
+     "kind": "number",
+     "system": true
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "collection",
+   "labels": {
+    "en": "Collection",
+    "es": "Colección"
+   },
+   "properties": [
+    {
+     "key": "item_type_id",
+     "labels": {
+      "en": "Item type",
+      "es": "Tipo de los elementos"
+     },
+     "kind": "select",
+     "options": []
+    },
+    {
+     "key": "items",
+     "labels": {
+      "en": "Items",
+      "es": "Elementos"
+     },
+     "kind": "object"
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "tag",
+   "labels": {
+    "en": "Tag",
+    "es": "Etiqueta"
+   },
+   "properties": [
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "whiteboard",
+   "labels": {
+    "en": "Whiteboard",
+    "es": "Pizarra"
+   },
+   "properties": [
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  },
+  {
+   "id": "set",
+   "labels": {
+    "en": "Set",
+    "es": "Set"
+   },
+   "properties": []
+  },
+  {
+   "id": "habit",
+   "labels": {
+    "en": "Habit",
+    "es": "Hábito"
+   },
+   "properties": [
+    {
+     "key": "habit_kind",
+     "labels": {
+      "en": "Kind",
+      "es": "Tipo"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "check",
+       "labels": {
+        "en": "Yes/No",
+        "es": "Sí/No"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "count",
+       "labels": {
+        "en": "Count",
+        "es": "Cantidad"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "time",
+       "labels": {
+        "en": "Minutes",
+        "es": "Minutos"
+       },
+       "color": "red"
+      }
+     ]
+    },
+    {
+     "key": "habit_goal",
+     "labels": {
+      "en": "Goal",
+      "es": "Meta"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "habit_unit",
+     "labels": {
+      "en": "Unit",
+      "es": "Unidad"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "habit_freq",
+     "labels": {
+      "en": "Frequency",
+      "es": "Frecuencia"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "daily",
+       "labels": {
+        "en": "Daily",
+        "es": "Cada día"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "weekdays",
+       "labels": {
+        "en": "Specific days",
+        "es": "Días concretos"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "per_week",
+       "labels": {
+        "en": "Per week",
+        "es": "Por semana"
+       },
+       "color": "red"
+      },
+      {
+       "id": "per_month",
+       "labels": {
+        "en": "Per month",
+        "es": "Por mes"
+       },
+       "color": "green"
+      }
+     ]
+    },
+    {
+     "key": "habit_slot",
+     "labels": {
+      "en": "Time of day",
+      "es": "Momento del día"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "morning",
+       "labels": {
+        "en": "Morning",
+        "es": "Mañana"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "afternoon",
+       "labels": {
+        "en": "Afternoon",
+        "es": "Tarde"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "evening",
+       "labels": {
+        "en": "Evening",
+        "es": "Noche"
+       },
+       "color": "red"
+      },
+      {
+       "id": "any",
+       "labels": {
+        "en": "Any",
+        "es": "Cualquiera"
+       },
+       "color": "green"
+      }
+     ]
+    },
+    {
+     "key": "habit_state",
+     "labels": {
+      "en": "State",
+      "es": "Estado"
+     },
+     "kind": "select",
+     "options": [
+      {
+       "id": "active",
+       "labels": {
+        "en": "Active",
+        "es": "Activo"
+       },
+       "color": "blue"
+      },
+      {
+       "id": "paused",
+       "labels": {
+        "en": "Paused",
+        "es": "En pausa"
+       },
+       "color": "purple"
+      },
+      {
+       "id": "archived",
+       "labels": {
+        "en": "Archived",
+        "es": "Archivado"
+       },
+       "color": "red"
+      }
+     ]
+    },
+    {
+     "key": "tags",
+     "labels": {
+      "en": "Tags",
+      "es": "Etiquetas"
+     },
+     "kind": "multi_select",
+     "system": true
+    }
+   ]
+  }
+ ]
+}

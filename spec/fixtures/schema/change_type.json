@@ -1,0 +1,46 @@
+{
+ "cases": [
+  {
+   "name": "book to project keeps every value, author and genre become loose",
+   "object": { "type_id": "book", "properties": {
+     "author": "Sönke Ahrens", "genre": ["essay"], "status": "reading", "tags": ["pkm"], "pinned": true,
+     "blocks": [ { "id": "b1", "type": "paragraph", "text": "hi", "runs": [ { "text": "hi" } ] } ] } },
+   "to": "project", "to_keys": ["status", "tags"],
+   "expect": { "type_id": "project", "loose": ["author", "genre"],
+     "properties": {
+       "author": "Sönke Ahrens", "genre": ["essay"], "status": "reading", "tags": ["pkm"], "pinned": true,
+       "blocks": [ { "id": "b1", "type": "paragraph", "text": "hi", "runs": [ { "text": "hi" } ] } ] } }
+  },
+  {
+   "name": "back to the old type: nothing is loose any more",
+   "object": { "type_id": "project", "properties": { "author": "A", "genre": ["essay"], "status": "reading" } },
+   "to": "book", "to_keys": ["author", "status", "genre", "medium", "rating", "recommended_by", "tags"],
+   "expect": { "type_id": "book", "loose": [] }
+  },
+  {
+   "name": "loose keys are sorted by code point and special keys never count",
+   "object": { "type_id": "note", "properties": { "zeta": 1, "Alpha": 2, "beta": 3, "icon": { "emoji": "x" },
+     "cover": { "asset_id": "a" }, "aliases": ["n"], "summary": "s", "is_template": true } },
+   "to": "task", "to_keys": ["status", "due_date", "priority", "tags"],
+   "expect": { "type_id": "task", "loose": ["Alpha", "beta", "zeta"] }
+  },
+  {
+   "name": "same type is a no-op",
+   "object": { "type_id": "note", "properties": { "x": 1 } },
+   "to": "note", "to_keys": ["tags"],
+   "expect": { "type_id": "note", "loose": [] }
+  },
+  {
+   "name": "media objects never change type",
+   "object": { "type_id": "image", "properties": { "asset_id": "a1" } },
+   "to": "note", "to_keys": ["tags"],
+   "expect": { "error": "fixed_type" }
+  },
+  {
+   "name": "nothing becomes a journal",
+   "object": { "type_id": "note", "properties": {} },
+   "to": "journal", "to_keys": ["date", "reviewed", "tags"],
+   "expect": { "error": "fixed_type" }
+  }
+ ]
+}
