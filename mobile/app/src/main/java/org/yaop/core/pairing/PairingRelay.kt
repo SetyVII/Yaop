@@ -18,9 +18,9 @@ class PairingRelay(baseUrl: String) {
     fun create(pairingId: String, ephPubB64: String): Boolean =
         post("/v1/pairing", JSONObject().put("pairing_id", pairingId).put("eph_pub", ephPubB64).toString().toByteArray()).first == 201
 
-    /** Joining device answers with its own ephemeral key. */
-    fun join(pairingId: String, bPubB64: String): Boolean =
-        post("/v1/pairing/$pairingId/join", JSONObject().put("b_pub", bPubB64).toString().toByteArray()).first == 202
+    /** Joining device answers with its own ephemeral key: 202 ok, 409 another device already used the code. */
+    fun join(pairingId: String, bPubB64: String): Int =
+        post("/v1/pairing/$pairingId/join", JSONObject().put("b_pub", bPubB64).toString().toByteArray()).first
 
     /** QR holder polls for the joining device's key; null until it answers. */
     fun answer(pairingId: String): String? {
@@ -78,6 +78,7 @@ class PairingRelay(baseUrl: String) {
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             code to (stream?.use { it.readBytes() } ?: ByteArray(0))
         } catch (e: Exception) {
+            android.util.Log.w("PairingRelay", "$method $path failed: $e")
             -1 to ByteArray(0)
         } finally {
             conn.disconnect()

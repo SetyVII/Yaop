@@ -46,10 +46,16 @@ object PairingSession {
         private val pairingId = qr.pairingId.joinToString("") { "%02x".format(it) }
         private var shared: ByteArray? = null
 
+        /** True after [join] failed because another device already used this code. */
+        var codeAlreadyUsed = false
+            private set
+
         /** Answers the QR; returns the 6-digit code to display, or null on failure. */
         fun join(): String? {
             val s = Pairing.sharedSecret(priv, qr.ephPub) ?: return null
-            if (!relay.join(pairingId, Pairing.encodePub(Pairing.publicKeyOf(priv)))) return null
+            val status = relay.join(pairingId, Pairing.encodePub(Pairing.publicKeyOf(priv)))
+            codeAlreadyUsed = status == 409
+            if (status != 202) return null
             shared = s
             return Pairing.shortCode(s)
         }

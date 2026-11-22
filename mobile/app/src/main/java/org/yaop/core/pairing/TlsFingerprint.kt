@@ -25,6 +25,7 @@ object TlsFingerprint {
             conn.disconnect()
             MessageDigest.getInstance("SHA-256").digest(spki).joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
+            android.util.Log.w("TlsFingerprint", "Could not read the certificate of $serverUrl: $e")
             null
         }
     }

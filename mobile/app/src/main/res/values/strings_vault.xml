@@ -29,6 +29,7 @@
     <string name="onb_join_go">Join</string>
     <string name="onb_join_bad_code">That code is not valid.</string>
     <string name="onb_join_unreachable">Could not reach the server.</string>
+    <string name="onb_join_used">Another device already used this code. Create a new one on the other device.</string>
     <string name="onb_join_compare">Check that the other device shows this code, then approve there:</string>
     <string name="onb_join_waiting">Waiting for approval…</string>
     <string name="onb_server_title">Connect a server</string>

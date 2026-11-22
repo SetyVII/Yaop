@@ -196,10 +196,18 @@ private fun JoinStep(onVk: (ByteArray, Long, String, String?) -> Unit, onBack: (
         if (qr == null) { errorRes = R.string.onb_join_bad_code; return }
         scope.launch {
             val g = PairingSession.Guest(PairingRelay(qr.serverUrl), qr)
-            val c = withContext(Dispatchers.IO) {
-                if (!TlsFingerprint.matches(qr.serverUrl, qr.tlsFp)) null else g.join()
+            // Tell a certificate that does not match apart from a server that cannot be reached.
+            val fp = withContext(Dispatchers.IO) { TlsFingerprint.of(qr.serverUrl) }
+            if (fp == null) { errorRes = R.string.onb_join_unreachable; return@launch }
+            if (qr.serverUrl.startsWith("https://") && fp != qr.tlsFp) {
+                android.util.Log.w("Pairing", "tls_fp mismatch: server $fp, code ${qr.tlsFp}")
+                errorRes = R.string.onb_server_bad_cert; return@launch
             }
-            if (c == null) { errorRes = R.string.onb_join_unreachable; return@launch }
+            val c = withContext(Dispatchers.IO) { g.join() }
+            if (c == null) {
+                errorRes = if (g.codeAlreadyUsed) R.string.onb_join_used else R.string.onb_join_unreachable
+                return@launch
+            }
             errorRes = null; serverUrl = qr.serverUrl; guest = g; code = c
         }
     }
