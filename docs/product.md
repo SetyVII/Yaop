@@ -177,8 +177,8 @@ typed — EXISTS.
 
 - Async OpenGraph: description in a property, image as cover, link in a property, "reviewed" as
   part of a personal flow.
-- ALWAYS a local copy of the cover (WebP q75, 480 px, 15–30 KB): once copied, the remote is not
-  needed (posts disappear); if extraction fails, the user sets a cover.
+- ALWAYS a local copy of the cover (original resolution, WebP q90 for near-lossless compression):
+  once copied, the remote is not needed (posts disappear); if extraction fails, the user sets a cover.
 - Full-article capture and HTML snapshots — REJECTED.
 
 ### 8.2 Media — EXISTS

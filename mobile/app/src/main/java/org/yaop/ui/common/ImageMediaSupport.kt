@@ -17,6 +17,7 @@ import org.yaop.core.model.AssetMeta
 import org.yaop.core.model.Block
 import org.yaop.core.model.CoverSpec
 import org.yaop.core.model.DefaultTypes
+import org.yaop.core.model.InlineSpan
 import org.yaop.core.model.PkmObject
 import org.yaop.core.model.ObjectIcon
 import org.yaop.core.model.PropertyValue
@@ -702,7 +703,7 @@ suspend fun createNewWebLinkObject(
     val props = buildMap<String, PropertyValue> {
         put("url", PropertyValue.Url(cleanUrl))
         if (siteName.isNotBlank()) {
-            put("site_name", PropertyValue.RichText(siteName.toTextSpan()))
+            put("site_name", PropertyValue.RichText(listOf(InlineSpan.Text(siteName))))
         }
         put("reviewed", PropertyValue.Checkbox(isReviewed))
         put("is_bookmark", PropertyValue.Checkbox(isBookmark))
@@ -711,7 +712,7 @@ suspend fun createNewWebLinkObject(
     val newObj = PkmObject(
         id = newId,
         typeId = DefaultTypes.WEBLINK.id,
-        title = pageTitle.toTextSpan(),
+        title = listOf(InlineSpan.Text(pageTitle)),
         icon = ObjectIcon(emoji = "🌐"),
         cover = thumbnailAssetId?.let { CoverSpec(assetId = it) },
         properties = props,

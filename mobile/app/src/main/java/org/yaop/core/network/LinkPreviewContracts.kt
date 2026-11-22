@@ -29,7 +29,7 @@ interface LinkPreviewService {
 interface ThumbnailCompressor {
     fun compressImageBytes(
         rawBytes: ByteArray,
-        maxSidePx: Int = 480,
-        quality: Int = 75,
+        maxSidePx: Int = 0,
+        quality: Int = 90,
     ): ByteArray?
 }

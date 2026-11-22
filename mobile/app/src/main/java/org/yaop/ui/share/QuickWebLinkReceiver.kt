@@ -11,10 +11,10 @@ import org.yaop.core.model.AssetMeta
 import org.yaop.core.model.Block
 import org.yaop.core.model.CoverSpec
 import org.yaop.core.model.DefaultTypes
+import org.yaop.core.model.InlineSpan
 import org.yaop.core.model.PkmObject
 import org.yaop.core.model.ObjectIcon
 import org.yaop.core.model.PropertyValue
-import org.yaop.core.model.toTextSpan
 import org.yaop.core.network.LinkPreviewFetcher
 import org.yaop.core.network.NetworkPreferences
 import org.yaop.core.repository.PkmRepository
@@ -141,12 +141,12 @@ suspend fun executeQuickSave(
                 val imageObj = PkmObject(
                     id = imageObjId,
                     typeId = DefaultTypes.IMAGE.id,
-                    title = coverTitle.toTextSpan(),
+                    title = listOf(InlineSpan.Text(coverTitle)),
                     icon = ObjectIcon(emoji = "🖼️"),
                     properties = mapOf(
-                        "asset_id" to PropertyValue.RichText(assetId.toTextSpan()),
-                        "file_name" to PropertyValue.RichText(coverFileName.toTextSpan()),
-                        "mime" to PropertyValue.RichText("image/webp".toTextSpan()),
+                        "asset_id" to PropertyValue.RichText(listOf(InlineSpan.Text(assetId))),
+                        "file_name" to PropertyValue.RichText(listOf(InlineSpan.Text(coverFileName))),
+                        "mime" to PropertyValue.RichText(listOf(InlineSpan.Text("image/webp"))),
                         "size" to PropertyValue.Number(downloadedThumbBytes.size.toDouble()),
                         "source_url" to PropertyValue.Url(url),
                     ),
@@ -163,12 +163,12 @@ suspend fun executeQuickSave(
         val props = buildMap<String, PropertyValue> {
             put("url", PropertyValue.Url(url))
             if (siteName.isNotBlank()) {
-                put("site_name", PropertyValue.RichText(siteName.toTextSpan()))
+                put("site_name", PropertyValue.RichText(listOf(InlineSpan.Text(siteName))))
             }
             put("reviewed", PropertyValue.Checkbox(false))
             put("is_bookmark", PropertyValue.Checkbox(false))
             if (createdImageObjectId != null) {
-                put("cover_image", PropertyValue.RichText(createdImageObjectId.toTextSpan()))
+                put("cover_image", PropertyValue.RichText(listOf(InlineSpan.Text(createdImageObjectId))))
             }
         }
 
@@ -199,7 +199,7 @@ suspend fun executeQuickSave(
         val newObj = PkmObject(
             id = newId,
             typeId = DefaultTypes.WEBLINK.id,
-            title = finalTitle.toTextSpan(),
+            title = listOf(InlineSpan.Text(finalTitle)),
             icon = ObjectIcon(emoji = "🌐"),
             cover = thumbnailAssetId?.let { CoverSpec(assetId = it) },
             properties = props,

@@ -609,74 +609,86 @@ object LinkPreviewFetcher : LinkPreviewService, ThumbnailCompressor {
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * Downloads the remote image at [imageUrl], downsamples and compresses it
-     * into a low-resolution WebP/JPEG thumbnail prioritizing storage savings.
-     * Keeps typical thumbnail size between 15KB - 30KB.
+     * Downloads the remote image at [imageUrl] and encodes it into near-lossless WebP (q90)
+     * preserving original resolution when [maxSidePx] <= 0 (product §8.1).
      * Automatically filters out 1x1 tracker pixels and tiny logos (<32px).
      * Returns null if download or decoding fails.
      */
     suspend fun downloadCompressedThumbnail(
         imageUrl: String,
-        maxSidePx: Int = 480,
-        quality: Int = 75,
+        maxSidePx: Int = 0,
+        quality: Int = 90,
     ): ByteArray? = withContext(Dispatchers.IO) {
         val clean = cleanImageUrl(imageUrl)
         val resolved = normalizeUrl(clean) ?: clean
         ensureCookieManager()
 
-        runCatching {
-            var current = resolved
-            var rawBytes: ByteArray? = null
-            val imgHeaders = mapOf(
-                "User-Agent" to BROWSER_USER_AGENT,
-                "Accept" to "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                "Referer" to current,
-            )
-            for (redirect in 0..MAX_REDIRECTS) {
-                val conn = URL(upgradeToHttps(current)).openConnection() as HttpURLConnection
-                conn.connectTimeout = CONNECT_TIMEOUT_MS
-                conn.readTimeout = READ_TIMEOUT_MS
-                conn.instanceFollowRedirects = false
-                imgHeaders.forEach { (k, v) -> conn.setRequestProperty(k, v) }
-                try {
-                    conn.connect()
-                    val code = conn.responseCode
-                    Log.d(TAG, "Descargando imagen: code=$code, url=$current")
-                    when (code) {
-                        in 300..399 -> {
-                            val loc = conn.getHeaderField("Location") ?: return@runCatching null
-                            current = resolveUrl(current, loc) ?: return@runCatching null
-                        }
-                        in 200..299 -> {
-                            val stream = conn.inputStream
-                            val buffer = ByteArrayOutputStream()
-                            val chunk = ByteArray(8 * 1024)
-                            var read: Int
-                            var total = 0
-                            val maxLimit = 6 * 1024 * 1024 // 6MB cap
-                            while (stream.read(chunk).also { read = it } != -1) {
-                                buffer.write(chunk, 0, read)
-                                total += read
-                                if (total > maxLimit) break
+        // Upgrade YouTube hqdefault.jpg (480x360 letterboxed) to maxresdefault.jpg (1280x720) when available.
+        val candidates = if ((resolved.contains("i.ytimg.com/vi/") || resolved.contains("img.youtube.com/vi/")) &&
+            resolved.endsWith("/hqdefault.jpg", ignoreCase = true)
+        ) {
+            listOf(resolved.dropLast(14) + "/maxresdefault.jpg", resolved)
+        } else {
+            listOf(resolved)
+        }
+
+        for (candidate in candidates) {
+            val encoded = runCatching {
+                var current = candidate
+                var rawBytes: ByteArray? = null
+                val imgHeaders = mapOf(
+                    "User-Agent" to BROWSER_USER_AGENT,
+                    "Accept" to "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                    "Referer" to current,
+                )
+                for (redirect in 0..MAX_REDIRECTS) {
+                    val conn = URL(upgradeToHttps(current)).openConnection() as HttpURLConnection
+                    conn.connectTimeout = CONNECT_TIMEOUT_MS
+                    conn.readTimeout = READ_TIMEOUT_MS
+                    conn.instanceFollowRedirects = false
+                    imgHeaders.forEach { (k, v) -> conn.setRequestProperty(k, v) }
+                    try {
+                        conn.connect()
+                        val code = conn.responseCode
+                        Log.d(TAG, "Descargando imagen: code=$code, url=$current")
+                        when (code) {
+                            in 300..399 -> {
+                                val loc = conn.getHeaderField("Location") ?: return@runCatching null
+                                current = resolveUrl(current, loc) ?: return@runCatching null
                             }
-                            rawBytes = buffer.toByteArray()
-                            break
+                            in 200..299 -> {
+                                val stream = conn.inputStream
+                                val buffer = ByteArrayOutputStream()
+                                val chunk = ByteArray(8 * 1024)
+                                var read: Int
+                                var total = 0
+                                val maxLimit = 8 * 1024 * 1024 // 8MB cap
+                                while (stream.read(chunk).also { read = it } != -1) {
+                                    buffer.write(chunk, 0, read)
+                                    total += read
+                                    if (total > maxLimit) break
+                                }
+                                rawBytes = buffer.toByteArray()
+                                break
+                            }
+                            else -> return@runCatching null
                         }
-                        else -> return@runCatching null
+                    } finally {
+                        conn.disconnect()
                     }
-                } finally {
-                    conn.disconnect()
                 }
-            }
-            val bytes = rawBytes ?: return@runCatching null
-            compressImageBytes(bytes, maxSidePx, quality)
-        }.onFailure {
-            Log.e(TAG, "Fallo al descargar miniatura ($imageUrl): ${it.javaClass.name} - ${it.message}", it)
-        }.getOrNull()
+                val bytes = rawBytes ?: return@runCatching null
+                compressImageBytes(bytes, maxSidePx, quality)
+            }.onFailure {
+                Log.e(TAG, "Fallo al descargar miniatura ($candidate): ${it.javaClass.name} - ${it.message}", it)
+            }.getOrNull()
+            if (encoded != null) return@withContext encoded
+        }
+        null
     }
 
     /**
-     * Downsamples and compresses [rawBytes] into a lightweight WebP/JPEG image.
+     * Encodes [rawBytes] into WebP, keeping original dimensions when [maxSidePx] <= 0.
      * Discards empty tracking pixels or tiny icons (<32px).
      */
     override fun compressImageBytes(
@@ -693,8 +705,10 @@ object LinkPreviewFetcher : LinkPreviewService, ThumbnailCompressor {
         if (origW < 32 || origH < 32) return null
 
         var inSample = 1
-        while ((origW / inSample) > maxSidePx * 2 || (origH / inSample) > maxSidePx * 2) {
-            inSample *= 2
+        if (maxSidePx > 0) {
+            while ((origW / inSample) > maxSidePx * 2 || (origH / inSample) > maxSidePx * 2) {
+                inSample *= 2
+            }
         }
 
         val sampleOptions = BitmapFactory.Options().apply {
@@ -703,7 +717,7 @@ object LinkPreviewFetcher : LinkPreviewService, ThumbnailCompressor {
         val sampled = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, sampleOptions) ?: return null
 
         val currentMax = maxOf(sampled.width, sampled.height)
-        val finalBitmap = if (currentMax > maxSidePx) {
+        val finalBitmap = if (maxSidePx > 0 && currentMax > maxSidePx) {
             val scale = maxSidePx.toFloat() / currentMax.toFloat()
             val targetW = (sampled.width * scale).roundToInt().coerceAtLeast(1)
             val targetH = (sampled.height * scale).roundToInt().coerceAtLeast(1)
