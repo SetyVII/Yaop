@@ -7,6 +7,7 @@ server/bin/
 .cxx/
 .externalNativeBuild/
 mobile/captures/
+extension/dist/
 
 # Local machine / IDE
 local.properties

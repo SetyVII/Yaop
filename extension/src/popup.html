@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YAOP Web Clipper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="../icons/icon32.png" alt="YAOP" width="20" height="20">
+      <span class="brand-name">YAOP</span>
+    </div>
+    <div id="status-pill" class="status-pill status-idle" title="">
+      <span class="dot"></span>
+      <span id="status-text">...</span>
+    </div>
+    <button id="btn-options" class="icon-btn" type="button" data-i18n-title="btnSettings" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="weblink" type="button" role="tab" aria-selected="true">
+      <span data-i18n="tabWebLink">Web link</span>
+    </button>
+    <button class="tab" data-tab="images" type="button" role="tab" aria-selected="false">
+      <span data-i18n="tabImages">Images</span>
+      <span id="images-count" class="tab-badge hidden">0</span>
+    </button>
+    <button class="tab" data-tab="note" type="button" role="tab" aria-selected="false">
+      <span data-i18n="tabNote">Note</span>
+    </button>
+    <button class="tab" data-tab="queue" type="button" role="tab" aria-selected="false">
+      <span data-i18n="tabQueue">Queue</span>
+      <span id="queue-count" class="tab-badge hidden">0</span>
+    </button>
+  </nav>
+
+  <main class="content">
+    <!-- Banner for feedback -->
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <!-- Panel 1: Web link -->
+    <section id="panel-weblink" class="panel">
+      <div id="unsupported-banner" class="banner banner-warn hidden" data-i18n="unsupportedPage">
+        This browser page cannot be captured (only http/https URLs).
+      </div>
+      <div id="existing-banner" class="banner banner-info hidden" data-i18n="alreadySaved">
+        Already in YAOP — saving updates it or appends your highlight/note.
+      </div>
+
+      <div id="cover-card" class="cover-card">
+        <div class="cover-thumb-wrap">
+          <img id="cover-preview" class="cover-preview hidden" alt="">
+          <div id="cover-empty" class="cover-empty" data-i18n="coverNone">No cover image detected</div>
+        </div>
+        <div class="cover-meta">
+          <label class="check-row">
+            <input type="checkbox" id="wl-include-cover" checked>
+            <span data-i18n="labelIncludeCover">Include WebP cover</span>
+          </label>
+          <div id="cover-stats" class="mono-muted"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="wl-title" data-i18n="labelTitle">Title</label>
+        <input id="wl-title" type="text" data-i18n-placeholder="placeholderTitle" placeholder="Page title">
+      </div>
+
+      <div class="url-line" id="wl-url-display"></div>
+
+      <div class="field">
+        <label for="wl-desc" data-i18n="labelDescription">Description</label>
+        <textarea id="wl-desc" rows="2" data-i18n-placeholder="placeholderDescription" placeholder="Optional description..."></textarea>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="wl-category" data-i18n="labelCategory">Category</label>
+          <select id="wl-category"></select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="wl-tag-input" data-i18n="labelTags">Tags</label>
+        <div class="tag-box" id="wl-tag-box">
+          <div id="wl-tag-chips" class="chips"></div>
+          <input id="wl-tag-input" type="text" list="vault-tags-list" data-i18n-placeholder="placeholderTag" placeholder="Add tag and press Enter...">
+        </div>
+        <datalist id="vault-tags-list"></datalist>
+      </div>
+
+      <div id="wl-highlight-wrap" class="field hidden">
+        <label for="wl-highlight" data-i18n="labelHighlight">Highlight</label>
+        <textarea id="wl-highlight" rows="2"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="wl-note" data-i18n="labelNote">Quick note</label>
+        <textarea id="wl-note" rows="2" data-i18n-placeholder="placeholderNote" placeholder="Optional note or thoughts..."></textarea>
+      </div>
+
+      <div class="actions-bar">
+        <label class="check-row">
+          <input type="checkbox" id="wl-reviewed">
+          <span data-i18n="labelReviewed">Mark as reviewed</span>
+        </label>
+        <button id="btn-save-weblink" class="btn-primary" type="button" data-i18n="btnSaveWebLink">
+          Save to Web links
+        </button>
+      </div>
+    </section>
+
+    <!-- Panel 2: Images on page -->
+    <section id="panel-images" class="panel hidden">
+      <p class="hint" data-i18n="imagesHint">Every image is converted to WebP before saving to your vault.</p>
+      <div id="images-empty" class="empty-state hidden" data-i18n="imagesEmpty">
+        No large images found on this page.
+      </div>
+      <div id="images-grid" class="images-grid"></div>
+    </section>
+
+    <!-- Panel 3: Quick note -->
+    <section id="panel-note" class="panel hidden">
+      <div class="field">
+        <label for="note-title" data-i18n="labelTitle">Title</label>
+        <input id="note-title" type="text" data-i18n-placeholder="placeholderNoteTitle" placeholder="Note title...">
+      </div>
+      <div class="field">
+        <label for="note-body" data-i18n="labelNoteBody">Content</label>
+        <textarea id="note-body" rows="6" data-i18n-placeholder="placeholderNoteBody" placeholder="Write a note or select text on the page..."></textarea>
+      </div>
+      <div class="field">
+        <label for="note-tag-input" data-i18n="labelTags">Tags</label>
+        <div class="tag-box">
+          <div id="note-tag-chips" class="chips"></div>
+          <input id="note-tag-input" type="text" list="vault-tags-list" data-i18n-placeholder="placeholderTag" placeholder="Add tag and press Enter...">
+        </div>
+      </div>
+      <div class="actions-bar">
+        <label class="check-row">
+          <input type="checkbox" id="note-include-url" checked>
+          <span data-i18n="labelIncludeSourceUrl">Attach page URL</span>
+        </label>
+        <button id="btn-save-note" class="btn-primary" type="button" data-i18n="btnSaveNote">
+          Save Note
+        </button>
+      </div>
+    </section>
+
+    <!-- Panel 4: Offline Queue -->
+    <section id="panel-queue" class="panel hidden">
+      <p class="hint" data-i18n="queueHint">
+        Captures made while YAOP Desktop is closed wait here and sync automatically once it opens.
+      </p>
+      <div class="queue-actions">
+        <button id="btn-flush-queue" class="btn-secondary" type="button" data-i18n="btnFlushQueue">Send all now</button>
+        <button id="btn-clear-queue" class="btn-ghost" type="button" data-i18n="btnClearQueue">Clear</button>
+      </div>
+      <div id="queue-empty" class="empty-state hidden" data-i18n="queueEmpty">No pending captures.</div>
+      <ul id="queue-list" class="queue-list"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
