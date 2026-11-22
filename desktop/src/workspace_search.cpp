@@ -194,30 +194,33 @@ QVariantList Workspace::tagSuggestions(const QString &query, int limit) const
         int count = 0;
         QString latest;
     };
-    QHash<QString, TagInfo> byKey; // tagKey -> info
+    QHash<QString, TagInfo> byKey; // tagKey -> info (real Tag objects only)
     for (auto it = m_objects.constBegin(); it != m_objects.constEnd(); ++it) {
         const Object &o = it.value();
-        if (!o.trashedAt.isEmpty())
+        if (!o.trashedAt.isEmpty() || o.typeId != TypeId::Tag)
             continue;
-        if (o.typeId == TypeId::Tag) {
-            const QString name = o.title.trimmed();
-            if (!name.isEmpty()) {
-                TagInfo &info = byKey[tagKey(name)];
-                info.name = name; // Tag object's title is the canonical display name
-                if (o.updatedAt > info.latest)
-                    info.latest = o.updatedAt;
-            }
+        const QString name = o.title.trimmed();
+        if (!name.isEmpty()) {
+            TagInfo &info = byKey[tagKey(name)];
+            info.name = name;
+            if (o.updatedAt > info.latest)
+                info.latest = o.updatedAt;
         }
+    }
+    for (auto it = m_objects.constBegin(); it != m_objects.constEnd(); ++it) {
+        const Object &o = it.value();
+        if (!o.trashedAt.isEmpty() || o.typeId == TypeId::Tag)
+            continue;
         for (const QString &t : o.propertyStringList(QStringLiteral("tags"))) {
             const QString c = QString(t).remove(QLatin1Char('#')).trimmed();
             if (c.isEmpty())
                 continue;
-            TagInfo &info = byKey[tagKey(c)];
-            if (info.name.isEmpty())
-                info.name = c;
-            ++info.count;
-            if (o.updatedAt > info.latest)
-                info.latest = o.updatedAt;
+            auto found = byKey.find(tagKey(c));
+            if (found == byKey.end())
+                continue;
+            ++found->count;
+            if (o.updatedAt > found->latest)
+                found->latest = o.updatedAt;
         }
     }
 
@@ -347,27 +350,45 @@ QString Workspace::ensureTagObject(const QString &tagName)
 QVariantList Workspace::backlinksFor(const QString &id)
 {
     QVariantList out;
+    QSet<QString> seenSrc;
+    auto appendSource = [&](const Object &src, const QString &blockId) {
+        QString snippet;
+        if (!blockId.isEmpty()) {
+            for (const Block &b : src.blocks) {
+                if (b.id == blockId) {
+                    snippet = b.plainText();
+                    break;
+                }
+            }
+        }
+        if (snippet.isEmpty())
+            snippet = src.summary().isEmpty() ? src.title : src.summary();
+        QVariantMap m = objectToVariant(src, viewFor(src), QString());
+        m.insert("snippet", snippet.left(160));
+        m.insert("blockId", blockId);
+        out.append(m);
+        seenSrc.insert(src.id);
+    };
+
     if (m_store) {
         for (const search::SourceRef &r : m_store->backlinkRows(id)) {
             auto it = m_objects.find(r.src);
             if (it == m_objects.end() || !it.value().trashedAt.isEmpty())
                 continue;
-            const Object &src = it.value();
-            QString snippet;
-            if (!r.blockId.isEmpty()) {
-                for (const Block &b : src.blocks) {
-                    if (b.id == r.blockId) {
-                        snippet = b.plainText();
-                        break;
-                    }
-                }
+            appendSource(it.value(), r.blockId);
+        }
+    }
+    // Also surface cover references for media_<assetId> objects that were saved before cover backlink indexing.
+    if (id.startsWith(QLatin1String("media_"))) {
+        const QString assetId = id.mid(6);
+        if (!assetId.isEmpty()) {
+            for (auto it = m_objects.constBegin(); it != m_objects.constEnd(); ++it) {
+                const Object &src = it.value();
+                if (!src.trashedAt.isEmpty() || src.id == id || seenSrc.contains(src.id))
+                    continue;
+                if (src.coverAssetId() == assetId)
+                    appendSource(src, QString());
             }
-            if (snippet.isEmpty())
-                snippet = src.summary().isEmpty() ? src.title : src.summary();
-            QVariantMap m = objectToVariant(src, viewFor(src), QString());
-            m.insert("snippet", snippet.left(160));
-            m.insert("blockId", r.blockId);
-            out.append(m);
         }
     }
     emit backlinksReady(id, out);

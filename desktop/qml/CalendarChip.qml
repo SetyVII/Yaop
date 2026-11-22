@@ -13,20 +13,27 @@ Rectangle {
                                 : Theme.typeColor(item.typeId || "")
     implicitHeight: 22
     radius: Theme.radiusSm
-    color: Qt.rgba(tone.r, tone.g, tone.b, hover.hovered ? 0.22 : 0.13)
-    border.width: 1
+    color: Theme.noir ? (hover.hovered ? Theme.panel2 : "transparent")
+                      : Qt.rgba(tone.r, tone.g, tone.b, hover.hovered ? 0.22 : 0.13)
+    border.width: Theme.noir ? 0 : 1
     border.color: Qt.rgba(tone.r, tone.g, tone.b, 0.25)
 
     Row {
         anchors.left: parent.left
-        anchors.leftMargin: 6
+        anchors.leftMargin: Theme.noir ? 2 : 6
         anchors.right: parent.right
-        anchors.rightMargin: 6
+        anchors.rightMargin: Theme.noir ? 2 : 6
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 5
+        spacing: 6
+        Rectangle {
+            visible: Theme.noir
+            anchors.verticalCenter: parent.verticalCenter
+            width: 7; height: 7
+            color: chip.tone
+        }
         TintedIcon {
             id: glyph
-            visible: !chip.item.iconEmoji
+            visible: !Theme.noir && !chip.item.iconEmoji
             anchors.verticalCenter: parent.verticalCenter
             name: chip.item.kind === "task" ? (chip.item.done ? "circle-check" : "circle")
                 : chip.item.kind === "note" ? "calendar" : Theme.typeIcon(chip.item.typeId || "")
@@ -34,16 +41,16 @@ Rectangle {
             color: chip.tone
         }
         Text {
-            visible: !!chip.item.iconEmoji
+            visible: !Theme.noir && !!chip.item.iconEmoji
             anchors.verticalCenter: parent.verticalCenter
             text: chip.item.iconEmoji || ""
             font.pixelSize: 11
         }
         Text {
-            width: parent.width - 17
+            width: parent.width - (Theme.noir ? 13 : 17)
             anchors.verticalCenter: parent.verticalCenter
             text: chip.item.kind === "note" ? qsTr("Daily note") : (chip.item.title || qsTr("Untitled"))
-            color: chip.item.done ? Theme.muted : Theme.text
+            color: chip.item.done ? Theme.muted : (Theme.noir ? Theme.bodyText : Theme.text)
             font.family: Theme.body
             font.pixelSize: 12
             font.strikeout: !!chip.item.done

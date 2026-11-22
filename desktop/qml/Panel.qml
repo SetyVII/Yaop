@@ -17,7 +17,7 @@ Rectangle {
 
     // Surface card: sky = plain fill, no border (spec §4); slate = lifted and outlined like cards.
     color: Theme.card
-    border.width: Theme.slate ? 1 : 0
+    border.width: Theme.modern ? 1 : 0
     border.color: Theme.cardBorder
     radius: Theme.radiusLg
     clip: true

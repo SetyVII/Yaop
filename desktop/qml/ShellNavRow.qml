@@ -3,57 +3,72 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "."
 
-// Slate sidebar row: icon (bare, or in a rounded square tinted with the type colour), label,
-// count. The open page's row is raised (surface + hairline ring) rather than tinted.
+// Sidebar navigation row: in noir (AppDesktop.dc.html), full-row Theme.accent fill + #000 text
+// when active, subtle 5% white hover, 7px square indicator for pinned/type items, mono right badge.
 Rectangle {
     id: root
     property string icon: "home"
-    property color tint: "transparent"   // type colour: draws the icon in a tinted square
+    property color tint: "transparent"
+    property bool roundDot: false
     property string emoji: ""
     property string label: ""
     property string count: ""
+    property string shortcutHint: ""
     property bool active: false
     signal clicked()
 
     Layout.fillWidth: true
-    implicitHeight: 34
+    implicitHeight: Theme.noir ? 36 : 34
     radius: Theme.radius
-    color: active ? Theme.panel2 : hover.hovered ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
-    border.width: active ? 1 : 0
+    color: active ? (Theme.noir ? Theme.accent : Theme.panel2)
+         : hover.hovered ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+    border.width: (!Theme.noir && active) ? 1 : 0
     border.color: Theme.line2
 
-    Rectangle {
-        id: iconBox
-        x: 10
-        anchors.verticalCenter: parent.verticalCenter
-        width: 22
-        height: 22
-        radius: 6
-        color: root.tint.a > 0 && !root.emoji ? Qt.rgba(root.tint.r, root.tint.g, root.tint.b, 0.16) : "transparent"
+    Behavior on color { ColorAnimation { duration: Theme.fast } }
 
+    Item {
+        id: iconBox
+        x: Theme.noir ? 12 : 10
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.noir ? 18 : 22
+        height: 22
+
+        // Slate/Sky: rounded tinted box
+        Rectangle {
+            visible: !Theme.noir && root.tint.a > 0 && !root.emoji
+            anchors.fill: parent
+            radius: 6
+            color: Qt.rgba(root.tint.r, root.tint.g, root.tint.b, 0.16)
+        }
+
+        // Crisp 24x24 SVG icon (Icons.dc.html) for both main nav and object types
         TintedIcon {
             visible: !root.emoji
             anchors.centerIn: parent
             name: root.icon
-            size: root.tint.a > 0 ? 14 : 17
-            color: root.tint.a > 0 ? root.tint : root.active ? Theme.text : Theme.dim
+            size: Theme.noir ? 16 : (root.tint.a > 0 ? 14 : 16)
+            color: root.active ? (Theme.noir ? Theme.accentInk : Theme.text)
+                 : root.tint.a > 0 ? root.tint
+                 : hover.hovered ? Theme.text : Theme.muted
         }
         Text {
             visible: !!root.emoji
             anchors.centerIn: parent
             text: root.emoji
-            font.pixelSize: 14
+            font.pixelSize: 13
         }
     }
 
     Text {
         anchors.left: iconBox.right
         anchors.leftMargin: 10
-        anchors.right: countText.visible ? countText.left : parent.right
+        anchors.right: tailText.visible ? tailText.left : parent.right
         anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
-        color: root.active ? Theme.text : Theme.dim
+        color: root.active ? (Theme.noir ? Theme.accentInk : Theme.text)
+             : hover.hovered ? Theme.text : Theme.dim
         font.family: Theme.body
         font.pixelSize: 14
         font.weight: root.active ? Font.Medium : Font.Normal
@@ -61,27 +76,27 @@ Rectangle {
     }
 
     Text {
-        id: countText
+        id: tailText
         anchors.right: parent.right
         anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
-        text: root.count
+        text: root.count.length > 0 ? root.count : root.shortcutHint
         visible: text.length > 0
-        color: Theme.muted
-        font.family: Theme.body
-        font.pixelSize: 12
-        // A count that grows (a capture landing in Inbox) pops once; one that shrinks does not.
-        property int last: Number(text) || 0
+        color: root.active ? (Theme.noir ? Theme.accentInk : Theme.muted) : Theme.label
+        opacity: root.count.length > 0 ? 1.0 : 0.65
+        font.family: Theme.mono
+        font.pixelSize: 11
+        property int last: Number(root.count) || 0
         onTextChanged: {
-            const n = Number(text) || 0
+            const n = Number(root.count) || 0
             if (n > last && Theme.motion > 0) pop.restart()
             last = n
         }
         SequentialAnimation {
             id: pop
             PauseAnimation { duration: Theme.normal }
-            NumberAnimation { target: countText; property: "scale"; to: 1.35; duration: 100 * Theme.motion; easing.type: Easing.OutCubic }
-            NumberAnimation { target: countText; property: "scale"; to: 1; duration: Theme.fast; easing.type: Easing.OutBack }
+            NumberAnimation { target: tailText; property: "scale"; to: 1.3; duration: 100 * Theme.motion; easing.type: Easing.OutCubic }
+            NumberAnimation { target: tailText; property: "scale"; to: 1; duration: Theme.fast; easing.type: Easing.OutBack }
         }
     }
 

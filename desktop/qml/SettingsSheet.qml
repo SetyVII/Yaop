@@ -50,33 +50,71 @@ Popup {
             font.pixelSize: 11
             font.letterSpacing: Theme.track(1.6)
         }
-        // This device only; both looks share every screen.
+        // This device only; all three looks share every screen.
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
             Repeater {
                 model: [
-                    { key: "slate", label: qsTr("Slate"), hint: qsTr("Neutral gray, page panel") },
+                    { key: "noir", label: qsTr("Black"), hint: qsTr("Pure black, single accent") },
+                    { key: "slate", label: qsTr("Slate"), hint: qsTr("Neutral gray, rounded") },
                     { key: "sky", label: qsTr("Sky"), hint: qsTr("Deep blue, mono labels") }
                 ]
                 delegate: Rectangle {
                     required property var modelData
-                    readonly property bool on: (modelData.key === "slate") === Theme.slate
+                    readonly property bool on: (modelData.key === "noir" && Theme.noir)
+                                            || (modelData.key === "slate" && Theme.slate)
+                                            || (modelData.key === "sky" && !Theme.modern)
                     Layout.fillWidth: true
                     implicitHeight: 54
                     radius: Theme.radius
-                    color: on ? Theme.panel2 : apHover.hovered ? Theme.panel : "transparent"
+                    color: on ? (Theme.noir ? Theme.accent : Theme.panel2) : apHover.hovered ? Theme.panel : "transparent"
                     border.width: 1
-                    border.color: on ? Theme.ice : Theme.line
+                    border.color: on ? (Theme.noir ? Theme.accent : Theme.ice) : Theme.line
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         x: 12
                         spacing: 2
-                        Text { text: modelData.label; color: Theme.text; font.family: Theme.body; font.pixelSize: 14; font.weight: Font.Medium }
-                        Text { text: modelData.hint; color: Theme.muted; font.family: Theme.body; font.pixelSize: 12 }
+                        Text { text: modelData.label; color: on && Theme.noir ? Theme.accentInk : Theme.text; font.family: Theme.body; font.pixelSize: 13; font.weight: Font.Medium }
+                        Text { text: modelData.hint; color: on && Theme.noir ? Theme.accentInk : Theme.muted; font.family: Theme.body; font.pixelSize: 11 }
                     }
                     HoverHandler { id: apHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler { onTapped: Theme.setScheme(modelData.key) }
+                }
+            }
+        }
+        // Accent color (Estética negra — Colors.dc.html)
+        RowLayout {
+            visible: Theme.noir
+            Layout.fillWidth: true
+            spacing: 8
+            Text {
+                text: Theme.caps(qsTr("ACCENT"))
+                color: Theme.muted
+                font.family: Theme.mono
+                font.pixelSize: 11
+                font.letterSpacing: Theme.track(1.2)
+            }
+            Item { Layout.fillWidth: true }
+            Repeater {
+                model: Theme.accentOptions
+                delegate: Rectangle {
+                    required property var modelData
+                    readonly property bool on: Theme.store.accentHex.toUpperCase() === modelData.hex.toUpperCase()
+                    implicitWidth: 32
+                    implicitHeight: 32
+                    color: "transparent"
+                    border.width: 1
+                    border.color: on ? Theme.text : Theme.line
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        color: modelData.hex
+                    }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: Theme.setAccent(modelData.hex) }
+                    ToolTip.visible: hovered; ToolTip.text: modelData.label; ToolTip.delay: 300
+                    property bool hovered: false
                 }
             }
         }
@@ -360,6 +398,89 @@ Popup {
             }
         }
 
+
+        // ---- browser extension local bridge (product §22.5)
+        Text {
+            text: Theme.caps(qsTr("BROWSER EXTENSION"))
+            color: Theme.ice
+            font.family: Theme.mono
+            font.pixelSize: 11
+            font.letterSpacing: Theme.track(1.6)
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Rectangle {
+                Layout.preferredWidth: 8
+                Layout.preferredHeight: 8
+                color: captureBridge && captureBridge.running ? Theme.accent : Theme.faint
+            }
+            Text {
+                Layout.fillWidth: true
+                text: !captureBridge ? ""
+                    : captureBridge.running
+                        ? qsTr("Listening on 127.0.0.1:%1").arg(captureBridge.listenPort)
+                        : (captureBridge.lastError.length > 0 ? captureBridge.lastError : qsTr("Disabled"))
+                color: Theme.dim
+                font.family: Theme.mono
+                font.pixelSize: 11
+            }
+            Button {
+                small: true
+                text: captureBridge && captureBridge.enabled ? Theme.caps(qsTr("DISABLE")) : Theme.caps(qsTr("ENABLE"))
+                onClicked: if (captureBridge) captureBridge.enabled = !captureBridge.enabled
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 34
+                color: Theme.panel
+                border.color: Theme.line
+                Text {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    verticalAlignment: Text.AlignVCenter
+                    text: captureBridge ? captureBridge.token : ""
+                    color: Theme.dim
+                    font.family: Theme.mono
+                    font.pixelSize: 11
+                    elide: Text.ElideMiddle
+                }
+            }
+            Button {
+                small: true
+                text: Theme.caps(qsTr("COPY TOKEN"))
+                onClicked: {
+                    if (captureBridge && ws) {
+                        ws.copyTextToClipboard(captureBridge.token)
+                        extStatus.text = qsTr("Token copied to clipboard.")
+                    }
+                }
+            }
+            Button {
+                small: true
+                text: Theme.caps(qsTr("REGENERATE"))
+                onClicked: {
+                    if (captureBridge) {
+                        captureBridge.regenerateToken()
+                        extStatus.text = qsTr("New token generated — paste it in the extension settings.")
+                    }
+                }
+            }
+        }
+        Text {
+            id: extStatus
+            visible: text.length > 0
+            Layout.fillWidth: true
+            color: Theme.dim
+            font.family: Theme.body
+            font.pixelSize: 11
+            wrapMode: Text.WordWrap
+        }
 
         // ---- local lock (spec §15.5): PIN at start and after N idle minutes
         Text {

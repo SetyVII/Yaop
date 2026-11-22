@@ -87,6 +87,17 @@ public:
     bool assetMeta(const QString &id, AssetMeta *out) const;
     void putAssetMeta(const AssetMeta &a);
 
+    // version history (product §16.3): compressed snapshots, newest first
+    struct SnapshotRow {
+        qint64 id = 0;
+        QString createdAt;
+        QByteArray compressed; // empty in allSnapshotTimes()
+    };
+    void putSnapshot(const QString &objectId, const QString &createdAt, const QByteArray &compressed);
+    QVector<SnapshotRow> snapshots(const QString &objectId) const;
+    QVector<SnapshotRow> allSnapshotTimes() const;
+    void deleteSnapshots(const QVector<qint64> &ids);
+
     // local search + backlinks (searchindex.h; inside this encrypted DB)
     bool usingFts5() const { return m_fts5; }
     QStringList searchIds(const QString &query, int limit);

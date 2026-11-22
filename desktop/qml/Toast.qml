@@ -23,10 +23,10 @@ Item {
         anchors.bottomMargin: root.open ? 24 : 12
         width: label.implicitWidth + 30
         height: 38
-        radius: 19
+        radius: Theme.noir ? 0 : 19
         color: Theme.sheet
         border.width: 1
-        border.color: Theme.line
+        border.color: Theme.noir ? Theme.accent : Theme.line
         opacity: root.open ? 1 : 0
 
         Behavior on opacity { NumberAnimation { duration: Theme.normal } }

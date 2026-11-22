@@ -51,4 +51,16 @@ private:
     QHash<QString, QPdfDocument *> m_docs;
 };
 
+// image://icon/<name>/<hex> -> crisp 24x24 SVG icon rendered via QSvgRenderer
+// Works identically on GPU and offscreen software backends (unlike MultiEffect).
+class IconProvider : public QQuickImageProvider {
+public:
+    IconProvider();
+    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+
+private:
+    QMutex m_mutex;
+    QHash<QString, QImage> m_cache;
+};
+
 } // namespace pkm

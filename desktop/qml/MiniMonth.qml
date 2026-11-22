@@ -98,7 +98,7 @@ ColumnLayout {
                 Rectangle {
                     anchors.centerIn: parent
                     width: 32
-                    height: 36
+                    height: 34
                     radius: Theme.radius
                     color: dayCell.isSelected ? Theme.accent : cellHover.hovered ? Theme.panel2 : "transparent"
                 }
@@ -107,23 +107,27 @@ ColumnLayout {
                     y: 6
                     text: dayCell.d.getDate()
                     color: dayCell.isSelected ? Theme.accentInk
-                         : dayCell.isToday ? Theme.ice
-                         : dayCell.inMonth ? Theme.text : Theme.faint
+                         : dayCell.isToday ? Theme.accent
+                         : dayCell.inMonth ? Theme.dim : Theme.faint
                     font.family: Theme.body
                     font.pixelSize: 13
-                    font.weight: dayCell.isSelected || dayCell.isToday ? Font.DemiBold : Font.Normal
+                    font.weight: dayCell.isSelected || dayCell.isToday ? Font.Medium : Font.Normal
                 }
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 26
-                    spacing: 2
+                    spacing: Theme.noir ? 3 : 2
                     Repeater {
                         model: mm.kinds.filter(k => mm.filters[k.key] && dayCell.m[k.key])
                         delegate: Rectangle {
                             required property var modelData
-                            width: 4; height: 4; radius: 2
-                            color: dayCell.isSelected ? Theme.accentInk : modelData.color
-                            opacity: dayCell.inMonth ? 1 : 0.5
+                            width: Theme.noir ? 4 : 4
+                            height: width
+                            radius: Theme.noir ? 0 : 2
+                            color: modelData.color
+                            border.width: Theme.noir && dayCell.isSelected ? 1 : 0
+                            border.color: Theme.accentInk
+                            opacity: dayCell.inMonth ? 1 : 0.45
                         }
                     }
                 }
@@ -137,7 +141,7 @@ ColumnLayout {
         }
     }
 
-    // legend
+    // legend (sharp colored squares in noir — Calendar.dc.html)
     Flow {
         Layout.fillWidth: true
         spacing: 12
@@ -145,10 +149,12 @@ ColumnLayout {
             model: mm.kinds.filter(k => mm.filters[k.key])
             delegate: Row {
                 required property var modelData
-                spacing: 5
+                spacing: 6
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 6; height: 6; radius: 3
+                    width: Theme.noir ? 7 : 6
+                    height: width
+                    radius: Theme.noir ? 0 : 3
                     color: modelData.color
                 }
                 Text {

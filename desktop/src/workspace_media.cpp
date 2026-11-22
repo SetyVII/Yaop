@@ -1,5 +1,6 @@
 // Workspace: media files (sealed at rest) and their upload/download.
 #include "workspace.h"
+#include "imagecolors.h"
 #include "backup.h"
 #include "syncpolicy.h"
 #include "query.h"
@@ -283,6 +284,12 @@ QString Workspace::importFileAsAsset(const QString &localPath)
                                    / vault::kAssetChunkBytes));
     media.properties.insert(QStringLiteral("chunk_size"), double(vault::kAssetChunkBytes));
     media.properties.insert(QStringLiteral("total_plain_size"), double(bytes.size()));
+    // image.colors (spec/types.md) from the pixels, locally; a value set by hand is kept.
+    if (media.typeId == QLatin1String("image") && !media.properties.contains(QStringLiteral("colors"))) {
+        const QStringList colors = dominantColorIds(QImage::fromData(bytes));
+        if (!colors.isEmpty())
+            media.properties.insert(QStringLiteral("colors"), QJsonArray::fromStringList(colors));
+    }
     saveObject(media);
 
     m_store->queueUpload({ assetId, name, mime, mediaId });

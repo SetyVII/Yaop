@@ -13,8 +13,9 @@ QtObject {
         if ((h.freq || "daily") === "weekdays") return (h.days || []).indexOf(code(d)) >= 0
         return true
     }
-    function isSkip(h, d) { return h.rec[iso(d)] === "skip" }
+    function isSkip(h, d) { return !!h && !!h.rec && h.rec[iso(d)] === "skip" }
     function progress(h, d) {
+        if (!h || !h.rec) return 0
         const v = h.rec[iso(d)]
         if (v === undefined || v === null || v === false) return 0
         if (v === "skip") return 1

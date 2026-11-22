@@ -253,24 +253,24 @@ Item {
                 }
             }
 
-            // views; the pill slides to the chosen one
+            // views; the pill slides to the chosen one (accent fill in noir — Calendar.dc.html)
             Rectangle {
                 Layout.preferredHeight: 36
-                implicitWidth: viewsRow.implicitWidth + 8
+                implicitWidth: viewsRow.implicitWidth + (Theme.noir ? 0 : 8)
                 radius: Theme.radius
                 color: Theme.page
                 border.width: 1
-                border.color: Theme.line
+                border.color: Theme.line2
                 Rectangle {
                     id: viewPill
                     readonly property Item target: { viewsRow.width; return viewsRep.itemAt(viewsRep.keys.indexOf(page.view)) }
                     x: viewsRow.x + (target ? target.x : 0)
-                    y: viewsRow.y
+                    y: Theme.noir ? 0 : viewsRow.y
                     width: target ? target.width : 0
-                    height: 28
+                    height: Theme.noir ? parent.height : 28
                     radius: Theme.radiusSm
-                    color: Theme.panel2
-                    border.width: 1
+                    color: Theme.noir ? Theme.accent : Theme.panel2
+                    border.width: Theme.noir ? 0 : 1
                     border.color: Theme.line2
                     Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
                     Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeStandard } }
@@ -278,7 +278,7 @@ Item {
                 Row {
                     id: viewsRow
                     anchors.centerIn: parent
-                    spacing: 2
+                    spacing: Theme.noir ? 0 : 2
                     Repeater {
                         id: viewsRep
                         readonly property var keys: ["month", "week", "three", "day"]
@@ -291,15 +291,15 @@ Item {
                         delegate: Item {
                             required property var modelData
                             readonly property bool on: modelData.key === page.view
-                            width: vt.implicitWidth + 22
-                            height: 28
+                            width: vt.implicitWidth + 24
+                            height: Theme.noir ? 36 : 28
                             Text {
                                 id: vt
                                 anchors.centerIn: parent
                                 text: modelData.label
-                                color: parent.on ? Theme.text : vHover.hovered ? Theme.dim : Theme.muted
+                                color: parent.on ? (Theme.noir ? Theme.accentInk : Theme.text) : vHover.hovered ? Theme.text : Theme.muted
                                 font.family: Theme.body
-                                font.pixelSize: 14
+                                font.pixelSize: 13
                                 Behavior on color { ColorAnimation { duration: 240 * Theme.motion } }
                             }
                             HoverHandler { id: vHover; cursorShape: Qt.PointingHandCursor }
@@ -357,6 +357,18 @@ Item {
                 onOpenRequested: (id) => page.openObjectRequested(id)
             }
 
+            // Ctrl+Left / Ctrl+Right day navigation (AppDesktop.dc.html)
+            Shortcut {
+                sequences: ["Ctrl+Left"]
+                enabled: page.shown && page.view === "day"
+                onActivated: page.shift(-1)
+            }
+            Shortcut {
+                sequences: ["Ctrl+Right"]
+                enabled: page.shown && page.view === "day"
+                onActivated: page.shift(1)
+            }
+
             // the day: header + daily note blocks + day's objects, one scroll
             Item {
                 visible: page.view === "day"
@@ -379,50 +391,53 @@ Item {
                         width: dayBlocks.width - 20
                         spacing: 0
 
-                        RowLayout {
+                        // Kicker + 44px date heading (AppDesktop.dc.html / Blocks.dc.html)
+                        Text {
                             Layout.topMargin: 36
-                            spacing: 8
-                            Text {
-                                text: Qt.locale().standaloneDayName(page.day.getDay())
-                                color: Theme.ice
-                                font.family: Theme.body
-                                font.pixelSize: 17
-                                font.weight: Font.Medium
-                            }
-                            Rectangle {
-                                visible: page.isToday
-                                implicitWidth: todayTxt.implicitWidth + 14
-                                implicitHeight: 24
-                                radius: Theme.radiusSm
-                                color: Qt.rgba(Theme.ice.r, Theme.ice.g, Theme.ice.b, 0.14)
-                                Text {
-                                    id: todayTxt
-                                    anchors.centerIn: parent
-                                    text: qsTr("Today")
-                                    color: Theme.ice
-                                    font.family: Theme.body
-                                    font.pixelSize: 13
-                                    font.weight: Font.Medium
-                                }
-                            }
+                            text: Theme.caps(page.isToday ? qsTr("TODAY") : Qt.locale().standaloneDayName(page.day.getDay()))
+                            color: page.isToday ? Theme.accent : Theme.label
+                            font.family: Theme.mono
+                            font.pixelSize: 11
+                            font.letterSpacing: Theme.track(0.6)
                         }
                         RowLayout {
-                            Layout.topMargin: 4
+                            Layout.topMargin: 8
                             spacing: 14
                             Text {
-                                text: page.day.toLocaleDateString(Qt.locale(), qsTr("MMMM d, yyyy"))
+                                text: Qt.locale().standaloneDayName(page.day.getDay()) + ", " + page.day.toLocaleDateString(Qt.locale(), qsTr("d MMMM"))
                                 color: Theme.text
                                 font.family: Theme.display
-                                font.pixelSize: 40
-                                font.weight: Font.Bold
-                                font.letterSpacing: -0.8
+                                font.pixelSize: Theme.noir ? 42 : 40
+                                font.weight: Theme.noir ? Font.Normal : Font.Bold
+                                font.letterSpacing: -0.9
+                            }
+                        }
+                        Row {
+                            Layout.topMargin: 12
+                            spacing: 14
+                            Rectangle {
+                                implicitWidth: djRow.implicitWidth + 16; height: 24
+                                color: "transparent"; border.width: 1; border.color: Theme.line2
+                                Row {
+                                    id: djRow; anchors.centerIn: parent; spacing: 7
+                                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; color: Theme.journal }
+                                    Text { anchors.verticalCenter: parent.verticalCenter; text: qsTr("Daily"); color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 12 }
+                                }
                             }
                             Text {
-                                Layout.alignment: Qt.AlignBaseline
-                                text: qsTr("Week %1").arg(page.isoWeek(page.day))
-                                color: Theme.muted
-                                font.family: Theme.body
-                                font.pixelSize: 16
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Theme.caps(qsTr("WEEK %1 · %2").arg(page.isoWeek(page.day)).arg(page.day.getFullYear()))
+                                color: Theme.label
+                                font.family: Theme.mono
+                                font.pixelSize: 11
+                            }
+                            Text {
+                                visible: Theme.noir
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Theme.caps(qsTr("CTRL ← PREV · CTRL → NEXT"))
+                                color: Theme.faint
+                                font.family: Theme.mono
+                                font.pixelSize: 10
                             }
                         }
 
@@ -448,23 +463,44 @@ Item {
                                     id: taskLine
                                     required property var modelData
                                     Layout.fillWidth: true
-                                    implicitHeight: 38
+                                    implicitHeight: 40
                                     radius: Theme.radius
-                                    color: Qt.rgba(Theme.ok.r, Theme.ok.g, Theme.ok.b, tlHover.hovered ? 0.14 : 0.08)
-                                    border.width: 1
+                                    color: Theme.noir ? (tlHover.hovered ? Theme.panel2 : "transparent")
+                                                      : Qt.rgba(Theme.ok.r, Theme.ok.g, Theme.ok.b, tlHover.hovered ? 0.14 : 0.08)
+                                    border.width: Theme.noir ? 0 : 1
                                     border.color: Qt.rgba(Theme.ok.r, Theme.ok.g, Theme.ok.b, 0.28)
+                                    Rectangle { visible: Theme.noir; anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.lineSubtle }
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 12
-                                        spacing: 10
-                                        Text {
-                                            text: qsTr("All day")
-                                            color: Theme.muted
-                                            font.family: Theme.body
-                                            font.pixelSize: 13
+                                        anchors.leftMargin: Theme.noir ? 2 : 10
+                                        anchors.rightMargin: Theme.noir ? 4 : 12
+                                        spacing: 12
+                                        // Sharp 18x18 square checkbox with 300ms scale(0->1) accent fill in noir (AppDesktop.dc.html)
+                                        Rectangle {
+                                            visible: Theme.noir
+                                            Layout.preferredWidth: 18; Layout.preferredHeight: 18
+                                            color: "transparent"
+                                            border.width: 1
+                                            border.color: taskLine.modelData.taskDone ? Theme.accent : Theme.faint
+                                            Behavior on border.color { ColorAnimation { duration: 200 * Theme.motion } }
+                                            Rectangle {
+                                                anchors.fill: parent; anchors.margins: 3; color: Theme.accent
+                                                scale: taskLine.modelData.taskDone ? 1 : 0
+                                                opacity: taskLine.modelData.taskDone ? 1 : 0
+                                                Behavior on scale {
+                                                    NumberAnimation {
+                                                        duration: 300 * Theme.motion
+                                                        easing.type: Easing.Bezier
+                                                        easing.bezierCurve: [0.2, 0.8, 0.1, 1, 1, 1]
+                                                    }
+                                                }
+                                                Behavior on opacity { NumberAnimation { duration: 200 * Theme.motion } }
+                                            }
+                                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+                                            TapHandler { enabled: !taskLine.modelData.taskDone; onTapped: ws.completeTask(taskLine.modelData.id) }
                                         }
                                         TintedIcon {
+                                            visible: !Theme.noir
                                             name: taskLine.modelData.taskDone ? "circle-check" : "circle"
                                             size: 17
                                             color: taskLine.modelData.taskDone ? Theme.ok : Theme.dim
@@ -476,11 +512,17 @@ Item {
                                         Text {
                                             Layout.fillWidth: true
                                             text: taskLine.modelData.title || qsTr("Untitled")
-                                            color: taskLine.modelData.taskDone ? Theme.muted : Theme.text
+                                            color: taskLine.modelData.taskDone ? Theme.label : Theme.text
                                             font.family: Theme.body
-                                            font.pixelSize: 14
+                                            font.pixelSize: 15
                                             font.strikeout: taskLine.modelData.taskDone
                                             elide: Text.ElideRight
+                                        }
+                                        Text {
+                                            text: Theme.caps(qsTr("TODAY"))
+                                            color: Theme.label
+                                            font.family: Theme.mono
+                                            font.pixelSize: 10
                                         }
                                     }
                                     HoverHandler { id: tlHover; cursorShape: Qt.PointingHandCursor }
@@ -566,6 +608,89 @@ Item {
                             }
                         }
                         Item { Layout.preferredHeight: 40 }
+                    }
+                }
+            }
+
+            // Day inspector sidebar in Month view (360px — Calendar.dc.html)
+            Rectangle {
+                visible: Theme.noir && page.view === "month" && page.width > 920
+                Layout.preferredWidth: 1
+                Layout.fillHeight: true
+                color: Theme.line
+            }
+            Flickable {
+                visible: Theme.noir && page.view === "month" && page.width > 920
+                Layout.preferredWidth: 360
+                Layout.fillHeight: true
+                contentWidth: width
+                contentHeight: monthInspectCol.implicitHeight + 48
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ColumnLayout {
+                    id: monthInspectCol
+                    x: 24; y: 28; width: parent.width - 48; spacing: 0
+
+                    Text {
+                        text: Theme.caps(page.isToday ? qsTr("TODAY") : (page.iso < Qt.formatDate(new Date(), "yyyy-MM-dd") ? qsTr("PAST") : qsTr("UPCOMING")))
+                        color: Theme.accent; font.family: Theme.mono; font.pixelSize: 11
+                    }
+                    Text {
+                        Layout.topMargin: 6
+                        text: Qt.locale().standaloneDayName(page.day.getDay()) + ", " + page.day.toLocaleDateString(Qt.locale(), qsTr("d MMMM"))
+                        color: Theme.text; font.family: Theme.display; font.pixelSize: 24; font.letterSpacing: -0.4
+                    }
+                    Text {
+                        Layout.topMargin: 4; Layout.bottomMargin: 22
+                        text: Theme.caps(qsTr("%1 ITEMS").arg(page.dueTasks.length + page.created.length + (page.noteId ? 1 : 0)))
+                        color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
+                    }
+                    Text {
+                        Layout.bottomMargin: 6
+                        text: Theme.caps(qsTr("ON THIS DAY"))
+                        color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
+                    }
+                    // Daily note row
+                    Rectangle {
+                        visible: !!page.noteId
+                        Layout.fillWidth: true; Layout.preferredHeight: 40; color: mnHov.hovered ? Theme.panel2 : "transparent"
+                        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.lineSubtle }
+                        RowLayout {
+                            anchors.fill: parent; spacing: 10
+                            Rectangle { width: 7; height: 7; color: Theme.journal }
+                            Text { Layout.fillWidth: true; text: qsTr("Daily note"); color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 14 }
+                            Text { text: Theme.caps(qsTr("DAILY")); color: Theme.label; font.family: Theme.mono; font.pixelSize: 10 }
+                        }
+                        HoverHandler { id: mnHov; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: page.openDay(page.day) }
+                    }
+                    Repeater {
+                        model: page.dueTasks.concat(page.created)
+                        delegate: Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true; Layout.preferredHeight: 40; color: miHov.hovered ? Theme.panel2 : "transparent"
+                            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.lineSubtle }
+                            RowLayout {
+                                anchors.fill: parent; spacing: 10
+                                TypeBadge { typeId: modelData.typeId || "task"; size: 14 }
+                                Text { Layout.fillWidth: true; text: modelData.title || qsTr("Untitled"); color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 14; elide: Text.ElideRight }
+                                Text { text: Theme.typeLabel(modelData.typeId || "task"); color: Theme.label; font.family: Theme.mono; font.pixelSize: 10 }
+                            }
+                            HoverHandler { id: miHov; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: page.openObjectRequested(modelData.id) }
+                        }
+                    }
+                    Button {
+                        visible: !page.noteId
+                        Layout.topMargin: 12
+                        small: true; text: qsTr("Start daily note")
+                        onClicked: { ws.journalFor(page.iso); page.openDay(page.day) }
+                    }
+                    Text {
+                        Layout.topMargin: 28
+                        text: Theme.caps(qsTr("EXTERNAL CALENDAR (CALDAV) · COMING SOON"))
+                        color: Theme.label; font.family: Theme.mono; font.pixelSize: 10
                     }
                 }
             }

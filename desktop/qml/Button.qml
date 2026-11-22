@@ -1,42 +1,40 @@
 import QtQuick
 import "."
 
-// Button (spec §5): primary = white fill with ink text (one per view); secondary =
-// transparent with a 1 px line. Mono caps, radius 14.
+// Button: in noir, sharp 0px corners, 1px #2A2A2A border; primary = Theme.accent fill with #000 text.
 Rectangle {
     id: root
     property string text: "BUTTON"
     property bool primary: false
     property bool small: false
+    property bool danger: false
     signal clicked()
 
-    implicitWidth: label.implicitWidth + (small ? 24 : 32)
-    implicitHeight: small ? 30 : 38
-    radius: Theme.slate ? Theme.radius : small ? 11 : Theme.radius
+    implicitWidth: label.implicitWidth + (small ? 22 : 28)
+    implicitHeight: small ? 30 : 36
+    radius: Theme.noir ? 0 : Theme.slate ? Theme.radius : small ? 11 : Theme.radius
     opacity: enabled ? 1 : 0.4
     color: primary
-           ? (press.pressed ? Theme.accent2 : hover.hovered ? Qt.lighter(Theme.accent, 1.0) : Theme.accent)
+           ? (press.pressed ? Theme.accent2 : hover.hovered ? Theme.accent2 : Theme.accent)
            : (press.pressed ? Theme.panel3 : hover.hovered ? Theme.panel2 : "transparent")
     border.width: primary ? 0 : 1
-    border.color: hover.hovered ? Theme.line3 : Theme.line
-    scale: press.pressed ? 0.98 : 1
+    border.color: danger ? Theme.danger : (hover.hovered ? Theme.line3 : Theme.line2)
+    scale: (!Theme.noir && press.pressed) ? 0.98 : 1
 
     Behavior on color { ColorAnimation { duration: Theme.fast } }
     Behavior on border.color { ColorAnimation { duration: Theme.fast } }
-    Behavior on scale { NumberAnimation { duration: 90 * Theme.motion } }
 
-    // keyboard focus: the shared sliding ring in Main (FocusRing.qml) draws around it
     property bool focusRing: true
 
     Text {
         id: label
         anchors.centerIn: parent
-        text: Theme.slate ? Theme.caps(root.text) : root.text.toUpperCase()
-        color: root.primary ? Theme.accentInk : Theme.text
-        font.family: Theme.mono
-        font.pixelSize: Theme.slate ? (root.small ? 12 : 13) : (root.small ? 10.5 : 12)
-        font.letterSpacing: root.small ? 0.8 : 1
-        font.weight: Font.Medium
+        text: Theme.noir ? root.text : (Theme.slate ? Theme.caps(root.text) : root.text.toUpperCase())
+        color: root.primary ? Theme.accentInk : (root.danger ? Theme.danger : Theme.text)
+        font.family: Theme.noir ? Theme.body : Theme.mono
+        font.pixelSize: Theme.noir ? (root.small ? 12 : 13) : (Theme.slate ? (root.small ? 12 : 13) : (root.small ? 10.5 : 12))
+        font.letterSpacing: Theme.noir ? 0 : (root.small ? 0.8 : 1)
+        font.weight: root.primary ? Font.Medium : Font.Normal
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

@@ -52,22 +52,28 @@ Flow {
                 return (ws && modelData) ? ws.tagColor(modelData) : Theme.tagGreen
             }
             height: 26
-            width: chipRow.implicitWidth + 16
+            width: chipRow.implicitWidth + 18
             radius: Theme.radiusSm
-            color: Qt.rgba(tone.r, tone.g, tone.b, chipHover.hovered ? 0.28 : 0.18)
+            color: Theme.noir ? "transparent" : Qt.rgba(tone.r, tone.g, tone.b, chipHover.hovered ? 0.28 : 0.18)
             border.width: 1
-            border.color: Qt.rgba(tone.r, tone.g, tone.b, 0.36)
+            border.color: Theme.noir ? (chipHover.hovered ? Theme.line3 : Theme.line2) : Qt.rgba(tone.r, tone.g, tone.b, 0.36)
             Row {
                 id: chipRow
                 anchors.centerIn: parent
-                spacing: 5
+                spacing: 7
+                Rectangle {
+                    visible: Theme.noir
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 7; height: 7
+                    color: chip.tone
+                }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: chip.modelData
-                    color: Theme.text
+                    color: Theme.noir ? Theme.bodyText : Theme.text
                     font.family: Theme.body
-                    font.pixelSize: 12
-                    font.weight: Font.Medium
+                    font.pixelSize: Theme.noir ? 13 : 12
+                    font.weight: Theme.noir ? Font.Normal : Font.Medium
                 }
                 // remove: shown on hover
                 Rectangle {
@@ -109,11 +115,32 @@ Flow {
             }
         }
         HoverHandler { id: addHover; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: { query.text = ""; picker.open(); query.forceActiveFocus() } }
+        TapHandler {
+            onTapped: {
+                query.text = ""
+                const overlay = Overlay.overlay
+                if (overlay) {
+                    const margin = 12
+                    const gap = 6
+                    const topPt = addButton.mapToItem(overlay, 0, 0)
+                    const botPt = addButton.mapToItem(overlay, 0, addButton.height)
+                    const estH = Math.min(280, Math.max(84, picker.implicitHeight > 0 ? picker.implicitHeight : 220))
+                    const spaceAbove = Math.max(0, topPt.y - margin - gap)
+                    const spaceBelow = Math.max(0, overlay.height - botPt.y - margin - gap)
+                    const openAbove = spaceAbove >= Math.min(estH, 160) || spaceAbove >= spaceBelow
+                    picker.x = Math.max(margin, Math.min(topPt.x, overlay.width - picker.width - margin))
+                    picker.y = openAbove
+                        ? Math.max(margin, topPt.y - estH - gap)
+                        : Math.min(overlay.height - estH - margin, botPt.y + gap)
+                }
+                picker.open()
+                query.forceActiveFocus()
+            }
+        }
 
         Popup {
             id: picker
-            y: addButton.height + 6
+            parent: Overlay.overlay
             width: 280
             padding: 8
             background: Rectangle {

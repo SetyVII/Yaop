@@ -23,7 +23,7 @@ class EditorModel : public QAbstractListModel {
     Q_PROPERTY(QString objectId READ objectId CONSTANT)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QString plainTitle READ plainTitle NOTIFY titleChanged)
-    Q_PROPERTY(QString typeId READ typeId CONSTANT)
+    Q_PROPERTY(QString typeId READ typeId NOTIFY typeChanged)
     Q_PROPERTY(QString coverAssetId READ coverAssetId NOTIFY coverChanged)
     Q_PROPERTY(QString thumbnailUrl READ thumbnailUrl NOTIFY coverChanged)
     Q_PROPERTY(QString url READ url NOTIFY metaChanged)
@@ -195,6 +195,13 @@ public:
     Q_INVOKABLE void formatColor(const QString &role, const QString &colorName,
                                  QQuickTextDocument *doc, int selStart, int selEnd);
     Q_INVOKABLE void formatLink(const QString &url, QQuickTextDocument *doc, int selStart, int selEnd);
+    Q_INVOKABLE QString selectionText(QQuickTextDocument *doc, int selStart, int selEnd) const;
+    Q_INVOKABLE void replaceSelectionWithMention(int row, QQuickTextDocument *doc, int selStart, int selEnd,
+                                                 const QString &objectId, const QString &label);
+    // Soft line break inside the current text block (Shift+Enter): inserts U+2028 via QTextCursor
+    // so RichText TextEdit creates a real visual line break that serializes as '\n'.
+    Q_INVOKABLE int insertLineBreak(QQuickTextDocument *doc, int selStart, int selEnd);
+    Q_INVOKABLE void setEmbedViewMode(int row, const QString &mode);
 
     // Table block structural helpers (kept small: full grid editing in QML)
     Q_INVOKABLE void insertImageBlockAfter(int row, const QString &assetId, const QString &caption);
@@ -202,6 +209,9 @@ public:
     Q_INVOKABLE void insertAudioBlockAfter(int row, const QString &assetId, int durationSeconds);
     Q_INVOKABLE void insertEmbedBlockAfter(int row, const QString &targetObjectId);
     Q_INVOKABLE void insertBookmarkAfter(int row, const QString &url, const QString &weblinkId = QString());
+    // Paste URL menu (HowTo.dc.html flow 6): "link" | "chip" | "card" | "wide"
+    Q_INVOKABLE void pasteUrlAs(int row, int caret, QQuickTextDocument *doc,
+                                const QString &url, const QString &mode);
     Q_INVOKABLE void insertCanvasBlockAfter(int row);
     Q_INVOKABLE void forceFocus(const QString &blockId, int position = 0);
     Q_INVOKABLE void clearFocusTarget(const QString &blockId);
@@ -221,6 +231,7 @@ public:
 
 signals:
     void titleChanged();
+    void typeChanged();
     void coverChanged();
     void metaChanged();
     void dirtyChanged();

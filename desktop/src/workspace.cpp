@@ -6,6 +6,7 @@
 #include "remoteops.h"
 #include "bootstrapsnapshot.h"
 #include "nodeops.h"
+#include "standardtypes.h"
 #include <QSaveFile>
 #include <QRegularExpression>
 #include <QImage>
@@ -324,6 +325,16 @@ void Workspace::loadFromStore()
             m_types.insert(t.id, t);
         m_pendingCount = m_store->pendingOps().size();
     }
+    pkm::detail::seedStandardTypes(m_types, pkm::detail::uiLanguage());
+    purgeOldSnapshots();
+    refreshViews();
+    emit syncStateChanged();
+}
+
+namespace detail {
+
+void seedStandardTypes(QHash<QString, ObjectType> &types, const QString &lang)
+{
     // Local-first (spec §15.7): the standard types exist without any server. They are seeded in
     // memory only — never queued as ops — and a synced/edited type with the same id wins.
     struct Std { const char *id; const char *name; const char *icon; const char *color; };
@@ -344,21 +355,28 @@ void Workspace::loadFromStore()
         { "tag", "Tag", "tag", "green" },
         { "habit", "Habit", "heart", "green" },
     };
+    // Their properties come from spec/types.md; a synced copy only adds its own keys (rule 5).
     for (const Std &t : kStandard) {
         const QString id = QString::fromLatin1(t.id);
-        if (m_types.contains(id))
+        const QJsonArray stdDefs = standardPropertyDefs(id, lang);
+        if (types.contains(id)) {
+            ObjectType &synced = types[id];
+            synced.propertyDefs = mergeStandardPropertyDefs(stdDefs, synced.propertyDefs);
             continue;
+        }
         ObjectType ft;
         ft.id = id;
-        ft.name = QString::fromLatin1(t.name);
+        const QString label = standardTypeLabel(id, lang);
+        ft.name = label.isEmpty() ? QString::fromLatin1(t.name) : label;
         ft.icon = QString::fromLatin1(t.icon);
         ft.color = QString::fromLatin1(t.color);
         ft.standard = true;
-        m_types.insert(id, ft);
+        ft.propertyDefs = stdDefs;
+        types.insert(id, ft);
     }
-    refreshViews();
-    emit syncStateChanged();
 }
+
+} // namespace detail
 
 Object *Workspace::objectPtr(const QString &id)
 {
@@ -431,6 +449,7 @@ void Workspace::closeObject(const QString &id)
     if (it == m_editors.end())
         return;
     it.value()->flushNow();
+    captureSnapshot(id); // end of an editing session (product §16.3)
     it.value()->deleteLater();
     m_editors.erase(it);
     if (m_activeEditingId == id)

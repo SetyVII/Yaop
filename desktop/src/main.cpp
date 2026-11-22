@@ -7,6 +7,7 @@
 #include "workspace.h"
 #include "onboarding.h"
 #include "applock.h"
+#include "capturebridge.h"
 #include "keyinput.h"
 #include "keymap.h"
 
@@ -251,10 +252,12 @@ int main(int argc, char *argv[])
     pkm::KeyInput keyInput(parser.isSet(QStringLiteral("keylog")));
     app.installEventFilter(&keyInput);
     pkm::Keymap keymap;
+    pkm::CaptureBridge captureBridge(&workspace);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("appLock"), &appLock);
     engine.rootContext()->setContextProperty(QStringLiteral("ws"), &workspace);
+    engine.rootContext()->setContextProperty(QStringLiteral("captureBridge"), &captureBridge);
     engine.rootContext()->setContextProperty(QStringLiteral("keymap"), &keymap);
     engine.rootContext()->setContextProperty(QStringLiteral("keyInput"), &keyInput);
     engine.rootContext()->setContextProperty(QStringLiteral("initialPage"), parser.value(QStringLiteral("page")));
@@ -267,11 +270,14 @@ int main(int argc, char *argv[])
     pdfProvider->setAssetLookup([&workspace](const QString &id) { return workspace.assetLocalPath(id); });
     engine.addImageProvider(QStringLiteral("tex"), texProvider);
     engine.addImageProvider(QStringLiteral("pdfpage"), pdfProvider);
+    engine.addImageProvider(QStringLiteral("icon"), new pkm::IconProvider());
 
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     engine.addImportPath(QStringLiteral("qrc:/"));
 
     workspace.initialize();
+    if (!parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("drive")))
+        captureBridge.start();
     if (parser.isSet(QStringLiteral("showcase"))) {
         const QString id = pkm::seedShowcase(&workspace);
         // With --page or --open the fixture only seeds data; alone it opens the showcase note.

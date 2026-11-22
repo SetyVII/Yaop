@@ -24,8 +24,8 @@ Popup {
     padding: 0
     closePolicy: Popup.NoAutoClose
     background: Rectangle {
-        radius: 20
-        color: Theme.panel2
+        radius: Theme.noir ? 0 : 20
+        color: Theme.noir ? Theme.sheet : Theme.panel2
         border.color: Theme.line2
         border.width: 1
     }
@@ -128,6 +128,40 @@ Popup {
                     if (view.session && view.activeDoc) {
                         linkPrompt.text = ""
                         linkPrompt.open()
+                    }
+                }
+            }
+        }
+
+        // "+ Object": turns selected text into a new object & replaces with mention (HowTo.dc.html #8)
+        Rectangle {
+            Layout.preferredWidth: toObjLbl.implicitWidth + 16
+            Layout.preferredHeight: 28
+            color: toObjHover.hovered ? Theme.accent : (Theme.noir ? Theme.panel2 : "transparent")
+            border.width: 1
+            border.color: toObjHover.hovered ? Theme.accent : Theme.line2
+            Text {
+                id: toObjLbl
+                anchors.centerIn: parent
+                text: qsTr("+ Object")
+                color: toObjHover.hovered ? Theme.accentInk : Theme.text
+                font.family: Theme.body
+                font.pixelSize: 12
+                font.weight: Font.Medium
+            }
+            HoverHandler { id: toObjHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler {
+                onTapped: {
+                    if (view && view.session && view.activeDoc && typeof ws !== "undefined" && ws) {
+                        const txt = view.session.selectionText(view.activeDoc, view.selStart, view.selEnd)
+                        if (txt.length > 0) {
+                            const newId = ws.createObject("note", txt)
+                            if (newId.length > 0) {
+                                view.session.replaceSelectionWithMention(view.activeRow, view.activeDoc, view.selStart, view.selEnd, newId, txt)
+                                view.toastRequested(qsTr("Created & linked “%1”").arg(txt))
+                                fb.close()
+                            }
+                        }
                     }
                 }
             }

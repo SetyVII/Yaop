@@ -28,7 +28,7 @@ Item {
 
     readonly property bool hasUrl: url.length > 0
 
-    implicitHeight: 104
+    implicitHeight: 76
 
     Rectangle {
         visible: bb.hasUrl
@@ -54,9 +54,9 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            anchors.leftMargin: 14
-            spacing: 12
+            anchors.margins: 8
+            anchors.leftMargin: 12
+            spacing: 10
 
             // favicon (remote) falling back to the domain letter tile
             Item {
@@ -93,7 +93,7 @@ Item {
             }
 
             ColumnLayout {
-                spacing: 3
+                spacing: 2
                 Layout.fillWidth: true
 
                 Text {
@@ -112,8 +112,7 @@ Item {
                     font.family: Theme.body
                     font.pixelSize: 12
                     elide: Text.ElideRight
-                    maximumLineCount: 2
-                    wrapMode: Text.Wrap
+                    maximumLineCount: 1
                     Layout.fillWidth: true
                 }
 
@@ -163,7 +162,7 @@ Item {
                 inObject: true
                 id: ogThumb
                 visible: bb.thumbnailUrl.length > 0
-                Layout.preferredWidth: 118
+                Layout.preferredWidth: 100
                 Layout.fillHeight: true
                 Layout.leftMargin: 4
                 source: bb.thumbnailUrl
@@ -179,7 +178,7 @@ Item {
             Rectangle {
                 id: thumbHolder
                 visible: bb.thumbnailUrl.length > 0 && ogThumb.status !== Image.Ready
-                Layout.preferredWidth: 118
+                Layout.preferredWidth: 100
                 Layout.fillHeight: true
                 Layout.leftMargin: 4
                 color: Theme.panel2

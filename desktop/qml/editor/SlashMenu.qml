@@ -110,7 +110,7 @@ Popup {
     }
 
     background: Rectangle {
-        radius: 18
+        radius: Theme.noir ? 0 : 18
         color: Theme.sheet
         border.color: Theme.line2
         border.width: 1
@@ -155,7 +155,8 @@ Popup {
                 required property int index
                 width: catalog.width
                 height: sm.rowHeight
-                color: index === sm.currentIndex ? Theme.panel3 : "transparent"
+                readonly property bool isCur: index === sm.currentIndex
+                color: isCur ? (Theme.noir ? Theme.accent : Theme.panel3) : "transparent"
                 Component.onCompleted: if (sm.justOpened && index < 8) rowIn.start()
                 SequentialAnimation {
                     id: rowIn
@@ -171,12 +172,12 @@ Popup {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 26
                     height: 22
-                    color: Theme.panel2
-                    border.color: Theme.line
+                    color: row.isCur && Theme.noir ? "transparent" : Theme.panel2
+                    border.color: row.isCur && Theme.noir ? "#000000" : Theme.line
                     Text {
                         anchors.centerIn: parent
                         text: row.modelData.glyph
-                        color: Theme.dim
+                        color: row.isCur && Theme.noir ? Theme.accentInk : Theme.dim
                         font.family: Theme.mono
                         font.pixelSize: 11
                     }
@@ -190,9 +191,9 @@ Popup {
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignLeft
                     text: row.modelData.name
-                    color: Theme.text
+                    color: row.isCur && Theme.noir ? Theme.accentInk : Theme.text
                     font.family: Theme.body
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     elide: Text.ElideRight
                 }
 
@@ -203,7 +204,7 @@ Popup {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: row.modelData.hint.length > 0
                     text: row.modelData.hint.trim()
-                    color: Theme.faint
+                    color: row.isCur && Theme.noir ? Theme.accentInk : Theme.faint
                     font.family: Theme.mono
                     font.pixelSize: 11
                 }

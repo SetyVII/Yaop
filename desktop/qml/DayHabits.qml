@@ -67,12 +67,42 @@ ColumnLayout {
                 anchors.rightMargin: 8
                 spacing: 10
 
-                // ring: tap logs the day (a goal adds one)
+                // Sharp animated square in noir (AppDesktop.dc.html); progress ring in slate/sky
                 Item {
-                    Layout.preferredWidth: 24
-                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: Theme.noir ? 18 : 24
+                    Layout.preferredHeight: Theme.noir ? 18 : 24
                     opacity: dh.future ? 0.4 : 1
+
+                    Rectangle {
+                        visible: Theme.noir
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: 1
+                        border.color: row.p >= 1 ? Theme.accent : (row.p > 0 ? Theme.ok : Theme.faint)
+                        Behavior on border.color { ColorAnimation { duration: 200 * Theme.motion } }
+
+                        // Counted partial progress bar from bottom
+                        Rectangle {
+                            visible: row.p > 0 && row.p < 1
+                            anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                            anchors.margins: 3
+                            height: Math.max(2, Math.round((parent.height - 6) * row.p))
+                            color: Theme.ok
+                            Behavior on height { NumberAnimation { duration: 250 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: [0.2, 0.8, 0.1, 1, 1, 1] } }
+                        }
+                        // Full completion inner square with mockup scale animation
+                        Rectangle {
+                            anchors.fill: parent; anchors.margins: 3
+                            color: Theme.accent
+                            scale: row.p >= 1 ? 1 : 0
+                            opacity: row.p >= 1 ? 1 : 0
+                            Behavior on scale { NumberAnimation { duration: 300 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: [0.2, 0.8, 0.1, 1, 1, 1] } }
+                            Behavior on opacity { NumberAnimation { duration: 200 * Theme.motion } }
+                        }
+                    }
+
                     Canvas {
+                        visible: !Theme.noir
                         anchors.fill: parent
                         property real p: row.p
                         property color track: Theme.line3
@@ -94,7 +124,7 @@ ColumnLayout {
                         }
                     }
                     TintedIcon {
-                        visible: row.p >= 1
+                        visible: !Theme.noir && row.p >= 1
                         anchors.centerIn: parent
                         name: "check"
                         size: 14

@@ -3,8 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../"
 
-// Object embed: reference card / compact / inline. Click opens the object.
-
+// Object embed (docs/design/mockup/Mentions.dc.html + BlockTypes.dc.html):
+// Four display modes: chip ("inline"), small card ("compact"), wide card ("card"), full read-only ("full").
+// Hover shows a compact mode switcher to change viewMode live.
 Item {
     id: eb
 
@@ -16,104 +17,127 @@ Item {
     readonly property var summary: (typeof ws !== "undefined" && targetObjectId.length > 0)
                             ? ws.objectSummary(targetObjectId) : ({})
     readonly property string embeddedType: summary.typeId !== undefined ? summary.typeId : ""
-    readonly property string displayTitle: summary.title !== undefined ? summary.title : targetObjectId
+    readonly property string displayTitle: summary.title !== undefined && summary.title.length > 0 ? summary.title : targetObjectId
     readonly property string snippet: summary.snippet !== undefined ? summary.snippet : ""
 
     signal openRequested(string objectId)
 
-    implicitHeight: viewMode === "card" ? 86 : viewMode === "compact" ? 44 : 28
+    implicitHeight: viewMode === "full" ? 132 : viewMode === "card" ? 92 : viewMode === "compact" ? 56 : 32
 
     function activate(viaSpace) { if (!viaSpace) emitOpen(); return false }
-
     function emitOpen() {
         openRequested(targetObjectId)
-        if (view)
-            view.openObjectRequested(targetObjectId)
+        if (view) view.openObjectRequested(targetObjectId)
     }
 
+    HoverHandler { id: outerHover }
+
+    // 1. CHIP ("inline")
+    Rectangle {
+        visible: eb.viewMode === "inline"
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: chipRow.implicitWidth + 18
+        height: 26
+        radius: Theme.radiusSm
+        color: "transparent"
+        border.width: 1
+        border.color: outerHover.hovered ? Theme.line3 : Theme.line2
+        Row {
+            id: chipRow; anchors.centerIn: parent; spacing: 7
+            TypeBadge { anchors.verticalCenter: parent.verticalCenter; typeId: eb.embeddedType; size: 14 }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: eb.displayTitle; color: Theme.bodyText; font.family: Theme.body; font.pixelSize: 14 }
+        }
+        TapHandler { onTapped: eb.emitOpen() }
+    }
+
+    // 2. SMALL / WIDE / FULL CARD
     Rectangle {
         visible: eb.viewMode !== "inline"
         anchors.fill: parent
-        anchors.leftMargin: 2
-        anchors.rightMargin: 2
-        anchors.topMargin: 2
-        anchors.bottomMargin: 2
+        anchors.margins: 2
         radius: Theme.radius
-        color: embedHover.hovered ? Theme.panel : "transparent"
-        Behavior on color { ColorAnimation { duration: Theme.fast } }
+        color: outerHover.hovered ? Theme.panel2 : Theme.page
+        border.width: 1
+        border.color: outerHover.hovered ? Theme.line3 : Theme.line2
 
-        DashedFrame { anchors.fill: parent; radius: Theme.radius; lineColor: embedHover.hovered ? Theme.line3 : Theme.line2 }
-
-        HoverHandler { id: embedHover; cursorShape: Qt.PointingHandCursor }
         TapHandler { onTapped: eb.emitOpen() }
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: eb.viewMode === "compact" ? 10 : 14
+            spacing: 14
 
+            // Compact / wide cover box (Mentions.dc.html)
             Rectangle {
-                Layout.preferredWidth: 42
-                Layout.preferredHeight: 42
-                radius: 12
-                color: Theme.panel2
-                TintedIcon {
+                visible: eb.viewMode === "compact" || eb.viewMode === "card"
+                Layout.preferredWidth: eb.viewMode === "compact" ? 30 : 54
+                Layout.preferredHeight: eb.viewMode === "compact" ? 34 : 62
+                color: Theme.ink
+                border.width: 1; border.color: Theme.line2
+                Rectangle {
                     anchors.centerIn: parent
-                    name: Theme.typeIcon(eb.embeddedType)
-                    size: 18
+                    width: eb.viewMode === "compact" ? 10 : 16
+                    height: width
                     color: Theme.typeColor(eb.embeddedType)
                 }
             }
 
             ColumnLayout {
-                spacing: 2
                 Layout.fillWidth: true
+                spacing: 4
 
                 Text {
-                    text: (Theme.typeLabel(eb.embeddedType).length > 0 ? Theme.typeLabel(eb.embeddedType) : Theme.caps(qsTr("OBJECT")))
-                    color: Theme.muted
-                    font.family: Theme.mono
-                    font.pixelSize: 11
-                    font.letterSpacing: Theme.track(1.2)
+                    text: Theme.caps(Theme.typeName(eb.embeddedType) + (eb.viewMode === "full" ? (" · " + qsTr("READ ONLY")) : ""))
+                    color: Theme.typeColor(eb.embeddedType)
+                    font.family: Theme.mono; font.pixelSize: 10
                 }
                 Text {
+                    Layout.fillWidth: true
                     text: eb.displayTitle
                     color: Theme.text
                     font.family: Theme.body
-                    font.pixelSize: 15
-                    font.weight: Font.Medium
+                    font.pixelSize: eb.viewMode === "full" ? 18 : eb.viewMode === "card" ? 16 : 14
                     elide: Text.ElideRight
-                    Layout.fillWidth: true
                 }
                 Text {
-                    visible: eb.viewMode === "card" && eb.snippet.length > 0
+                    visible: (eb.viewMode === "card" || eb.viewMode === "full") && eb.snippet.length > 0
+                    Layout.fillWidth: true
                     text: eb.snippet
                     color: Theme.muted
-                    font.family: Theme.body
-                    font.pixelSize: 12
+                    font.family: Theme.body; font.pixelSize: 13; lineHeight: 1.4
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: eb.viewMode === "full" ? 3 : 1
                     elide: Text.ElideRight
-                    maximumLineCount: 2
-                    wrapMode: Text.Wrap
-                    Layout.fillWidth: true
                 }
             }
-
         }
     }
 
-    RowLayout {
-        visible: eb.viewMode === "inline"
-        anchors.left: parent.left
-        anchors.leftMargin: 4
-        spacing: 5
-
-        Rectangle { Layout.preferredWidth: 6; Layout.preferredHeight: 6; color: Theme.typeColor(eb.embeddedType) }
-        Text {
-            text: eb.displayTitle
-            color: Theme.note
-            font.family: Theme.body
-            font.pixelSize: 13
-            TapHandler { onTapped: eb.emitOpen() }
+    // Hover mode switcher (Chip | Small | Wide | Full — Mentions.dc.html)
+    Row {
+        visible: outerHover.hovered && !!view && !!view.session
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 6
+        spacing: 2
+        z: 5
+        Repeater {
+            model: [
+                { key: "inline", label: qsTr("Chip") },
+                { key: "compact", label: qsTr("Small") },
+                { key: "card", label: qsTr("Wide") },
+                { key: "full", label: qsTr("Full") }
+            ]
+            delegate: Rectangle {
+                required property var modelData
+                readonly property bool on: eb.viewMode === modelData.key
+                implicitWidth: ml.implicitWidth + 12; height: 22
+                color: on ? Theme.accent : Theme.sheet
+                border.width: 1; border.color: on ? Theme.accent : Theme.line2
+                Text { id: ml; anchors.centerIn: parent; text: modelData.label; color: on ? Theme.accentInk : Theme.dim; font.family: Theme.body; font.pixelSize: 11 }
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: if (view && view.session) view.session.setEmbedViewMode(eb.row, modelData.key) }
+            }
         }
     }
 }

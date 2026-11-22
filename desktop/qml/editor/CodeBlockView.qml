@@ -3,9 +3,9 @@ import "../"
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// Code block: plain mono TextEdit + language selector. Line numbers quietly on
-// the gutter. Content commits to model.codeText (wire "text").
-
+// Code block (docs/design/mockup/BlockTypes.dc.html):
+// #050505 box, 1px #1F1F1F border, 36px header with language selector on the left
+// and Copy button with accent feedback on the right.
 Item {
     id: cb
 
@@ -21,69 +21,95 @@ Item {
     property string language: "kotlin"
     property string codeText: ""
     property bool loading: true
+    property bool copied: false
 
-    implicitHeight: Math.max(60, edit.implicitHeight + 26 + 6 + 10 + 4)
+    implicitHeight: Math.max(76, edit.implicitHeight + 56)
 
     onCodeTextChanged: {
-        if (loading)
-            return
-        if (!edit.activeFocus)
-            edit.text = codeText
+        if (loading) return
+        if (!edit.activeFocus) edit.text = codeText
     }
-
     Component.onCompleted: {
         edit.text = codeText
         loading = false
     }
 
+    Timer { id: copiedTimer; interval: 1400; onTriggered: cb.copied = false }
+
     Rectangle {
         anchors.fill: parent
         anchors.margins: 2
         radius: Theme.radius
-        color: Qt.rgba(0.012, 0.031, 0.118, 0.55)     // ink box (spec §6)
+        color: Theme.noir ? Theme.ink : Qt.rgba(0.012, 0.031, 0.118, 0.55)
         border.color: Theme.line
         border.width: 1
         clip: true
 
-        // language strip, pinned to the top: the text below starts under it and can never overlap it
+        // 36px header bar (BlockTypes.dc.html)
         Rectangle {
             id: strip
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 32
+            height: 36
             color: "transparent"
+
+            Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: Theme.lineSubtle }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
+                anchors.leftMargin: 14
                 anchors.rightMargin: 8
                 spacing: 10
 
-                Item { Layout.fillWidth: true }
-                // language tag (pill): click cycles the language
+                // Language selector (click cycles)
                 Rectangle {
-                    Layout.preferredHeight: 22
-                    Layout.preferredWidth: langLabel.implicitWidth + 20
-                    radius: 11
-                    color: langHover.hovered ? Theme.panel3 : Theme.panel2
+                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: langLabel.implicitWidth + 12
+                    color: langHover.hovered ? Theme.panel2 : "transparent"
                     Text {
                         id: langLabel
                         anchors.centerIn: parent
-                        text: language.toUpperCase()
-                        color: Theme.dim
+                        text: Theme.caps(cb.language)
+                        color: langHover.hovered ? Theme.text : Theme.muted
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        font.letterSpacing: Theme.track(1)
                     }
-
                     HoverHandler { id: langHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler {
                         onTapped: {
-                            const langs = ["kotlin", "python", "javascript", "typescript", "cpp",
-                                           "java", "go", "bash", "sql", "json", "yaml", "markdown"]
+                            const langs = ["kotlin", "cpp", "go", "python", "javascript", "typescript",
+                                           "sql", "bash", "json", "yaml", "markdown"]
                             const at = Math.max(0, langs.indexOf(cb.language))
                             view.session.setCodeLanguage(cb.row, langs[(at + 1) % langs.length])
+                        }
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // Copy button (BlockTypes.dc.html)
+                Rectangle {
+                    Layout.preferredHeight: 26
+                    Layout.preferredWidth: copyLbl.implicitWidth + 18
+                    radius: Theme.radiusSm
+                    color: cb.copied ? Theme.accent : (copyHover.hovered ? Theme.panel2 : "transparent")
+                    border.width: 1
+                    border.color: cb.copied ? Theme.accent : (copyHover.hovered ? Theme.line3 : Theme.line2)
+                    Text {
+                        id: copyLbl
+                        anchors.centerIn: parent
+                        text: cb.copied ? qsTr("Copied") : qsTr("Copy")
+                        color: cb.copied ? Theme.accentInk : (copyHover.hovered ? Theme.text : Theme.dim)
+                        font.family: Theme.body
+                        font.pixelSize: 12
+                    }
+                    HoverHandler { id: copyHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler {
+                        onTapped: {
+                            if (typeof ws !== "undefined" && ws) ws.copyTextToClipboard(edit.text)
+                            cb.copied = true
+                            copiedTimer.restart()
                         }
                     }
                 }
@@ -95,33 +121,30 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: strip.bottom
-            anchors.topMargin: 2
-            anchors.leftMargin: 12
-            anchors.rightMargin: 10
+            anchors.topMargin: 10
+            anchors.leftMargin: 16
+            anchors.rightMargin: 14
 
             textFormat: TextEdit.PlainText
             wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
             selectByMouse: true
             selectByKeyboard: true
-            color: Theme.text
-            selectionColor: Qt.rgba(0.75, 0.89, 1, 0.38)
+            color: Theme.bodyText
+            selectionColor: Theme.accentDim
             selectedTextColor: Theme.text
             font.family: Theme.code
             font.pixelSize: 13
             clip: true
 
-            onActiveFocusChanged: {
-                view.setFocusedBlock(cb.blockId, activeFocus)
-            }
+            onActiveFocusChanged: view.setFocusedBlock(cb.blockId, activeFocus)
             onTextChanged: commitTimer.restart()
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Escape) {
                     event.accepted = true
                     view.closePopups()
-                    view.selectRow(cb.row)   // back to block mode on this block
+                    view.selectRow(cb.row)
                     return
                 }
-                // Enter inside code: insert a real newline (only exit on esc/ctrl+enter)
                 if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                     && (event.modifiers & Qt.ControlModifier)) {
                     event.accepted = true
@@ -129,8 +152,7 @@ Item {
                 }
                 if (event.key === Qt.Key_Tab) {
                     event.accepted = true
-                    const c = edit.cursorPosition
-                    edit.insert(c, "    ")
+                    edit.insert(edit.cursorPosition, "    ")
                 }
             }
 
@@ -138,32 +160,7 @@ Item {
                 id: commitTimer
                 interval: 420
                 onTriggered: {
-                    if (loading)
-                        return
-                    // Commit code text through the model path set for code blocks.
-                    view.session.commitCodeText(cb.row, edit.text)
-                }
-            }
-
-            // Gutter numbers
-            Column {
-                id: gutter
-                x: 8
-                y: 4
-                spacing: 2
-                Text {
-                    text: "1"
-                    visible: edit.length > 0
-                    color: Theme.faint
-                    font.family: Theme.code
-                    font.pixelSize: 11
-                }
-                Text {
-                    text: qsTr("—")
-                    visible: edit.length === 0
-                    color: Theme.faint
-                    font.family: Theme.code
-                    font.pixelSize: 11
+                    if (!loading) view.session.commitCodeText(cb.row, edit.text)
                 }
             }
         }

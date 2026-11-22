@@ -260,6 +260,10 @@ bool Store::openDatabase(bool fresh)
         "CREATE TABLE IF NOT EXISTS assets ("
         " id TEXT PRIMARY KEY, object_id TEXT, name TEXT, mime TEXT,"
         " size INTEGER, created_at TEXT, duration_seconds INTEGER)",
+        // Version history (product §16.3): zstd-compressed snapshot, base64; local only for now.
+        "CREATE TABLE IF NOT EXISTS snapshots ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT, object_id TEXT NOT NULL, created_at TEXT NOT NULL, data TEXT NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS snapshots_object ON snapshots(object_id, id)",
         nullptr,
     };
     for (const char **sql = schema; *sql; ++sql)
@@ -397,11 +401,14 @@ QVector<search::LinkRef> Store::linksFor(const Object &o)
                      || b.type == BlockType::Pdf))
             add(objectIdForMedia(b.assetId), b.id);
     }
-    // References born from properties (relations, tags, dates).
+    // References born from properties (relations, tags, cover media, dates).
     for (const QString &id : o.propertyLinks)
         add(id, QString());
     for (const QString &tag : o.propertyStringList(QStringLiteral("tags")))
         add(tagKey(tag), QString());
+    const QString coverAsset = o.coverAssetId();
+    if (!coverAsset.isEmpty())
+        add(objectIdForMedia(coverAsset), QString());
     return out;
 }
 
@@ -689,6 +696,58 @@ QList<search::SourceRef> Store::backlinkRows(const QString &dst) const
     if (!ensureOpened())
         return {};
     return search::backlinks(m_db, dst);
+}
+
+// ---------------------------------------------------------------------------
+// Version history
+// ---------------------------------------------------------------------------
+void Store::putSnapshot(const QString &objectId, const QString &createdAt, const QByteArray &compressed)
+{
+    if (!ensureOpened())
+        return;
+    Stmt q;
+    q.prepare(m_db, "INSERT INTO snapshots (object_id, created_at, data) VALUES (?, ?, ?)");
+    q.bind(1, objectId);
+    q.bind(2, createdAt);
+    q.bind(3, QString::fromLatin1(compressed.toBase64()));
+    q.done();
+}
+
+QVector<Store::SnapshotRow> Store::snapshots(const QString &objectId) const
+{
+    QVector<SnapshotRow> out;
+    if (!ensureOpened())
+        return out;
+    Stmt q;
+    q.prepare(m_db, "SELECT id, created_at, data FROM snapshots WHERE object_id = ? ORDER BY id DESC");
+    q.bind(1, objectId);
+    while (q.step())
+        out.append({ q.number(0), q.text(1), QByteArray::fromBase64(q.bytes(2)) });
+    return out;
+}
+
+QVector<Store::SnapshotRow> Store::allSnapshotTimes() const
+{
+    QVector<SnapshotRow> out;
+    if (!ensureOpened())
+        return out;
+    Stmt q;
+    q.prepare(m_db, "SELECT id, created_at FROM snapshots");
+    while (q.step())
+        out.append({ q.number(0), q.text(1), {} });
+    return out;
+}
+
+void Store::deleteSnapshots(const QVector<qint64> &ids)
+{
+    if (!ensureOpened())
+        return;
+    for (qint64 id : ids) {
+        Stmt q;
+        q.prepare(m_db, "DELETE FROM snapshots WHERE id = ?");
+        q.bind(1, qlonglong(id));
+        q.done();
+    }
 }
 
 } // namespace pkm

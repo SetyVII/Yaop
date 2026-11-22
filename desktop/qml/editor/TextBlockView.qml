@@ -320,6 +320,14 @@ Item {
                     view.mediaPasteRequested()
                     return
                 }
+                if (typeof ws !== "undefined" && ws && typeof view.openUrlPasteMenu === "function") {
+                    const clip = ws.clipboardText()
+                    if (/^https?:\/\/\S+$/i.test(clip) && clip.indexOf("\n") < 0) {
+                        event.accepted = true
+                        view.openUrlPasteMenu(tb.row, edit.cursorPosition, edit.textDocument, clip)
+                        return
+                    }
+                }
                 if (view.session && view.session.pasteFromClipboard(tb.row, edit.cursorPosition, edit.textDocument)) {
                     event.accepted = true
                     return
@@ -425,7 +433,19 @@ Item {
             case Qt.Key_Return:
             case Qt.Key_Enter:
                 event.accepted = true
-                view.session.handleEnter(tb.row, edit.cursorPosition, edit.textDocument)
+                if (event.modifiers & Qt.ShiftModifier) {
+                    // Soft line break inside the same block (Shift+Enter) via QTextCursor
+                    // (QQuickTextEdit.insert() treats text as HTML in RichText mode and drops U+2028).
+                    const nextPos = view.session
+                        ? view.session.insertLineBreak(edit.textDocument, edit.selectionStart, edit.selectionEnd)
+                        : -1
+                    if (nextPos >= 0) {
+                        edit.cursorPosition = nextPos
+                        commitTimer.restart()
+                    }
+                } else {
+                    view.session.handleEnter(tb.row, edit.cursorPosition, edit.textDocument)
+                }
                 break
             case Qt.Key_Backspace:
                 if (edit.selectionStart === edit.selectionEnd) {
@@ -446,7 +466,7 @@ Item {
                 break
             case Qt.Key_Tab:
                 event.accepted = true
-                view.session.indentBlocks(tb.row, 1, edit.cursorPosition)
+                view.session.indentBlocks(tb.row, (event.modifiers & Qt.ShiftModifier) ? -1 : 1, edit.cursorPosition)
                 break
             case Qt.Key_Backtab:
                 event.accepted = true

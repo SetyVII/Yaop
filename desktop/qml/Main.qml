@@ -14,14 +14,17 @@ ApplicationWindow {
     color: Theme.page
     title: "YAOP"
 
-    property string page: (typeof initialPage !== "undefined" && initialPage) ? initialPage
-                          : Theme.slate ? "calendar" : "home"
+    readonly property string rawInitialPage: (typeof initialPage !== "undefined" && initialPage) ? String(initialPage) : ""
+    property string page: rawInitialPage.length > 0 ? rawInitialPage.split(":")[0]
+                          : Theme.modern ? "calendar" : "home"
     property bool paletteOpen: false
     property bool captureOpen: false
     property string editorObjectId: (typeof initialObjectId !== "undefined" && initialObjectId) ? initialObjectId : ""
     property string pendingScrollBlockId: ""
-    property string libraryType: "all"
-    property bool sidebarOpen: !Theme.compact
+    property string libraryType: (rawInitialPage.startsWith("library:") && rawInitialPage.length > 8)
+                                 ? rawInitialPage.substring(8) : "all"
+    property bool sidebarOpen: !Theme.compact && !rawInitialPage.endsWith(":rail")
+    property bool focusMode: false
 
     // Tabs (slate top bar), like a browser: each tab is a place ("p:<page>" | "o:<objectId>") with
     // its own back / forward. Ctrl+click on anything that opens a place opens it in a new tab.
@@ -102,14 +105,14 @@ ApplicationWindow {
         tabs = t
         loadTab(next)
     }
-    // Ctrl held during the click that asked for a place: new tab (slate only, where tabs show).
-    function wantsNewTab() { return Theme.slate && ws && (ws.keyModifiers() & Qt.ControlModifier) }
-    function wantsPane() { return Theme.slate && ws && (ws.keyModifiers() & Qt.ShiftModifier) }
+    // Ctrl held during the click that asked for a place: new tab (modern shell, where tabs show).
+    function wantsNewTab() { return Theme.modern && ws && (ws.keyModifiers() & Qt.ControlModifier) }
+    function wantsPane() { return Theme.modern && ws && (ws.keyModifiers() & Qt.ShiftModifier) }
 
-    // Side pane (slate): one object beside the page, keeping the page in view. Shift+click opens
+    // Side pane: one object beside the page, keeping the page in view. Shift+click opens
     // there; links inside the pane open in the page. Each tab keeps its own pane.
     property string paneObjectId: ""
-    readonly property bool paneOpen: Theme.slate && paneObjectId.length > 0
+    readonly property bool paneOpen: Theme.modern && paneObjectId.length > 0
     function openInPane(id) {
         if (id === editorObjectId) { showToast(qsTr("Already open in the page")); return }
         paneObjectId = id
@@ -156,6 +159,9 @@ ApplicationWindow {
         case "habits": return "circle-check"
         case "library": return "layout-grid"
         case "sets": return "filter"
+        case "graph": return "graph"
+        case "types": return "shape"
+        case "tags": return "tag"
         case "whiteboard": return "layout-board-split"
         case "journal": return "calendar"
         default: return "home"
@@ -168,11 +174,14 @@ ApplicationWindow {
         }
         switch (loc.substring(2)) {
         case "calendar": return calendarLoader.item ? calendarLoader.item.placeTitle : qsTr("Today")
-        case "inbox": return qsTr("Inbox")
+        case "inbox": return qsTr("To review")
         case "tasks": return qsTr("Tasks")
         case "habits": return qsTr("Habits")
-        case "library": return qsTr("Spaces")
-        case "sets": return qsTr("Sets")
+        case "library": return qsTr("Objects")
+        case "sets": return qsTr("Queries")
+        case "graph": return qsTr("Graph")
+        case "types": return qsTr("Types")
+        case "tags": return qsTr("Tags")
         case "whiteboard": return qsTr("Whiteboards")
         case "journal": return qsTr("Daily")
         default: return qsTr("Home")
@@ -246,7 +255,7 @@ ApplicationWindow {
             required property var modelData
             sequences: modelData.keys
             context: modelData.appWide ? Qt.ApplicationShortcut : Qt.WindowShortcut
-            enabled: !modelData.slateOnly || Theme.slate
+            enabled: !modelData.slateOnly || Theme.modern
             onActivated: app.runAction(modelData.id)
         }
     }
@@ -297,6 +306,7 @@ ApplicationWindow {
         case "tab.next": switchTab((tabIndex + 1) % tabs.length); break
         case "tab.prev": switchTab((tabIndex + tabs.length - 1) % tabs.length); break
         case "sidebar": sidebarOpen = !sidebarOpen; break
+        case "editor.focusMode": focusMode = !focusMode; break
         case "settings": settingsSheet.open(); break
         case "lock": appLock.lockNow(); break
         case "privacy": Privacy.toggle(); break
@@ -324,6 +334,9 @@ ApplicationWindow {
         case "habits": return 6
         case "inbox": return 7
         case "calendar": return 9
+        case "graph": return 10
+        case "types": return 11
+        case "tags": return 12
         default: return 8
         }
     }
@@ -335,7 +348,7 @@ ApplicationWindow {
         spacing: 0
 
         TitleBar {
-            visible: !Theme.slate
+            visible: !Theme.modern
             Layout.fillWidth: true
             Layout.preferredHeight: Theme.topbarH
             onSearchRequested: app.paletteOpen = true
@@ -349,14 +362,98 @@ ApplicationWindow {
         Layout.fillHeight: true
         spacing: 0
 
+        // Collapsed 64px Icon Rail in noir when sidebar is collapsed (Book.dc.html / WebLinks.dc.html)
+        Rectangle {
+            id: iconRail
+            visible: Theme.noir && !app.sidebarOpen && !app.focusMode
+            Layout.preferredWidth: visible ? 64 : 0
+            Layout.fillHeight: true
+            color: Theme.bg2
+
+            Rectangle { anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.right: parent.right; width: 1; color: Theme.line }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.topMargin: 16; anchors.bottomMargin: 14
+                spacing: 4
+
+                // Square yaop mark (click expands sidebar)
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 44; Layout.preferredHeight: 40
+                    Layout.bottomMargin: 10
+                    Rectangle {
+                        anchors.centerIn: parent; width: 20; height: 20
+                        color: "transparent"; border.width: 1.6; border.color: Theme.text
+                        Rectangle { anchors.centerIn: parent; width: 8; height: 8; color: Theme.accent }
+                    }
+                    HoverHandler { id: railLogoH; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: app.sidebarOpen = true }
+                    ToolTip.visible: railLogoH.hovered; ToolTip.text: qsTr("Expand sidebar (Ctrl+B)"); ToolTip.delay: 300
+                }
+
+                Repeater {
+                    model: [
+                        { key: "calendar", icon: "journal", label: qsTr("Today") },
+                        { key: "search", icon: "search", label: qsTr("Search (Ctrl+K)") },
+                        { key: "library", icon: "layout-grid", label: qsTr("Objects") },
+                        { key: "inbox", icon: "inbox", label: qsTr("To review") },
+                        { key: "types", icon: "shape", label: qsTr("Types") },
+                        { key: "tags", icon: "tag", label: qsTr("Tags") },
+                        { key: "graph", icon: "graph", label: qsTr("Graph") },
+                        { key: "tasks", icon: "task", label: qsTr("Tasks") },
+                        { key: "habits", icon: "habit", label: qsTr("Habits") },
+                        { key: "whiteboard", icon: "whiteboard", label: qsTr("Whiteboards") }
+                    ]
+                    delegate: Rectangle {
+                        required property var modelData
+                        readonly property bool on: app.editorObjectId.length === 0 && app.page === modelData.key
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 44; Layout.preferredHeight: 42
+                        color: on ? Theme.accent : railBtnH.hovered ? Theme.panel2 : "transparent"
+                        Behavior on color { ColorAnimation { duration: Theme.fast } }
+                        TintedIcon {
+                            anchors.centerIn: parent
+                            name: modelData.icon; size: 18
+                            color: on ? Theme.accentInk : railBtnH.hovered ? Theme.text : Theme.label
+                        }
+                        HoverHandler { id: railBtnH; cursorShape: Qt.PointingHandCursor }
+                        TapHandler {
+                            onTapped: {
+                                if (modelData.key === "search") app.paletteOpen = true
+                                else app.navigate(modelData.key)
+                            }
+                        }
+                        ToolTip.visible: railBtnH.hovered; ToolTip.text: modelData.label; ToolTip.delay: 300
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
+                IconButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    implicitWidth: 40; implicitHeight: 40
+                    icon: "plus"
+                    onClicked: app.captureOpen = true
+                    ToolTip.visible: hovered; ToolTip.text: qsTr("New (Ctrl+N)"); ToolTip.delay: 300
+                }
+                IconButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    implicitWidth: 40; implicitHeight: 40
+                    icon: "settings"
+                    onClicked: settingsSheet.open()
+                    ToolTip.visible: hovered; ToolTip.text: qsTr("Settings"); ToolTip.delay: 300
+                }
+            }
+        }
+
         // Ctrl+B: the page takes its new width at once (one layout pass) and the sidebar slides
-        // over it (200 ms, a transform only). Animating the width re-laid the page out on every
-        // frame.
+        // over it (200 ms, a transform only).
         Item {
             id: sidebarSlot
-            readonly property bool shown: Theme.slate && app.sidebarOpen
+            readonly property bool shown: Theme.modern && app.sidebarOpen && !app.focusMode
             z: 3
-            visible: Theme.slate && (shown || sidebarShift.x > -Theme.sidebarW + 0.5)
+            visible: Theme.modern && (shown || sidebarShift.x > -Theme.sidebarW + 0.5)
             Layout.preferredWidth: shown ? Theme.sidebarW : 0
             Layout.fillHeight: true
 
@@ -373,14 +470,18 @@ ApplicationWindow {
                 currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
                 onNavigate: (target) => app.navigate(target)
                 onTypeSelected: (typeId) => {
+                    if (typeId === "tag") {
+                        app.navigate("tags")
+                        return
+                    }
                     app.libraryType = typeId
                     app.editorObjectId = ""
                     app.page = "library"
                 }
                 onNewTypeRequested: {
                     app.editorObjectId = ""
-                    app.page = "library"
-                    Qt.callLater(() => Qt.callLater(() => { if (libraryLoader.item) libraryLoader.item.openTypeManager() }))
+                    app.page = "types"
+                    Qt.callLater(() => { if (typesLoader.item) typesLoader.item.creating = true })
                 }
                 onNewRequested: app.captureOpen = true
                 onSearchRequested: app.paletteOpen = true
@@ -392,7 +493,7 @@ ApplicationWindow {
 
         Sidebar {
             id: sidebar
-            visible: !Theme.slate
+            visible: !Theme.modern
             Layout.preferredWidth: Theme.sidebarW
             Layout.fillHeight: true
             currentPage: app.editorObjectId.length > 0 ? "editor" : app.page
@@ -404,8 +505,7 @@ ApplicationWindow {
             }
             onNewTypeRequested: {
                 app.editorObjectId = ""
-                app.page = "library"
-                Qt.callLater(() => Qt.callLater(() => { if (libraryLoader.item) libraryLoader.item.openTypeManager() }))
+                app.page = "types"
             }
             onSearchRequested: app.paletteOpen = true
             onSettingsRequested: settingsSheet.open()
@@ -418,7 +518,7 @@ ApplicationWindow {
             spacing: 0
 
             ShellTopBar {
-                visible: Theme.slate
+                visible: Theme.modern
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.paneBarH
                 sidebarHidden: !app.sidebarOpen
@@ -445,7 +545,7 @@ ApplicationWindow {
             }
 
             TopBar {
-                visible: !Theme.slate
+                visible: !Theme.modern
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.paneBarH
                 page: app.editorObjectId.length > 0 ? "editor" : app.page
@@ -608,6 +708,43 @@ ApplicationWindow {
                             onOpenObjectRequested: (objectId) => app.openObject(objectId)
                         }
                     }
+                    Loader {
+                        id: graphLoader
+                        property bool everActive: false
+                        active: everActive || pages.currentIndex === 10
+                        onActiveChanged: if (active) everActive = true
+                        sourceComponent: GraphPage {
+                            appWindow: app
+                            shown: pages.currentIndex === 10
+                            onOpenObjectRequested: (objectId) => app.openObject(objectId)
+                        }
+                    }
+                    Loader {
+                        id: typesLoader
+                        property bool everActive: false
+                        active: everActive || pages.currentIndex === 11
+                        onActiveChanged: if (active) everActive = true
+                        sourceComponent: TypesPage {
+                            appWindow: app
+                            shown: pages.currentIndex === 11
+                            onOpenTypeObjectsRequested: (typeId) => {
+                                app.libraryType = typeId
+                                app.editorObjectId = ""
+                                app.page = "library"
+                            }
+                        }
+                    }
+                    Loader {
+                        id: tagsLoader
+                        property bool everActive: false
+                        active: everActive || pages.currentIndex === 12
+                        onActiveChanged: if (active) everActive = true
+                        sourceComponent: TagsPage {
+                            appWindow: app
+                            shown: pages.currentIndex === 12
+                            onOpenObjectRequested: (objectId) => app.openObject(objectId)
+                        }
+                    }
                 }
             }
         }
@@ -663,6 +800,12 @@ ApplicationWindow {
         }
         function onTaskCompleted(taskId) {
             app.showToast(qsTr("Task completed"))
+        }
+        function onBrowserCaptureReceived(kind, title, objectId) {
+            const prefix = kind === "image" ? qsTr("Image saved: ")
+                         : kind === "note" ? qsTr("Note saved: ")
+                         : qsTr("Web link saved: ")
+            app.showToast(prefix + (title.length > 42 ? title.substring(0, 42) + "…" : title))
         }
     }
 }

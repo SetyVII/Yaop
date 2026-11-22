@@ -75,21 +75,21 @@ Item {
             Rectangle { anchors.right: parent.right; width: 1; height: parent.height; color: Theme.line; visible: index % 7 !== 6 }
             Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
 
-            // day number: today in an accent circle
+            // day number: today in an accent square (noir) or circle (slate/sky)
             Rectangle {
                 x: 6
                 y: 6
-                width: 24
-                height: 24
-                radius: 12
-                color: dayCell.isToday ? Theme.ice : numHover.hovered ? Theme.panel2 : "transparent"
+                width: 26
+                height: 22
+                radius: Theme.noir ? 0 : 12
+                color: dayCell.isToday ? Theme.accent : numHover.hovered ? Theme.panel2 : "transparent"
                 Text {
                     anchors.centerIn: parent
                     text: dayCell.d.getDate()
                     color: dayCell.isToday ? Theme.accentInk : dayCell.inMonth ? Theme.text : Theme.faint
                     font.family: Theme.body
-                    font.pixelSize: 12
-                    font.weight: dayCell.isToday ? Font.DemiBold : Font.Normal
+                    font.pixelSize: 13
+                    font.weight: dayCell.isToday ? Font.Medium : Font.Normal
                 }
                 HoverHandler { id: numHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: grid.dayRequested(dayCell.d) }

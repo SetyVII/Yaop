@@ -21,11 +21,11 @@ Item {
 
         ColumnLayout {
             id: content
-            x: Theme.pagePad
+            width: Math.min(parent.width - 2 * Theme.pagePad, 880)
+            x: Math.round((parent.width - width) / 2)
             y: Theme.pagePad
-            width: parent.width - 2 * Theme.pagePad
             height: implicitHeight
-            spacing: 14
+            spacing: 20
 
             // quick add
             Panel {
@@ -85,15 +85,22 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        Layout.bottomMargin: 4
                         spacing: 10
 
-                        Rectangle { Layout.preferredWidth: 6; Layout.preferredHeight: 6; radius: 3; color: Theme.ice }
+                        Rectangle {
+                            visible: !Theme.noir
+                            Layout.preferredWidth: 6; Layout.preferredHeight: 6; radius: 3; color: Theme.ice
+                        }
                         Text {
-                            text: sectionColumn.modelData.label
-                            color: Theme.muted
+                            text: Theme.noir
+                                ? sectionColumn.modelData.label + " · " + sectionColumn.rows.length
+                                : sectionColumn.modelData.label
+                            color: Theme.label
                             font.family: Theme.mono
                             font.pixelSize: 11
-                            font.letterSpacing: Theme.track(1.6)
+                            font.letterSpacing: Theme.track(1.4)
                             font.weight: Font.Medium
                         }
                         Rectangle {
@@ -109,45 +116,95 @@ Item {
                         delegate: Rectangle {
                             id: taskRow
                             required property var modelData
+                            property bool pendingToggle: false
+                            readonly property bool visualDone: pendingToggle ? !(taskRow.modelData.taskDone === true)
+                                                                             : (taskRow.modelData.taskDone === true)
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 52
+                            Layout.preferredHeight: 48
                             radius: Theme.radius
                             color: taskMouse.hovered ? Theme.panel : "transparent"
 
+                            Rectangle {
+                                visible: Theme.noir
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: 1
+                                color: Theme.lineSubtle
+                            }
+
+                            Timer {
+                                id: toggleTimer
+                                interval: 260
+                                repeat: false
+                                onTriggered: {
+                                    ws.completeTask(taskRow.modelData.id)
+                                    taskRow.pendingToggle = false
+                                }
+                            }
+
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 18
-                                anchors.rightMargin: 14
-                                spacing: 10
+                                anchors.leftMargin: Theme.noir ? 4 : 18
+                                anchors.rightMargin: Theme.noir ? 4 : 14
+                                spacing: 14
 
-                                // circular check: marked = white fill with an ink tick (spec §5)
+                                // Sharp 18x18 square checkbox with 300ms scale(0->1) accent fill in noir (AppDesktop.dc.html)
                                 Rectangle {
-                                    Layout.preferredWidth: 20
-                                    Layout.preferredHeight: 20
-                                    radius: 10
-                                    color: taskRow.modelData.taskDone === true ? Theme.accent : "transparent"
-                                    border.color: taskRow.modelData.taskDone === true ? Theme.accent : Theme.dim
-                                    border.width: 1.5
+                                    Layout.preferredWidth: Theme.noir ? 18 : 20
+                                    Layout.preferredHeight: Theme.noir ? 18 : 20
+                                    radius: Theme.noir ? 0 : 10
+                                    color: Theme.noir ? "transparent" : (taskRow.visualDone ? Theme.accent : "transparent")
+                                    border.color: taskRow.visualDone ? Theme.accent : (Theme.noir ? Theme.faint : Theme.dim)
+                                    border.width: Theme.noir ? 1 : 1.5
+                                    Behavior on border.color { ColorAnimation { duration: 200 * Theme.motion } }
+
+                                    Rectangle {
+                                        visible: Theme.noir
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        color: Theme.accent
+                                        scale: taskRow.visualDone ? 1 : 0
+                                        opacity: taskRow.visualDone ? 1 : 0
+                                        Behavior on scale {
+                                            NumberAnimation {
+                                                duration: 300 * Theme.motion
+                                                easing.type: Easing.Bezier
+                                                easing.bezierCurve: [0.2, 0.8, 0.1, 1, 1, 1]
+                                            }
+                                        }
+                                        Behavior on opacity { NumberAnimation { duration: 200 * Theme.motion } }
+                                    }
 
                                     Text {
                                         anchors.centerIn: parent
-                                        visible: taskRow.modelData.taskDone === true
+                                        visible: !Theme.noir && taskRow.visualDone
                                         text: "✓"
                                         color: Theme.accentInk
                                         font.pixelSize: 12
                                         font.weight: Font.Bold
                                     }
                                     HoverHandler { cursorShape: Qt.PointingHandCursor }
-                                    TapHandler { onTapped: ws.completeTask(taskRow.modelData.id) }
+                                    TapHandler {
+                                        onTapped: {
+                                            if (toggleTimer.running) return
+                                            if (Theme.noir && Theme.motion > 0) {
+                                                taskRow.pendingToggle = true
+                                                toggleTimer.start()
+                                            } else {
+                                                ws.completeTask(taskRow.modelData.id)
+                                            }
+                                        }
+                                    }
                                 }
 
                                 Text {
                                     Layout.fillWidth: true
                                     text: taskRow.modelData.title !== undefined ? taskRow.modelData.title : ""
-                                    color: taskRow.modelData.taskDone === true ? Theme.muted : Theme.text
+                                    color: taskRow.visualDone ? Theme.label : Theme.text
+                                    Behavior on color { ColorAnimation { duration: 300 * Theme.motion } }
                                     font.family: Theme.body
                                     font.pixelSize: 15
-                                    font.strikeout: taskRow.modelData.taskDone === true
+                                    font.strikeout: taskRow.visualDone
                                     elide: Text.ElideRight
                                     TapHandler { onTapped: tasks.openObjectRequested(taskRow.modelData.id) }
                                 }
@@ -157,7 +214,7 @@ Item {
                                              && String(taskRow.modelData.dueDate).length > 0
                                     text: taskRow.modelData.dueDate !== undefined ? taskRow.modelData.dueDate : ""
                                     color: String(taskRow.modelData.dueDate) < Qt.formatDate(new Date(), "yyyy-MM-dd")
-                                           && taskRow.modelData.taskDone !== true ? Theme.late : Theme.muted
+                                           && !taskRow.visualDone ? Theme.late : Theme.label
                                     font.family: Theme.mono
                                     font.pixelSize: 11
                                 }
@@ -173,7 +230,7 @@ Item {
                         color: Theme.faint
                         font.family: Theme.mono
                         font.pixelSize: 11
-                        Layout.leftMargin: 18
+                        Layout.leftMargin: Theme.noir ? 4 : 18
                     }
                 }
             }

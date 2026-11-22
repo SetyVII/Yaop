@@ -4,9 +4,10 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import "."
 
-// Quick capture (Ctrl+N, CAPTURE): pick any type — everything is an object, user types included —
-// and type a title. Image opens a file picker instead (an image object needs its file).
-
+// Quick create (Ctrl+N) matching docs/design/mockup/QuickCreate.dc.html:
+// Sharp 680px #0A0A0A dialog, active type button in input row (Tab cycles types),
+// type chips grid, live object preview box with the chosen type's properties,
+// Enter creates & opens, Ctrl+Enter creates & keeps creating!
 Popup {
     id: capture
 
@@ -15,23 +16,44 @@ Popup {
     signal objectCreated(string objectId)
 
     x: (parent.width - width) / 2
-    readonly property real topGap: Math.max(24, Math.min(110, parent.height * 0.15))
-    y: topGap
-    width: Math.min(480, parent.width - 80)
-    height: Math.min(contentBox.implicitHeight + 2 * padding, parent.height - 2 * topGap)
-    padding: 12
+    y: Math.max(24, Math.min(84, parent.height * 0.10))
+    width: Math.min(680, parent.width - 64)
+    height: Math.min(contentBox.implicitHeight, parent.height - 2 * y)
+    padding: 0
     modal: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property string selectedTypeId: "note"
     readonly property bool mediaSelected: selectedTypeId === "image"
-    // Re-read on every open and whenever a type is created: a binding over ws.allTypes() is
-    // evaluated once, which hid the types created after start-up.
     property var kinds: []
+
     function refreshKinds() {
         const list = (typeof ws !== "undefined" && ws) ? ws.allTypes() : []
-        kinds = list.map(t => ({ type: t.id, label: Theme.slate ? String(t.name || t.id) : String(t.name || t.id).toUpperCase() }))
+        kinds = list.map(t => ({
+            type: t.id,
+            label: String(t.name || t.id),
+            color: (Theme.typeIcon(t.id) !== "shape") ? String(Theme.typeColor(t.id))
+                 : (t.color && String(t.color).startsWith("#")) ? String(t.color)
+                 : (t.color && Theme.paletteHex[t.color]) ? String(Theme.paletteColor(t.color))
+                 : String(Theme.typeColor(t.id))
+        }))
     }
+    function cycleType() {
+        if (kinds.length === 0) return
+        let idx = 0
+        for (let i = 0; i < kinds.length; i++) if (kinds[i].type === selectedTypeId) { idx = i; break }
+        selectedTypeId = kinds[(idx + 1) % kinds.length].type
+    }
+
+    readonly property var selectedKindObj: {
+        for (let i = 0; i < kinds.length; i++) if (kinds[i].type === selectedTypeId) return kinds[i]
+        return { type: "note", label: qsTr("Note"), color: String(Theme.note) }
+    }
+    readonly property var previewProps: {
+        if (!ws || !selectedTypeId) return []
+        return ws.typeProperties(selectedTypeId).filter(p => !p.system).slice(0, 4)
+    }
+
     Connections {
         target: typeof ws !== "undefined" ? ws : null
         function onTypesChanged() { capture.refreshKinds() }
@@ -47,32 +69,7 @@ Popup {
         }
     }
 
-    // dim: the page behind goes ink-blue, not neutral grey
-    Overlay.modal: Rectangle {
-        color: Theme.scrim
-        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-    }
-
-    // Opens like the palette. After saving, the box shrinks into the Inbox row of the sidebar
-    // (where the new object waits) instead of just vanishing; cancelling only fades.
-    property bool sent: false
-    readonly property bool inboxVisible: Theme.slate && !!appWindow && appWindow.sidebarOpen
-    onAboutToShow: {
-        sent = false
-        x = Qt.binding(() => (parent.width - width) / 2)
-        y = Qt.binding(() => topGap)
-    }
-    transformOrigin: Popup.Center
-    enter: Transition {
-        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.fast }
-        NumberAnimation { property: "scale"; from: 0.97; to: 1; duration: Theme.fast; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeEnter }
-    }
-    exit: Transition {
-        NumberAnimation { property: "opacity"; to: 0; duration: capture.sent ? Theme.slow : 100 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
-        NumberAnimation { property: "scale"; to: capture.sent ? 0.08 : 0.97; duration: capture.sent ? Theme.slow : 100 * Theme.motion; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
-        NumberAnimation { property: "x"; to: capture.sent && capture.inboxVisible ? Theme.sidebarW / 2 - capture.width / 2 : capture.x; duration: Theme.slow; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
-        NumberAnimation { property: "y"; to: capture.sent && capture.inboxVisible ? 150 - capture.height / 2 : capture.y; duration: Theme.slow; easing.type: Easing.Bezier; easing.bezierCurve: Theme.easeExit }
-    }
+    Overlay.modal: Rectangle { color: Theme.scrim }
 
     background: Rectangle {
         radius: Theme.radiusLg
@@ -83,109 +80,188 @@ Popup {
 
     ColumnLayout {
         id: contentBox
-        width: capture.availableWidth // without it the column shrinks to its content (narrow chips, title)
-        spacing: 16
+        width: capture.width
+        spacing: 0
 
-        RowLayout {
+        // Top input bar (60px — QuickCreate.dc.html)
+        Rectangle {
             Layout.fillWidth: true
-            spacing: 8
+            Layout.preferredHeight: 60
+            color: "transparent"
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 18
+                anchors.rightMargin: 18
+                spacing: 12
+
+                // Active type pill (click or Tab cycles)
+                Rectangle {
+                    implicitWidth: ctRow.implicitWidth + 18; implicitHeight: 30
+                    color: Theme.accent
+                    Row {
+                        id: ctRow; anchors.centerIn: parent; spacing: 7
+                        TypeBadge {
+                            anchors.verticalCenter: parent.verticalCenter
+                            typeId: capture.selectedTypeId
+                            size: 16
+                            overrideColor: Theme.accentInk
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: capture.selectedKindObj.label
+                            color: Theme.accentInk; font.family: Theme.body; font.pixelSize: 13; font.weight: Font.Medium
+                        }
+                    }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: capture.cycleType() }
+                }
+
+                TextInput {
+                    id: input
+                    Layout.fillWidth: true
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.text
+                    font.family: Theme.body
+                    font.pixelSize: 19
+                    clip: true
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: input.length === 0
+                        text: capture.selectedTypeId === "web" ? qsTr("Paste a URL or title…") : qsTr("Title of new object…")
+                        color: Theme.label; font: input.font
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if (event.key === Qt.Key_Escape) {
+                            event.accepted = true
+                            requestClose()
+                        } else if (event.key === Qt.Key_Tab) {
+                            event.accepted = true
+                            capture.cycleType()
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            event.accepted = true
+                            submit(!!(event.modifiers & Qt.ControlModifier))
+                        }
+                    }
+                }
+
+                Rectangle {
+                    implicitWidth: swSearchLbl.implicitWidth + 16; implicitHeight: 26
+                    color: swSHov.hovered ? Theme.panel2 : "transparent"
+                    border.width: 1; border.color: Theme.line2
+                    Text { id: swSearchLbl; anchors.centerIn: parent; text: Theme.caps(qsTr("CTRL K · SEARCH")); color: Theme.dim; font.family: Theme.mono; font.pixelSize: 10 }
+                    HoverHandler { id: swSHov; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: { requestClose(); if (capture.appWindow) capture.appWindow.paletteOpen = true } }
+                }
+            }
+
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
+        }
+
+        // Body: Type chips + Live object preview
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.margins: 18
+            spacing: 14
+
+            Text {
+                text: Theme.caps(qsTr("TAB SWITCHES TYPE"))
+                color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
+            }
 
             Flow {
                 Layout.fillWidth: true
                 spacing: 6
-
                 Repeater {
                     model: capture.kinds
-
                     delegate: Rectangle {
                         required property var modelData
                         readonly property bool on: capture.selectedTypeId === modelData.type
-                        width: chipRow.implicitWidth + (Theme.slate ? 18 : 26)
-                        height: Theme.slate ? 30 : 28
-                        radius: Theme.slate ? Theme.radius : 14
-                        color: Theme.slate ? (on ? Theme.panel2 : Theme.card) : Theme.panel
-                        border.color: on ? (Theme.slate ? Theme.line3 : Theme.ice) : Theme.slate ? Theme.cardBorder : "transparent"
-                        border.width: 1
-
+                        implicitWidth: kRow.implicitWidth + 18; implicitHeight: 30
+                        color: on ? Theme.accent : kHov.hovered ? Theme.panel2 : "transparent"
+                        border.width: 1; border.color: on ? Theme.accent : Theme.line2
                         Row {
-                            id: chipRow
-                            anchors.centerIn: parent
-                            spacing: 6
-                        TypeBadge {
-                            visible: Theme.slate
-                            anchors.verticalCenter: parent.verticalCenter
-                            typeId: modelData.type
-                            size: 18
+                            id: kRow; anchors.centerIn: parent; spacing: 7
+                            TypeBadge {
+                                anchors.verticalCenter: parent.verticalCenter
+                                typeId: modelData.type
+                                size: 15
+                                overrideColor: on ? Theme.accentInk : "transparent"
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.label
+                                color: on ? Theme.accentInk : Theme.dim
+                                font.family: Theme.body; font.pixelSize: 13
+                            }
                         }
-                        Text {
-                            id: chipLabel
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.label
-                            color: parent.parent.on ? (Theme.slate ? Theme.text : Theme.ice) : Theme.dim
-                            font.family: Theme.mono
-                            font.pixelSize: Theme.slate ? 12 : 10
-                            font.letterSpacing: Theme.track(1.0)
-                        }
-                        }
-                        HoverHandler { cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: capture.selectedTypeId = modelData.type }
+                        HoverHandler { id: kHov; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: { capture.selectedTypeId = modelData.type; input.forceActiveFocus() } }
                     }
                 }
             }
 
-            IconButton {
-                Layout.alignment: Qt.AlignTop
-                icon: "x"
-                onClicked: capture.requestClose()
+            // Live preview box (QuickCreate.dc.html)
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: pvCol.implicitHeight + 32
+                color: "transparent"
+                border.width: 1; border.color: Theme.line
+
+                ColumnLayout {
+                    id: pvCol
+                    anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                    anchors.margins: 16; spacing: 0
+
+                    Text {
+                        text: Theme.caps(capture.selectedKindObj.label + " · " + qsTr("PREVIEW"))
+                        color: capture.selectedKindObj.color
+                        font.family: Theme.mono; font.pixelSize: 11
+                    }
+                    Text {
+                        Layout.topMargin: 8; Layout.bottomMargin: 10
+                        Layout.fillWidth: true
+                        text: input.text.trim().length > 0 ? input.text.trim() : qsTr("Untitled")
+                        color: input.text.trim().length > 0 ? Theme.text : Theme.label
+                        font.family: Theme.display; font.pixelSize: 22; font.letterSpacing: -0.3
+                        elide: Text.ElideRight
+                    }
+                    Repeater {
+                        model: capture.previewProps
+                        delegate: Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true; Layout.preferredHeight: 32
+                            color: "transparent"
+                            Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.lineSubtle }
+                            RowLayout {
+                                anchors.fill: parent; spacing: 10
+                                Text { Layout.preferredWidth: 120; text: modelData.name || modelData.key; color: Theme.label; font.family: Theme.body; font.pixelSize: 13; elide: Text.ElideRight }
+                                Text { Layout.fillWidth: true; text: modelData.kind === "checkbox" ? qsTr("No") : qsTr("Empty"); color: Theme.dim; font.family: Theme.body; font.pixelSize: 13 }
+                            }
+                        }
+                    }
+                }
             }
         }
 
+        // Footer hints + Create button
         Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 40
-            radius: Theme.radius
-            color: Theme.panel
-
-            TextInput {
-                id: input
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.text
-                font.family: Theme.body
-                font.pixelSize: 14
-                clip: true
-
-                Text { anchors.verticalCenter: parent.verticalCenter; visible: input.length === 0; text: qsTr("Title…"); color: Theme.faint; font: input.font }
-
-                Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Escape) {
-                        event.accepted = true
-                        requestClose()
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        event.accepted = true
-                        submit()
-                    }
+            Layout.fillWidth: true; Layout.preferredHeight: 46
+            color: "transparent"
+            Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.line }
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 18; anchors.rightMargin: 18; spacing: 16
+                Text { text: Theme.caps(qsTr("ENTER CREATE & OPEN")); color: Theme.label; font.family: Theme.mono; font.pixelSize: 10 }
+                Text { text: Theme.caps(qsTr("CTRL ENTER KEEP CREATING")); color: Theme.label; font.family: Theme.mono; font.pixelSize: 10 }
+                Item { Layout.fillWidth: true }
+                Button {
+                    small: true; primary: true
+                    text: capture.mediaSelected ? qsTr("Pick file") : qsTr("Create")
+                    enabled: capture.mediaSelected || input.text.trim().length > 0
+                    onClicked: submit(false)
                 }
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
-
-            Item { Layout.fillWidth: true }
-            Button {
-                text: Theme.caps(qsTr("CANCEL"))
-                small: true
-                onClicked: requestClose()
-            }
-            Button {
-                small: true
-                text: capture.mediaSelected ? Theme.caps(qsTr("PICK FILE")) : Theme.caps(qsTr("CREATE"))
-                enabled: capture.mediaSelected || input.text.trim().length > 0
-                onClicked: submit()
             }
         }
     }
@@ -198,32 +274,29 @@ Popup {
             const assetId = ws.importFileAsAsset(selectedFile.toString().replace("file://", ""))
             const id = assetId.length > 0 ? ws.ensureMediaObject(assetId) : ""
             if (id.length === 0) {
-                appWindow.showToast(qsTr("Could not import file"))
+                if (appWindow) appWindow.showToast(qsTr("Could not import file"))
                 return
             }
             if (input.text.trim().length > 0)
                 ws.renameObject(id, input.text.trim())
-            sent = true
             requestClose()
             objectCreated(id)
+            if (appWindow) appWindow.openObject(id)
         }
     }
 
-    function submit() {
+    function submit(keepOpen) {
         if (mediaSelected) {
             mediaPicker.open()
             return
         }
         const title = input.text.trim()
-        if (title.length === 0)
-            return
+        if (title.length === 0 || !ws) return
         let id = ""
         if (selectedTypeId === "journal") {
             const iso = Qt.formatDate(new Date(), "yyyy-MM-dd")
             id = ws.journalFor(iso)
-            if (!id || id.length === 0) {
-                id = ws.createObject("journal", title)
-            }
+            if (!id || id.length === 0) id = ws.createObject("journal", title)
         } else if (selectedTypeId === "tag") {
             id = ws.ensureTagObject(title)
         } else if (selectedTypeId === "web") {
@@ -237,11 +310,16 @@ Popup {
         } else {
             id = ws.createObject(selectedTypeId, title)
         }
-        sent = !!id && id.length > 0
-        requestClose()
         if (id && id.length > 0) {
             objectCreated(id)
-            appWindow.showToast(qsTr("Created · syncing"))
+            if (keepOpen) {
+                input.text = ""
+                input.forceActiveFocus()
+                if (appWindow) appWindow.showToast(qsTr("Created “%1”").arg(title))
+            } else {
+                requestClose()
+                if (appWindow) appWindow.openObject(id)
+            }
         }
     }
 }

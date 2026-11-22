@@ -14,7 +14,7 @@ Item {
     Canvas {
         id: sky
         anchors.fill: parent
-        visible: !Theme.slate
+        visible: !Theme.modern
         renderTarget: Canvas.Image
         onPaint: {
             const ctx = getContext("2d")

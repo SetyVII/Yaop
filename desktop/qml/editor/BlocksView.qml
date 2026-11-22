@@ -10,6 +10,23 @@ ListView {
     id: blocksView
 
     property var session: null
+    property bool focusMode: false
+    property var blockRefCounts: (ws && session && session.objectId && ws.revision >= 0)
+        ? ws.blockReferenceCounts(session.objectId) : ({})
+
+    // Paste URL menu state (HowTo.dc.html flow 6)
+    property string pasteUrlValue: ""
+    property int pasteUrlRow: -1
+    property int pasteUrlCaret: 0
+    property var pasteUrlDoc: null
+    function openUrlPasteMenu(row, caret, doc, url) {
+        pasteUrlRow = row
+        pasteUrlCaret = caret
+        pasteUrlDoc = doc
+        pasteUrlValue = url
+        urlPasteMenu.currentIndex = 2   // default: Bookmark card (Enter)
+        urlPasteMenu.open()
+    }
     // Image blocks' side panel (open + width) by blockId: survives delegate rebuilds, not synced.
     property var mediaPanels: ({})
     // Optional content drawn under the "+" row (the calendar's day page lists the day's objects there).
@@ -526,7 +543,7 @@ ListView {
     function linkRequested(url, row, doc, caret, ctrlHeld, viewPt) {
         if (url.startsWith("yaop://object/")) {
             // Clicking a mention navigates straight to the referenced object.
-            const id = url.substring("yaop://object/".length)
+            const id = url.substring("yaop://object/".length).split("#")[0] // "#block" = block reference
             if (id.length > 0)
                 openObjectRequested(id)
         } else if (url.startsWith("yaop-date://")) {
@@ -988,8 +1005,10 @@ ListView {
             Rectangle {
                 Layout.preferredWidth: 22
                 Layout.preferredHeight: 22
-                radius: 11
-                color: plusArea.hovered ? Theme.panel3 : Theme.panel2
+                radius: Theme.noir ? 0 : 11
+                color: plusArea.hovered ? Theme.panel3 : (Theme.noir ? "transparent" : Theme.panel2)
+                border.width: Theme.noir ? 1 : 0
+                border.color: plusArea.hovered ? Theme.line3 : Theme.line2
 
                 Text {
                     anchors.centerIn: parent
@@ -1026,6 +1045,87 @@ ListView {
 
     SelectionBar {
         view: blocksView
+    }
+
+    // Paste URL as… menu (HowTo.dc.html flow 6: Inline link | Chip | Bookmark card | Wide card)
+    Popup {
+        id: urlPasteMenu
+        property int currentIndex: 2
+        readonly property var choices: [
+            { mode: "link", icon: "text", label: qsTr("Inline link"), hint: "" },
+            { mode: "chip", icon: "shape", label: qsTr("Chip"), hint: "" },
+            { mode: "card", icon: "web", label: qsTr("Bookmark card"), hint: "ENTER" },
+            { mode: "wide", icon: "web", label: qsTr("Wide card"), hint: "" }
+        ]
+        function accept(mode) {
+            close()
+            if (blocksView.session && blocksView.pasteUrlValue.length > 0)
+                blocksView.session.pasteUrlAs(blocksView.pasteUrlRow, blocksView.pasteUrlCaret,
+                                              blocksView.pasteUrlDoc, blocksView.pasteUrlValue, mode)
+        }
+        x: Math.max(24, Math.min(blocksView.width - width - 24, 96))
+        y: Math.max(24, Math.min(blocksView.height - height - 24, 140))
+        width: 310
+        padding: 0
+        modal: false
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: Theme.sheet
+            border.width: 1; border.color: Theme.line2
+        }
+        contentItem: ColumnLayout {
+            spacing: 0
+            Text {
+                Layout.margins: 12; Layout.bottomMargin: 6
+                text: Theme.caps(qsTr("PASTE AS"))
+                color: Theme.label; font.family: Theme.mono; font.pixelSize: 10
+            }
+            Repeater {
+                model: urlPasteMenu.choices
+                delegate: Rectangle {
+                    required property var modelData
+                    required property int index
+                    readonly property bool on: urlPasteMenu.currentIndex === index
+                    Layout.fillWidth: true; implicitHeight: 36
+                    color: on ? Theme.accent : upH.hovered ? Theme.panel2 : "transparent"
+                    RowLayout {
+                        anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 10
+                        TintedIcon {
+                            name: modelData.icon; size: 15
+                            color: on ? Theme.accentInk : (modelData.mode === "card" || modelData.mode === "wide" ? Theme.weblink : Theme.dim)
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: modelData.label
+                            color: on ? Theme.accentInk : Theme.bodyText
+                            font.family: Theme.body; font.pixelSize: 14
+                        }
+                        Text {
+                            visible: modelData.hint.length > 0
+                            text: modelData.hint
+                            color: on ? Theme.accentInk : Theme.label
+                            font.family: Theme.mono; font.pixelSize: 10
+                        }
+                    }
+                    HoverHandler { id: upH; cursorShape: Qt.PointingHandCursor; onHoveredChanged: if (hovered) urlPasteMenu.currentIndex = index }
+                    TapHandler { onTapped: urlPasteMenu.accept(modelData.mode) }
+                }
+            }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; Layout.topMargin: 4; color: Theme.line }
+            Text {
+                Layout.fillWidth: true; Layout.margins: 10
+                text: Theme.caps(qsTr("Creates a Web link object (except Inline link)"))
+                color: Theme.label; font.family: Theme.mono; font.pixelSize: 9
+                wrapMode: Text.WordWrap
+            }
+        }
+        Keys.onPressed: (ev) => {
+            if (ev.key === Qt.Key_Down) { ev.accepted = true; currentIndex = (currentIndex + 1) % choices.length }
+            else if (ev.key === Qt.Key_Up) { ev.accepted = true; currentIndex = (currentIndex - 1 + choices.length) % choices.length }
+            else if (ev.key === Qt.Key_Return || ev.key === Qt.Key_Enter) { ev.accepted = true; accept(choices[currentIndex].mode) }
+            else if (ev.key === Qt.Key_Escape) { ev.accepted = true; close() }
+        }
     }
 
     SlashMenu {

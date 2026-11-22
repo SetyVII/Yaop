@@ -1,5 +1,8 @@
 // Workspace: objects, types, properties, sets, tasks, habits and the journal.
 #include "workspace.h"
+#include "objectops.h"
+#include "graph.h"
+#include "unlinked.h"
 #include "backup.h"
 #include "syncpolicy.h"
 #include "query.h"
@@ -25,6 +28,8 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QCryptographicHash>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QJsonDocument>
 #include <QNetworkInformation>
 #include <QNetworkAccessManager>
@@ -63,6 +68,188 @@ QString Workspace::createObject(const QString &typeId, const QString &title)
     ++m_listRevision;
     emit objectListChanged();
     return obj.id;
+}
+
+QString Workspace::duplicateObject(const QString &id)
+{
+    auto it = m_objects.constFind(id);
+    if (it == m_objects.constEnd())
+        return {};
+    Object src = it.value();
+    if (auto *ed = m_editors.value(id)) { // unsaved edits travel with the copy
+        src.blocks = ed->m_blocks;
+        src.title = ed->m_title;
+    }
+    const QString now = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+    Object copy = pkm::duplicateObject(src, newUuid(), now, [] { return newUuid(); });
+    if (copy.id.isEmpty())
+        return {};
+    copy.hlc = newHlc();
+    saveObject(copy);
+    ++m_listRevision;
+    emit objectListChanged();
+    return copy.id;
+}
+
+QStringList Workspace::typePropertyKeys(const QString &typeId) const
+{
+    QStringList keys;
+    for (const QJsonValue &v : m_types.value(normalizeTypeId(typeId)).propertyDefs) {
+        const QJsonObject o = v.toObject();
+        keys.append(normalizePropertyKey(o.value(QLatin1String("key")).toString(o.value(QLatin1String("id")).toString())));
+    }
+    return keys;
+}
+
+QVariantMap Workspace::previewTypeChange(const QString &id, const QString &toTypeId) const
+{
+    auto it = m_objects.constFind(id);
+    if (it == m_objects.constEnd())
+        return { { "error", QStringLiteral("not_found") } };
+    const QString to = normalizeTypeId(toTypeId);
+    const pkm::TypeChange r = pkm::changeObjectType(it.value(), to, typePropertyKeys(to));
+    QVariantList loose;
+    for (const QString &k : r.loose)
+        loose.append(QVariantMap{ { "key", k } });
+    return { { "error", r.error }, { "loose", loose }, { "properties", typeProperties(to) } };
+}
+
+bool Workspace::changeObjectType(const QString &id, const QString &toTypeId)
+{
+    auto it = m_objects.constFind(id);
+    if (it == m_objects.constEnd())
+        return false;
+    Object src = it.value();
+    if (auto *ed = m_editors.value(id)) {
+        src.blocks = ed->m_blocks;
+        src.title = ed->m_title;
+    }
+    const QString to = normalizeTypeId(toTypeId);
+    if (!m_types.contains(to))
+        return false;
+    const pkm::TypeChange r = pkm::changeObjectType(src, to, typePropertyKeys(to));
+    if (!r.error.isEmpty())
+        return false;
+    if (r.object.typeId == it.value().typeId)
+        return true;
+    saveObject(r.object); // stamps field_hlc.type_id (spec/merge.md)
+    if (auto *ed = m_editors.value(id)) {
+        ed->m_object.typeId = r.object.typeId;
+        emit ed->typeChanged();
+    }
+    ++m_listRevision;
+    emit objectListChanged();
+    emit objectPropertiesChanged(id);
+    return true;
+}
+
+int Workspace::moveBlocksToObject(const QString &fromId, const QStringList &blockIds, const QString &toId)
+{
+    auto fit = m_objects.constFind(fromId);
+    auto tit = m_objects.constFind(toId);
+    if (fit == m_objects.constEnd() || tit == m_objects.constEnd())
+        return 0;
+    auto withEditor = [this](Object o) {
+        if (auto *ed = m_editors.value(o.id)) { // unsaved edits are part of what moves
+            o.blocks = ed->m_blocks;
+            o.title = ed->m_title;
+        }
+        return o;
+    };
+    const pkm::BlockMove r = pkm::moveBlocksToObject(withEditor(fit.value()), withEditor(tit.value()),
+                                                     blockIds, [] { return newUuid(); });
+    if (r.moved == 0)
+        return 0;
+    saveObject(r.from);
+    saveObject(r.to);
+    for (const QString &id : { fromId, toId })
+        if (auto *ed = m_editors.value(id))
+            ed->load(m_objects.value(id));
+    emit objectUpdated(fromId);
+    emit objectUpdated(toId);
+    return r.moved;
+}
+
+QVariantMap Workspace::graphData(const QString &focusId, int depth, const QStringList &types) const
+{
+    // links are derived from content (spec/object.md); recompute so local edits count at once.
+    QHash<QString, Object> objs;
+    objs.reserve(m_objects.size());
+    for (const Object &o : m_objects) {
+        Object c = o;
+        if (auto *ed = m_editors.value(o.id))
+            c.blocks = ed->m_blocks;
+        c.links = deriveLinks(c.toJson(true));
+        objs.insert(c.id, c);
+    }
+    pkm::Graph g = pkm::buildGraph(objs, QSet<QString>(types.begin(), types.end()));
+    if (!focusId.isEmpty())
+        g = pkm::localGraph(g, focusId, depth);
+    QVariantList nodes, edges;
+    for (const pkm::GraphNode &n : g.nodes)
+        nodes.append(QVariantMap{ { "id", n.id }, { "typeId", n.typeId }, { "title", n.title }, { "degree", n.degree } });
+    for (const pkm::GraphEdge &e : g.edges)
+        edges.append(QVariantMap{ { "from", e.from }, { "to", e.to } });
+    return { { "nodes", nodes }, { "edges", edges } };
+}
+
+QHash<QString, Object> Workspace::objectsWithEditors() const
+{
+    QHash<QString, Object> objs = m_objects;
+    for (auto it = m_editors.constBegin(); it != m_editors.constEnd(); ++it)
+        if (objs.contains(it.key()) && it.value()) {
+            objs[it.key()].blocks = it.value()->m_blocks;
+            objs[it.key()].title = it.value()->m_title;
+        }
+    return objs;
+}
+
+QVariantMap Workspace::blockReferenceCounts(const QString &objectId) const
+{
+    QVariantMap out;
+    const QHash<QString, int> counts = pkm::blockReferenceCounts(objectsWithEditors(), objectId);
+    for (auto it = counts.constBegin(); it != counts.constEnd(); ++it)
+        out.insert(it.key(), it.value());
+    return out;
+}
+
+QVariantList Workspace::unlinkedMentions(const QString &targetId) const
+{
+    QVariantList out;
+    const QHash<QString, Object> objs = objectsWithEditors();
+    for (const pkm::UnlinkedMention &m : pkm::findUnlinkedMentions(objs, targetId)) {
+        const Object &o = objs.value(m.objectId);
+        out.append(QVariantMap{ { "objectId", m.objectId }, { "blockId", m.blockId }, { "runIndex", m.runIndex },
+                                { "runOffset", m.runOffset }, { "length", m.length }, { "snippet", m.snippet },
+                                { "title", plainTitleFor(o) }, { "typeId", o.typeId } });
+    }
+    return out;
+}
+
+bool Workspace::linkUnlinkedMention(const QString &targetId, const QVariantMap &match)
+{
+    const QString objectId = match.value(QStringLiteral("objectId")).toString();
+    const QHash<QString, Object> objs = objectsWithEditors();
+    if (!objs.contains(objectId) || !objs.contains(targetId))
+        return false;
+    Object next = objs.value(objectId);
+    const pkm::UnlinkedMention m{ objectId, match.value(QStringLiteral("blockId")).toString(),
+                                  match.value(QStringLiteral("runIndex")).toInt(), match.value(QStringLiteral("runOffset")).toInt(),
+                                  match.value(QStringLiteral("length")).toInt(), QString() };
+    bool changed = false;
+    for (Block &b : next.blocks)
+        if (b.id == m.blockId) {
+            const Block linked = pkm::linkUnlinkedMention(b, m, targetId);
+            changed = linked.runs.size() != b.runs.size();
+            b = linked;
+        }
+    if (!changed)
+        return false;
+    saveObject(next);
+    if (auto *ed = m_editors.value(objectId))
+        ed->load(m_objects.value(objectId));
+    emit objectUpdated(objectId);
+    return true;
 }
 
 void Workspace::deleteObject(const QString &id)
@@ -536,7 +723,8 @@ static QString sanitizePropertyKey(const QString &raw)
     return k.isEmpty() ? QStringLiteral("prop") : k;
 }
 
-QString Workspace::createCustomType(const QString &name, const QString &colorNameOrHex, const QVariantList &propDefs)
+QString Workspace::createCustomType(const QString &name, const QString &colorNameOrHex,
+                                    const QVariantList &propDefs, const QString &icon)
 {
     const QString cleanName = name.trimmed();
     if (cleanName.isEmpty())
@@ -550,7 +738,7 @@ QString Workspace::createCustomType(const QString &name, const QString &colorNam
     ObjectType t;
     t.id = id;
     t.name = cleanName;
-    t.icon = QStringLiteral("box");
+    t.icon = icon.trimmed().isEmpty() ? QStringLiteral("box") : icon.trimmed();
     t.color = colorNameOrHex.trimmed().isEmpty() ? QStringLiteral("blue") : colorNameOrHex.trimmed();
     t.standard = false;
     for (const QVariant &v : propDefs) {
@@ -615,6 +803,239 @@ bool Workspace::addPropertyToType(const QString &typeId, const QString &propName
     return true;
 }
 
+bool Workspace::addOptionToProperty(const QString &typeId, const QString &propKey,
+                                    const QString &label, const QString &color)
+{
+    const QString norm = normalizeTypeId(typeId);
+    const QString cleanKey = normalizePropertyKey(propKey);
+    const QString cleanLabel = label.trimmed();
+    if (cleanKey.isEmpty() || cleanLabel.isEmpty() || !m_types.contains(norm))
+        return false;
+    ObjectType t = m_types.value(norm);
+    const QString optId = sanitizePropertyKey(cleanLabel);
+    if (optId.isEmpty())
+        return false;
+
+    bool changed = false;
+    QJsonArray nextDefs;
+    for (const QJsonValue &v : t.propertyDefs) {
+        QJsonObject def = v.toObject();
+        const QString k = normalizePropertyKey(def.value(QLatin1String("key")).toString(def.value(QLatin1String("id")).toString()));
+        if (k == cleanKey) {
+            QJsonArray opts = def.value(QLatin1String("options")).toArray();
+            for (const QJsonValue &ov : opts) {
+                const QJsonObject oo = ov.toObject();
+                if (oo.value(QLatin1String("id")).toString().compare(optId, Qt::CaseInsensitive) == 0
+                    || oo.value(QLatin1String("label")).toString().compare(cleanLabel, Qt::CaseInsensitive) == 0)
+                    return false;
+            }
+            opts.append(QJsonObject{
+                { "id", optId },
+                { "label", cleanLabel },
+                { "color", color.trimmed().isEmpty() ? QStringLiteral("blue") : color.trimmed() },
+            });
+            def.insert(QStringLiteral("options"), opts);
+            changed = true;
+        }
+        nextDefs.append(def);
+    }
+    if (!changed)
+        return false;
+    t.propertyDefs = nextDefs;
+    m_types.insert(t.id, t);
+    if (m_store) {
+        m_store->putType(t);
+        m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
+        m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
+        m_pendingCount = m_store->pendingOps().size();
+        emit syncStateChanged();
+        schedulePush(1200);
+    }
+    emit typesChanged();
+    return true;
+}
+
+bool Workspace::removeOptionFromProperty(const QString &typeId, const QString &propKey, const QString &optionId)
+{
+    const QString norm = normalizeTypeId(typeId);
+    const QString cleanKey = normalizePropertyKey(propKey);
+    const QString cleanOpt = optionId.trimmed();
+    if (cleanKey.isEmpty() || cleanOpt.isEmpty() || !m_types.contains(norm))
+        return false;
+    ObjectType t = m_types.value(norm);
+    bool changed = false;
+    QJsonArray nextDefs;
+    for (const QJsonValue &v : t.propertyDefs) {
+        QJsonObject def = v.toObject();
+        const QString k = normalizePropertyKey(def.value(QLatin1String("key")).toString(def.value(QLatin1String("id")).toString()));
+        if (k == cleanKey) {
+            QJsonArray opts = def.value(QLatin1String("options")).toArray();
+            QJsonArray kept;
+            for (const QJsonValue &ov : opts) {
+                const QJsonObject oo = ov.toObject();
+                if (oo.value(QLatin1String("id")).toString() == cleanOpt) {
+                    changed = true;
+                    continue;
+                }
+                kept.append(ov);
+            }
+            def.insert(QStringLiteral("options"), kept);
+        }
+        nextDefs.append(def);
+    }
+    if (!changed)
+        return false;
+    t.propertyDefs = nextDefs;
+    m_types.insert(t.id, t);
+    if (m_store) {
+        m_store->putType(t);
+        m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
+        m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
+        m_pendingCount = m_store->pendingOps().size();
+        emit syncStateChanged();
+        schedulePush(1200);
+    }
+    emit typesChanged();
+    return true;
+}
+
+QVariantMap Workspace::resolveOption(const QString &typeId, const QString &propKey, const QString &optionId) const
+{
+    const QString cleanOpt = optionId.trimmed();
+    if (cleanOpt.isEmpty())
+        return {};
+    const ObjectType t = m_types.value(normalizeTypeId(typeId));
+    const QString cleanKey = normalizePropertyKey(propKey);
+    for (const QJsonValue &v : t.propertyDefs) {
+        const QJsonObject def = v.toObject();
+        const QString k = normalizePropertyKey(def.value(QLatin1String("key")).toString(def.value(QLatin1String("id")).toString()));
+        if (k != cleanKey)
+            continue;
+        for (const QJsonValue &ov : def.value(QLatin1String("options")).toArray()) {
+            const QJsonObject oo = ov.toObject();
+            const QString id = oo.value(QLatin1String("id")).toString();
+            const QString label = oo.value(QLatin1String("label")).toString(id);
+            if (id.compare(cleanOpt, Qt::CaseInsensitive) == 0 || label.compare(cleanOpt, Qt::CaseInsensitive) == 0) {
+                return QVariantMap{
+                    { "id", id },
+                    { "label", label },
+                    { "color", oo.value(QLatin1String("color")).toString(QStringLiteral("blue")) },
+                };
+            }
+        }
+    }
+    return QVariantMap{ { "id", cleanOpt }, { "label", cleanOpt }, { "color", QStringLiteral("gray") } };
+}
+
+QVariantMap Workspace::resolvePersonByValue(const QString &raw) const
+{
+    const QString clean = raw.trimmed();
+    if (clean.isEmpty())
+        return {};
+    if (auto it = m_objects.find(clean); it != m_objects.end() && it->trashedAt.isEmpty() && it->typeId == TypeId::Person) {
+        return QVariantMap{ { "id", it->id }, { "title", it->title } };
+    }
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.typeId != TypeId::Person)
+            continue;
+        if (o.title.trimmed().compare(clean, Qt::CaseInsensitive) == 0)
+            return QVariantMap{ { "id", o.id }, { "title", o.title } };
+    }
+    return {};
+}
+
+QVariantList Workspace::collectionsForObject(const QString &objectId) const
+{
+    QVariantList out;
+    if (objectId.isEmpty())
+        return out;
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate() || o.typeId != TypeId::Collection)
+            continue;
+        bool has = o.propertyStringList(QStringLiteral("items")).contains(objectId);
+        if (!has) {
+            for (const Block &b : o.blocks) {
+                if (b.objectId == objectId) {
+                    has = true;
+                    break;
+                }
+                for (const Run &r : b.runs) {
+                    if (r.objectId == objectId) {
+                        has = true;
+                        break;
+                    }
+                }
+                if (has)
+                    break;
+            }
+        }
+        if (has)
+            out.append(QVariantMap{ { "id", o.id }, { "title", o.title } });
+    }
+    return out;
+}
+
+QVariantMap Workspace::projectProgress(const QString &projectId) const
+{
+    int done = 0, total = 0, notes = 0, people = 0;
+    if (projectId.isEmpty() || !m_objects.contains(projectId))
+        return QVariantMap{ { "done", 0 }, { "total", 0 }, { "notes", 0 }, { "people", 0 } };
+    QSet<QString> linkedIds;
+    // Outgoing mentions & embeds from the project itself
+    const Object &proj = m_objects.value(projectId);
+    for (const Block &b : proj.blocks) {
+        if (!b.objectId.isEmpty())
+            linkedIds.insert(b.objectId);
+        for (const Run &r : b.runs)
+            if (!r.objectId.isEmpty())
+                linkedIds.insert(r.objectId);
+    }
+    // Incoming links from other objects mentioning this project
+    for (const Object &o : m_objects) {
+        if (o.id == projectId || !o.trashedAt.isEmpty() || o.isTemplate())
+            continue;
+        bool mentionsProj = false;
+        for (const Block &b : o.blocks) {
+            if (b.objectId == projectId) {
+                mentionsProj = true;
+                break;
+            }
+            for (const Run &r : b.runs) {
+                if (r.objectId == projectId) {
+                    mentionsProj = true;
+                    break;
+                }
+            }
+            if (mentionsProj)
+                break;
+        }
+        if (mentionsProj)
+            linkedIds.insert(o.id);
+    }
+    for (const QString &id : linkedIds) {
+        auto it = m_objects.find(id);
+        if (it == m_objects.end() || !it->trashedAt.isEmpty() || it->isTemplate())
+            continue;
+        if (it->typeId == TypeId::Task) {
+            ++total;
+            if (viewFor(*it).taskDone)
+                ++done;
+        } else if (it->typeId == TypeId::Note) {
+            ++notes;
+        } else if (it->typeId == TypeId::Person) {
+            ++people;
+        }
+    }
+    return QVariantMap{ { "done", done }, { "total", total }, { "notes", notes }, { "people", people } };
+}
+
+QString Workspace::clipboardText() const
+{
+    if (const QClipboard *cb = QGuiApplication::clipboard())
+        return cb->text().trimmed();
+    return {};
+}
+
 QVariantList Workspace::typeProperties(const QString &typeId) const
 {
     QVariantList out;
@@ -626,9 +1047,60 @@ QVariantList Workspace::typeProperties(const QString &typeId) const
         m.insert("key", key);
         m.insert("name", o.value(QLatin1String("name")).toString(key));
         m.insert("kind", o.value(QLatin1String("kind")).toString(QStringLiteral("text")));
+        m.insert("system", o.value(QLatin1String("system")).toBool());
+        m.insert("options", o.value(QLatin1String("options")).toArray().toVariantList());
         out.append(m);
     }
     return out;
+}
+
+// Option labels for a select value: known ids get their label, unknown ids stay as they came
+// (spec/types.md "Values on the wire").
+QVariantList pkm::detail::selectedOptions(const QJsonValue &val, const QJsonArray &options)
+{
+    QStringList ids;
+    if (val.isArray()) {
+        for (const QJsonValue &v : val.toArray())
+            if (!v.toString().isEmpty())
+                ids.append(v.toString());
+    } else if (!val.toString().isEmpty()) {
+        ids.append(val.toString());
+    }
+    QVariantList out;
+    for (const QString &id : std::as_const(ids)) {
+        QVariantMap m{ { "id", id }, { "label", id }, { "color", QString() } };
+        for (const QJsonValue &ov : options) {
+            const QJsonObject o = ov.toObject();
+            if (o.value(QLatin1String("id")).toString() == id) {
+                m.insert("label", o.value(QLatin1String("label")).toString(id));
+                m.insert("color", o.value(QLatin1String("color")).toString());
+                break;
+            }
+        }
+        out.append(m);
+    }
+    return out;
+}
+
+void Workspace::toggleOption(const QString &objectId, const QString &key, const QString &optionId, bool multi)
+{
+    auto it = m_objects.constFind(objectId);
+    if (it == m_objects.constEnd() || key.isEmpty() || optionId.isEmpty())
+        return;
+    const QJsonValue cur = it.value().properties.value(key);
+    if (!multi) {
+        const bool same = cur.toString() == optionId;
+        setObjectProperty(objectId, key, same ? QString() : optionId, QStringLiteral("select"));
+        return;
+    }
+    QStringList ids;
+    for (const QJsonValue &v : cur.toArray())
+        ids.append(v.toString());
+    if (ids.contains(optionId))
+        ids.removeAll(optionId);
+    else
+        ids.append(optionId);
+    setObjectProperty(objectId, key, ids.join(QLatin1Char(',')), QStringLiteral("multi_select"));
 }
 
 QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
@@ -641,7 +1113,8 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
     const ObjectType t = m_types.value(normalizeTypeId(obj.typeId));
     QSet<QString> seen;
 
-    auto appendEntry = [&](const QString &key, const QString &name, const QString &kind) {
+    auto appendEntry = [&](const QString &key, const QString &name, const QString &kind,
+                           const QJsonArray &options = {}) {
         if (key.isEmpty() || seen.contains(key))
             return;
         seen.insert(key);
@@ -675,6 +1148,15 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
             displayVal = val.toString();
         }
         entry.insert("kind", resolvedKind.isEmpty() ? QStringLiteral("text") : resolvedKind);
+        if (resolvedKind == QLatin1String("select") || resolvedKind == QLatin1String("multi_select")) {
+            const QVariantList sel = pkm::detail::selectedOptions(val, options);
+            QStringList labels;
+            for (const QVariant &sv : sel)
+                labels.append(sv.toMap().value(QStringLiteral("label")).toString());
+            displayVal = labels.join(QStringLiteral(", "));
+            entry.insert("selected", sel);
+            entry.insert("options", options.toVariantList());
+        }
         entry.insert("value", displayVal);
         entry.insert("checked", boolVal);
         out.append(entry);
@@ -682,8 +1164,11 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
 
     for (const QJsonValue &v : t.propertyDefs) {
         const QJsonObject o = v.toObject();
+        if (o.value(QLatin1String("system")).toBool())
+            continue; // filled by the app (file, url, tags): shown where it belongs, not as a field
         const QString k = normalizePropertyKey(o.value(QLatin1String("key")).toString(o.value(QLatin1String("id")).toString()));
-        appendEntry(k, o.value(QLatin1String("name")).toString(k), o.value(QLatin1String("kind")).toString(QStringLiteral("text")));
+        appendEntry(k, o.value(QLatin1String("name")).toString(k), o.value(QLatin1String("kind")).toString(QStringLiteral("text")),
+                    o.value(QLatin1String("options")).toArray());
     }
 
     static const QSet<QString> kHidden = {
@@ -697,10 +1182,17 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
     };
     QStringList objKeys = obj.properties.keys();
     std::sort(objKeys.begin(), objKeys.end());
+    const int definedCount = out.size();
     for (const QString &k : objKeys) {
         if (kHidden.contains(k))
             continue;
         appendEntry(k, k, QString());
+    }
+    // Keys the type does not define are loose (spec/schema.md rule 4): shown apart, removable.
+    for (int i = definedCount; i < out.size(); ++i) {
+        QVariantMap m = out[i].toMap();
+        m.insert("loose", true);
+        out[i] = m;
     }
     return out;
 }
@@ -770,6 +1262,25 @@ void Workspace::setObjectProperty(const QString &objectId, const QString &key, c
     emit objectPropertiesChanged(objectId);
 }
 
+void Workspace::removeObjectProperty(const QString &objectId, const QString &key)
+{
+    auto it = m_objects.find(objectId);
+    if (it == m_objects.end() || key.trimmed().isEmpty())
+        return;
+    Object next = it.value();
+    if (auto *ed = m_editors.value(objectId)) {
+        next.blocks = ed->m_blocks;
+        next.title = ed->m_title;
+    }
+    if (!next.properties.contains(key))
+        return;
+    next.properties.remove(key);
+    saveObject(next);
+    if (auto *ed = m_editors.value(objectId))
+        ed->m_object.properties = next.properties;
+    emit objectPropertiesChanged(objectId);
+}
+
 QVariantList Workspace::inbox() const
 {
     QVariantList out;
@@ -777,13 +1288,172 @@ QVariantList Workspace::inbox() const
         const QJsonValue v = o.properties.value(QStringLiteral("reviewed"));
         if (!v.isBool() || v.toBool() || !o.trashedAt.isEmpty() || o.isTemplate())
             continue;
-        QVariantMap m;
-        m.insert(QStringLiteral("id"), o.id);
-        m.insert(QStringLiteral("title"), o.title);
-        m.insert(QStringLiteral("typeId"), o.typeId);
+        QVariantMap m = objectSummary(o.id);
+        m.insert(QStringLiteral("url"), o.propertyString(QStringLiteral("url")));
+        m.insert(QStringLiteral("domain"), QUrl(o.propertyString(QStringLiteral("url"))).host());
+        m.insert(QStringLiteral("description"), o.propertyString(QStringLiteral("description")));
+        m.insert(QStringLiteral("category"), o.propertyString(QStringLiteral("category")));
+        m.insert(QStringLiteral("reviewed"), false);
         out.append(m);
     }
+    std::sort(out.begin(), out.end(), [](const QVariant &a, const QVariant &b) {
+        return a.toMap().value(QStringLiteral("updatedAt")).toString()
+             > b.toMap().value(QStringLiteral("updatedAt")).toString();
+    });
     return out;
+}
+
+QVariantList Workspace::reviewedItems(int limit) const
+{
+    QVariantList out;
+    for (const Object &o : m_objects) {
+        const QJsonValue v = o.properties.value(QStringLiteral("reviewed"));
+        if (!v.isBool() || !v.toBool() || !o.trashedAt.isEmpty() || o.isTemplate())
+            continue;
+        QVariantMap m = objectSummary(o.id);
+        m.insert(QStringLiteral("url"), o.propertyString(QStringLiteral("url")));
+        m.insert(QStringLiteral("domain"), QUrl(o.propertyString(QStringLiteral("url"))).host());
+        m.insert(QStringLiteral("description"), o.propertyString(QStringLiteral("description")));
+        m.insert(QStringLiteral("category"), o.propertyString(QStringLiteral("category")));
+        m.insert(QStringLiteral("reviewed"), true);
+        out.append(m);
+    }
+    std::sort(out.begin(), out.end(), [](const QVariant &a, const QVariant &b) {
+        return a.toMap().value(QStringLiteral("updatedAt")).toString()
+             > b.toMap().value(QStringLiteral("updatedAt")).toString();
+    });
+    if (limit > 0 && out.size() > limit)
+        out = out.mid(0, limit);
+    return out;
+}
+
+QVariantList Workspace::allTagsWithCounts() const
+{
+    struct TagEntry {
+        QString id;
+        QString name;
+        int count = 0;
+    };
+    // Pass 1: register ONLY real Tag objects (o.typeId == TypeId::Tag).
+    // Never invent phantom tags from web-link descriptions, legacy properties["tags"] strings,
+    // or inline #hashtags (Tags.dc.html: "Cada etiqueta es un objeto").
+    QHash<QString, TagEntry> entries; // keyed by tagKey(name)
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate() || o.typeId != TypeId::Tag)
+            continue;
+        const QString clean = QString(o.title).remove(QLatin1Char('#')).trimmed();
+        if (clean.isEmpty())
+            continue;
+        const QString k = tagKey(clean);
+        TagEntry &e = entries[k];
+        e.id = o.id;
+        e.name = clean;
+    }
+
+    // Pass 2: count non-trashed objects referencing each registered Tag object.
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate() || o.typeId == TypeId::Tag)
+            continue;
+        QSet<QString> seenInObj;
+        for (const QString &raw : o.propertyStringList(QStringLiteral("tags"))) {
+            const QString clean = QString(raw).remove(QLatin1Char('#')).trimmed();
+            if (clean.isEmpty())
+                continue;
+            const QString k = tagKey(clean);
+            if (entries.contains(k))
+                seenInObj.insert(k);
+        }
+        for (const Block &b : o.blocks) {
+            for (const Run &r : b.runs) {
+                const QString clean = QString(r.tagName).remove(QLatin1Char('#')).trimmed();
+                if (clean.isEmpty())
+                    continue;
+                const QString k = tagKey(clean);
+                if (entries.contains(k))
+                    seenInObj.insert(k);
+            }
+        }
+        for (const QString &k : seenInObj) {
+            auto it = entries.find(k);
+            if (it != entries.end())
+                ++it->count;
+        }
+    }
+
+    QVariantList out;
+    out.reserve(entries.size());
+    for (auto it = entries.constBegin(); it != entries.constEnd(); ++it) {
+        out.append(QVariantMap{
+            { "id", it->id },
+            { "name", it->name },
+            { "color", tagColor(it->name) },
+            { "count", it->count },
+        });
+    }
+    std::sort(out.begin(), out.end(), [](const QVariant &a, const QVariant &b) {
+        const auto am = a.toMap(), bm = b.toMap();
+        if (am.value("count").toInt() != bm.value("count").toInt())
+            return am.value("count").toInt() > bm.value("count").toInt();
+        return am.value("name").toString().compare(bm.value("name").toString(), Qt::CaseInsensitive) < 0;
+    });
+    return out;
+}
+
+QVariantList Workspace::objectsForTag(const QString &tagName) const
+{
+    const QString clean = QString(tagName).remove(QLatin1Char('#')).trimmed();
+    if (clean.isEmpty())
+        return {};
+    const QString wantKey = tagKey(clean);
+    QList<Object> hits;
+    for (const Object &o : m_objects) {
+        if (!o.trashedAt.isEmpty() || o.isTemplate() || o.typeId == TypeId::Tag)
+            continue;
+        bool matched = false;
+        for (const QString &raw : o.propertyStringList(QStringLiteral("tags"))) {
+            if (tagKey(QString(raw).remove(QLatin1Char('#')).trimmed()) == wantKey) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            for (const Block &b : o.blocks) {
+                for (const Run &r : b.runs) {
+                    const QString c = QString(r.tagName).remove(QLatin1Char('#')).trimmed();
+                    if (!c.isEmpty() && tagKey(c) == wantKey) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (matched)
+                    break;
+            }
+        }
+        if (matched)
+            hits.append(o);
+    }
+    std::sort(hits.begin(), hits.end(), [](const Object &a, const Object &b) {
+        return a.updatedAt > b.updatedAt;
+    });
+    QVariantList out;
+    out.reserve(hits.size());
+    for (const Object &o : hits)
+        out.append(objectToVariant(o, viewFor(o), QString()));
+    return out;
+}
+
+void Workspace::copyTextToClipboard(const QString &text) const
+{
+    if (QClipboard *cb = QGuiApplication::clipboard())
+        cb->setText(text);
+}
+
+bool Workspace::copyBlockReference(const QString &objectId, const QString &blockId) const
+{
+    if (objectId.isEmpty() || blockId.isEmpty())
+        return false;
+    copyTextToClipboard(QStringLiteral("yaop://object/") + objectId + QLatin1Char('#') + blockId);
+    return true;
 }
 
 void Workspace::markReviewed(const QString &id)

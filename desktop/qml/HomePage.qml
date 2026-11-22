@@ -94,9 +94,9 @@ Item {
 
         ColumnLayout {
             id: content
-            x: Theme.pagePad
+            width: Math.min(parent.width - 2 * Theme.pagePad, 1080)
+            x: Math.round((parent.width - width) / 2)
             y: Theme.pagePad
-            width: parent.width - 2 * Theme.pagePad
             spacing: 16
 
             // ---------------- hero: one sentence, two buttons ----------------
@@ -105,6 +105,8 @@ Item {
                 Layout.preferredHeight: heroCol.implicitHeight + 48
                 radius: Theme.radius
                 color: Theme.panel
+                border.width: Theme.noir ? 1 : 0
+                border.color: Theme.line
 
                 ColumnLayout {
                     id: heroCol
@@ -114,7 +116,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 12
 
-                    Flow {
+                    Row {
                         Layout.fillWidth: true
                         spacing: 10
                         readonly property string greeting: {
@@ -123,6 +125,7 @@ Item {
                                  : h < 20 ? qsTr("Good afternoon") : qsTr("Good evening")
                         }
                         Text {
+                            id: greetWord1
                             text: parent.greeting.substring(0, parent.greeting.lastIndexOf(" "))
                             color: Theme.text
                             font.family: Theme.display
@@ -130,18 +133,19 @@ Item {
                             font.weight: Font.Medium
                         }
                         Text {
+                            anchors.baseline: greetWord1.baseline
                             text: parent.greeting.substring(parent.greeting.lastIndexOf(" ") + 1)
                             color: Theme.ice
-                            font.family: Theme.pixel
-                            font.pixelSize: 36
-                            font.weight: Font.ExtraBold
+                            font.family: Theme.noir ? Theme.display : Theme.pixel
+                            font.pixelSize: Theme.noir ? 34 : 36
+                            font.weight: Theme.noir ? Font.Medium : Font.ExtraBold
                         }
                         Text {
+                            anchors.baseline: greetWord1.baseline
                             text: qsTr("— %1 tasks for today.").arg(home.todayTasks.length)
                             color: Theme.dim
                             font.family: Theme.body
-                            font.pixelSize: 18
-                            anchors.baseline: undefined
+                            font.pixelSize: 16
                         }
                     }
 
@@ -176,6 +180,8 @@ Item {
                 Layout.preferredHeight: habitsCol.implicitHeight + 28
                 radius: Theme.radius
                 color: Theme.panel
+                border.width: Theme.noir ? 1 : 0
+                border.color: Theme.line
                 ColumnLayout {
                     id: habitsCol
                     anchors.fill: parent
@@ -200,11 +206,15 @@ Item {
                                 spacing: 4
                                 readonly property real p: home.habitRev >= 0 ? home.habitDone(modelData) : 0
                                 Rectangle {
-                                    width: 44; height: 44; radius: 22
-                                    color: hc.p >= 1 ? Theme.ok : Qt.rgba(1, 1, 1, 0.1)
-                                    border.width: hc.p > 0 && hc.p < 1 ? 3 : 0
-                                    border.color: Theme.ok
+                                    width: 44; height: 44; radius: Theme.noir ? 0 : 22
+                                    color: Theme.noir
+                                        ? (hc.p >= 1 ? Theme.accent : "transparent")
+                                        : (hc.p >= 1 ? Theme.ok : Qt.rgba(1, 1, 1, 0.1))
+                                    border.width: Theme.noir ? 1 : (hc.p > 0 && hc.p < 1 ? 3 : 0)
+                                    border.color: Theme.noir ? (hc.p >= 1 ? Theme.accent : Theme.line2) : Theme.ok
+                                    Behavior on color { ColorAnimation { duration: 200 * Theme.motion } }
                                     Text { anchors.centerIn: parent; text: hc.modelData.emoji || "🌱"; font.pixelSize: 18 }
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                                     MouseArea { anchors.fill: parent; onClicked: home.habitTap(hc.modelData) }
                                 }
                                 Text {
@@ -245,10 +255,24 @@ Item {
                     Repeater {
                         model: home.todayTasks.slice(0, 6)
                         delegate: Item {
+                            id: homeTaskItem
                             required property var modelData
                             required property int index
+                            property bool pendingToggle: false
+                            readonly property bool visualDone: pendingToggle ? !(modelData.taskDone === true)
+                                                                             : (modelData.taskDone === true)
                             Layout.fillWidth: true
                             Layout.preferredHeight: 48
+
+                            Timer {
+                                id: homeToggleTimer
+                                interval: 260
+                                repeat: false
+                                onTriggered: {
+                                    ws.completeTask(homeTaskItem.modelData.id)
+                                    homeTaskItem.pendingToggle = false
+                                }
+                            }
 
                             Rectangle {
                                 visible: index > 0
@@ -263,32 +287,60 @@ Item {
                                 anchors.rightMargin: 10
                                 spacing: 12
 
-                                // circular check: marked = white fill + ink tick
+                                // Sharp 18x18 square checkbox with 300ms scale(0->1) accent fill in noir (AppDesktop.dc.html)
                                 Rectangle {
-                                    Layout.preferredWidth: 20
-                                    Layout.preferredHeight: 20
-                                    radius: 10
-                                    color: modelData.taskDone === true ? Theme.accent : "transparent"
-                                    border.width: 1.5
-                                    border.color: modelData.taskDone === true ? Theme.accent : Theme.dim
+                                    Layout.preferredWidth: Theme.noir ? 18 : 20
+                                    Layout.preferredHeight: Theme.noir ? 18 : 20
+                                    radius: Theme.noir ? 0 : 10
+                                    color: Theme.noir ? "transparent" : (homeTaskItem.visualDone ? Theme.accent : "transparent")
+                                    border.width: Theme.noir ? 1 : 1.5
+                                    border.color: homeTaskItem.visualDone ? Theme.accent : (Theme.noir ? Theme.faint : Theme.dim)
+                                    Behavior on border.color { ColorAnimation { duration: 200 * Theme.motion } }
+                                    Rectangle {
+                                        visible: Theme.noir
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        color: Theme.accent
+                                        scale: homeTaskItem.visualDone ? 1 : 0
+                                        opacity: homeTaskItem.visualDone ? 1 : 0
+                                        Behavior on scale {
+                                            NumberAnimation {
+                                                duration: 300 * Theme.motion
+                                                easing.type: Easing.Bezier
+                                                easing.bezierCurve: [0.2, 0.8, 0.1, 1, 1, 1]
+                                            }
+                                        }
+                                        Behavior on opacity { NumberAnimation { duration: 200 * Theme.motion } }
+                                    }
                                     Text {
-                                        visible: modelData.taskDone === true
+                                        visible: !Theme.noir && homeTaskItem.visualDone
                                         anchors.centerIn: parent
                                         text: "✓"
                                         color: Theme.accentInk
                                         font.pixelSize: 12
                                         font.weight: Font.Bold
                                     }
-                                    TapHandler { onTapped: ws.completeTask(modelData.id) }
+                                    TapHandler {
+                                        onTapped: {
+                                            if (homeToggleTimer.running) return
+                                            if (Theme.noir && Theme.motion > 0) {
+                                                homeTaskItem.pendingToggle = true
+                                                homeToggleTimer.start()
+                                            } else {
+                                                ws.completeTask(homeTaskItem.modelData.id)
+                                            }
+                                        }
+                                    }
                                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                                 }
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.title
-                                    color: modelData.taskDone === true ? Theme.muted : Theme.text
+                                    color: homeTaskItem.visualDone ? Theme.label : Theme.text
+                                    Behavior on color { ColorAnimation { duration: 300 * Theme.motion } }
                                     font.family: Theme.body
                                     font.pixelSize: 14
-                                    font.strikeout: modelData.taskDone === true
+                                    font.strikeout: homeTaskItem.visualDone
                                     elide: Text.ElideRight
                                     TapHandler { onTapped: home.openObjectRequested(modelData.id) }
                                 }
@@ -343,8 +395,10 @@ Item {
                                 Rectangle {
                                     Layout.preferredWidth: 42
                                     Layout.preferredHeight: 42
-                                    radius: 12
-                                    color: Theme.panel2
+                                    radius: Theme.noir ? 0 : 12
+                                    color: Theme.noir ? "transparent" : Theme.panel2
+                                    border.width: Theme.noir ? 1 : 0
+                                    border.color: Theme.line2
                                     TintedIcon {
                                         anchors.centerIn: parent
                                         name: Theme.typeIcon(rowItem.modelData.typeId)

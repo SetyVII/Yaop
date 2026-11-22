@@ -687,18 +687,33 @@ void editorKeysScenario(QQuickWindow *window)
                                                 later(600, [=]() {
                                                     check(order().contains(QLatin1String("paragraph:Xalpha")),
                                                           QStringLiteral("right at the end goes to the next block (%1)").arg(order()));
-                                                    key(Qt::Key_Down);      // Xalpha -> code: block mode
-                                                    key(Qt::Key_Return);    // edit the code
-                                                    later(300, [=]() {
-                                                    check(model->selectedCount() == 0 && focused() != QLatin1String("blockModeKeys"),
-                                                          QStringLiteral("enter on a code block edits it (focus=%1)").arg(focused()));
-                                                    key(Qt::Key_Escape);
-                                                    later(300, [=]() {
-                                                    check(model->selectedCount() == 1 && focused() == QLatin1String("blockModeKeys"),
-                                                          QStringLiteral("esc in code goes back to block mode (focus=%1)").arg(focused()));
-                                                    dlog(QStringLiteral("DRIVE editor-keys done failures=%1").arg(checks->size()));
-                                                    QCoreApplication::exit(checks->isEmpty() ? 0 : 6);
-                                                    });
+                                                    const int rowsBefore = model->rowCount();
+                                                    const qreal yBefore = window->activeFocusItem()
+                                                        ? window->activeFocusItem()->property("cursorRectangle").toRectF().y() : -1;
+                                                    key(Qt::Key_Return, Qt::ShiftModifier);
+                                                    type("Y");
+                                                    later(600, [=]() {
+                                                        const qreal yAfter = window->activeFocusItem()
+                                                            ? window->activeFocusItem()->property("cursorRectangle").toRectF().y() : -1;
+                                                        check(model->rowCount() == rowsBefore
+                                                                  && order().contains(QLatin1String("paragraph:X\nYalpha"))
+                                                                  && yAfter > yBefore,
+                                                              QStringLiteral("shift+enter stays in block & moves to next line (rows=%1->%2 y=%3->%4 order=%5)")
+                                                                  .arg(rowsBefore).arg(model->rowCount())
+                                                                  .arg(yBefore).arg(yAfter).arg(order()));
+                                                        key(Qt::Key_Down);      // X\nYalpha -> code: block mode
+                                                        key(Qt::Key_Return);    // edit the code
+                                                        later(300, [=]() {
+                                                        check(model->selectedCount() == 0 && focused() != QLatin1String("blockModeKeys"),
+                                                              QStringLiteral("enter on a code block edits it (focus=%1)").arg(focused()));
+                                                        key(Qt::Key_Escape);
+                                                        later(300, [=]() {
+                                                        check(model->selectedCount() == 1 && focused() == QLatin1String("blockModeKeys"),
+                                                              QStringLiteral("esc in code goes back to block mode (focus=%1)").arg(focused()));
+                                                        dlog(QStringLiteral("DRIVE editor-keys done failures=%1").arg(checks->size()));
+                                                        QCoreApplication::exit(checks->isEmpty() ? 0 : 6);
+                                                        });
+                                                        });
                                                     });
                                                 });
                                             });
@@ -1194,18 +1209,143 @@ QString seedShowcase(Workspace *ws)
         return id;
     Object o = *obj;
 
-    // A real image asset for the media block and the library.
+    // A real architectural-style image asset for the media block, book cover, and image viewer.
     QImage img(900, 1200, QImage::Format_RGB32);
-    img.fill(QColor("#27406b"));
-    for (int y = 0; y < img.height(); ++y)
-        for (int x = 0; x < img.width(); x += 3)
-            img.setPixelColor(x, y, QColor::fromHsv((x + y) % 360, 120, 200));
+    img.fill(QColor("#111318"));
+    for (int y = 0; y < img.height(); ++y) {
+        for (int x = 0; x < img.width(); ++x) {
+            if (y < 420 && x > 140 && x < 760)
+                img.setPixelColor(x, y, QColor("#27406b"));
+            else if (y >= 460 && y < 780 && x > 140 && x < 460)
+                img.setPixelColor(x, y, QColor("#C8F04A"));
+            else if (y >= 460 && y < 780 && x >= 500 && x < 760)
+                img.setPixelColor(x, y, QColor("#D97A36"));
+            else if (y >= 840 && y < 1040 && x > 140 && x < 760)
+                img.setPixelColor(x, y, QColor("#1F242D"));
+        }
+    }
     const QString imgPath = QDir::tempPath() + QStringLiteral("/yaop-showcase.png");
     img.save(imgPath, "PNG");
     const QString assetId = ws->importFileAsAsset(imgPath);
 
+    // Rich specialized objects for Book, Person, Image Viewer, Inbox/Reviewed, Graph & Unlinked Mentions.
+    const QString bookId = QStringLiteral("book-showcase");
+    const QString personId = QStringLiteral("person-showcase");
+    const QString imageId = QStringLiteral("image-showcase");
+    const QString nowIso = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+
+    ws->ensureTagObject(QStringLiteral("PKM"));
+    ws->ensureTagObject(QStringLiteral("Writing"));
+    ws->ensureTagObject(QStringLiteral("Design"));
+    ws->ensureTagObject(QStringLiteral("AI"));
+    ws->ensureTagObject(QStringLiteral("Coding"));
+
+    {
+        Object person;
+        person.id = personId;
+        person.typeId = TypeId::Person;
+        person.title = QStringLiteral("Ana López");
+        person.createdAt = nowIso;
+        person.updatedAt = nowIso;
+        person.properties.insert(QStringLiteral("category"), QStringLiteral("friend"));
+        person.properties.insert(QStringLiteral("email"), QStringLiteral("ana@estudionorte.es"));
+        person.properties.insert(QStringLiteral("organization"), QStringLiteral("Estudio Norte"));
+        person.properties.insert(QStringLiteral("phone"), QStringLiteral("+34 612 345 678"));
+        person.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("Design"), QStringLiteral("PKM") });
+        Block ph1 = Block::makeParagraph(newUuid(), { run(QStringLiteral("Context")) });
+        ph1.type = BlockType::Heading; ph1.level = 2;
+        person.blocks = {
+            ph1,
+            para(QStringLiteral("Product designer collaborating on Swiss grid typography and local-first tools.")),
+            para(QStringLiteral("Recommended reading Cómo tomar notas inteligentes for our weekly review workflow.")),
+        };
+        ws->saveObject(person);
+    }
+
+    {
+        Object authorPerson;
+        authorPerson.id = QStringLiteral("person-author-showcase");
+        authorPerson.typeId = TypeId::Person;
+        authorPerson.title = QStringLiteral("Sönke Ahrens");
+        authorPerson.createdAt = nowIso;
+        authorPerson.updatedAt = nowIso;
+        authorPerson.properties.insert(QStringLiteral("category"), QStringLiteral("author"));
+        authorPerson.blocks = { para(QStringLiteral("Author of How to Take Smart Notes.")) };
+        ws->saveObject(authorPerson);
+
+        Object col;
+        col.id = QStringLiteral("collection-showcase");
+        col.typeId = TypeId::Collection;
+        col.title = QStringLiteral("Lecturas 2026");
+        col.createdAt = nowIso;
+        col.updatedAt = nowIso;
+        col.properties.insert(QStringLiteral("item_type_id"), QStringLiteral("book"));
+        col.properties.insert(QStringLiteral("items"), QJsonArray{ bookId });
+        ws->saveObject(col);
+    }
+
+    {
+        Object book;
+        book.id = bookId;
+        book.typeId = TypeId::Book;
+        book.title = QStringLiteral("Cómo tomar notas inteligentes");
+        book.createdAt = nowIso;
+        book.updatedAt = nowIso;
+        book.properties.insert(QStringLiteral("author"), QStringLiteral("Sönke Ahrens"));
+        book.properties.insert(QStringLiteral("status"), QStringLiteral("reading"));
+        book.properties.insert(QStringLiteral("genre"), QJsonArray{ QStringLiteral("personal_growth"), QStringLiteral("productivity") });
+        book.properties.insert(QStringLiteral("rating"), 4);
+        book.properties.insert(QStringLiteral("cover"),
+                               QJsonObject{ { "asset_id", assetId }, { "crop_offset_y", 0.5 }, { "is_fit", false } });
+        book.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("PKM"), QStringLiteral("Writing") });
+        Run mentionAna;
+        mentionAna.text = QStringLiteral("Ana López");
+        mentionAna.objectId = personId;
+        Block bh1 = Block::makeParagraph(newUuid(), { run(QStringLiteral("Key ideas")) });
+        bh1.type = BlockType::Heading; bh1.level = 2;
+        Block bq = para(QStringLiteral("Writing is not what follows research, learning or studying, it is the medium of all this work."));
+        bq.type = BlockType::Quote;
+        Block bb1 = Block::makeParagraph(newUuid(), { run(QStringLiteral("Discussed chapter 4 with ")), mentionAna, run(QStringLiteral(" during the sprint review.")) });
+        bb1.type = BlockType::BulletList;
+        Block bb2 = para(QStringLiteral("Separate fleeting notes, literature notes, and permanent atomic notes."));
+        bb2.type = BlockType::BulletList;
+        book.blocks = { bh1, bq, bb1, bb2 };
+        ws->saveObject(book);
+    }
+
+    {
+        Object imObj;
+        imObj.id = imageId;
+        imObj.typeId = TypeId::Image;
+        imObj.title = QStringLiteral("Swiss grid study — composition 04.png");
+        imObj.createdAt = nowIso;
+        imObj.updatedAt = nowIso;
+        imObj.properties.insert(QStringLiteral("asset_id"), assetId);
+        imObj.properties.insert(QStringLiteral("file_name"), QStringLiteral("swiss-grid-04.png"));
+        imObj.properties.insert(QStringLiteral("mime"), QStringLiteral("image/png"));
+        imObj.properties.insert(QStringLiteral("caption"), QStringLiteral("High-contrast poster grid study with lime and amber blocks"));
+        imObj.properties.insert(QStringLiteral("source_url"), QStringLiteral("https://yaop.app/studies/grid-04"));
+        imObj.properties.insert(QStringLiteral("colors"), QJsonArray{ QStringLiteral("black"), QStringLiteral("blue"), QStringLiteral("green"), QStringLiteral("orange") });
+        imObj.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("Design") });
+        imObj.blocks = {
+            para(QStringLiteral("Reference visual for 0px corners, 1px hairline separation and accent balance.")),
+        };
+        ws->saveObject(imObj);
+    }
+
     const QString sibling = ws->createObject(QStringLiteral("task"), QStringLiteral("Review the quarterly plan"));
     ws->createObject(QStringLiteral("note"), QStringLiteral("A note with a deliberately long title that must elide or wrap instead of breaking the layout of its card"));
+
+    Run mentionBook;
+    mentionBook.text = QStringLiteral("Cómo tomar notas inteligentes");
+    mentionBook.objectId = bookId;
+    Run mentionPerson;
+    mentionPerson.text = QStringLiteral("Ana López");
+    mentionPerson.objectId = personId;
+    Block linkedIntro = Block::makeParagraph(newUuid(), {
+        run(QStringLiteral("Intro paragraph referencing ")), mentionBook,
+        run(QStringLiteral(" with notes from ")), mentionPerson, run(QStringLiteral("."))
+    });
 
     Block h1 = Block::makeParagraph(newUuid(), { run(QStringLiteral("Heading one")) });
     h1.type = BlockType::Heading; h1.level = 1;
@@ -1234,7 +1374,8 @@ QString seedShowcase(Workspace *ws)
     Block image; image.id = newUuid(); image.type = BlockType::Image; image.assetId = assetId;
     image.runs = { run(QStringLiteral("A caption")) };
 
-    o.blocks = { para(QStringLiteral("Intro paragraph with **inline** text.")), h1, h2, bullet, num, todo, toggle, child,
+    o.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("PKM"), QStringLiteral("Design") });
+    o.blocks = { linkedIntro, h1, h2, bullet, num, todo, toggle, child,
                  quote, callout, code, math, table, divider, bookmark, embed, image,
                  para(QStringLiteral("Last paragraph after everything.")) };
     ws->saveObject(o);
@@ -1249,22 +1390,50 @@ QString seedShowcase(Workspace *ws)
         wl.id = QStringLiteral("web-showcase");
         wl.typeId = TypeId::Web;
         wl.title = QStringLiteral("GLM Coding Plan — AI Coding Powered by GLM-5.1 & GLM-5-Turbo");
-        wl.createdAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
-        wl.updatedAt = wl.createdAt;
+        wl.createdAt = nowIso;
+        wl.updatedAt = nowIso;
         wl.properties.insert(QStringLiteral("url"), QStringLiteral("https://z.ai/subscribe"));
         wl.properties.insert(QStringLiteral("description"),
                              QStringLiteral("Use GLM models like GLM-5.1 & GLM-5-Turbo for AI coding in Claude Code, Kilo Code, Cline, OpenCode and more."));
         wl.properties.insert(QStringLiteral("cover"),
                              QJsonObject{ { "asset_id", assetId }, { "crop_offset_y", 0.5 }, { "is_fit", false } });
         wl.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("AI"), QStringLiteral("Coding") });
-        wl.properties.insert(QStringLiteral("category"), QStringLiteral(""));
-        wl.properties.insert(QStringLiteral("topic"), QStringLiteral(""));
+        wl.properties.insert(QStringLiteral("category"), QStringLiteral("tool"));
+        wl.properties.insert(QStringLiteral("topics"), QJsonArray{ QStringLiteral("technology"), QStringLiteral("programming") });
+        wl.properties.insert(QStringLiteral("reviewed"), false);
         wl.blocks.append(para(QStringLiteral("Notes about this web link and why it is useful.")));
-        ws->ensureTagObject(QStringLiteral("AI"));
-        ws->ensureTagObject(QStringLiteral("Coding"));
         ws->saveObject(wl);
-        ws->addPropertyToType(QStringLiteral("web"), QStringLiteral("Category"), QStringLiteral("text"));
-        ws->addPropertyToType(QStringLiteral("web"), QStringLiteral("Topic"), QStringLiteral("text"));
+
+        Object wl2;
+        wl2.id = QStringLiteral("web-showcase-2");
+        wl2.typeId = TypeId::Web;
+        wl2.title = QStringLiteral("Local-First Software: You Own Your Data, in spite of the Cloud");
+        wl2.createdAt = nowIso;
+        wl2.updatedAt = nowIso;
+        wl2.properties.insert(QStringLiteral("url"), QStringLiteral("https://www.inkandswitch.com/local-first/"));
+        wl2.properties.insert(QStringLiteral("description"),
+                              QStringLiteral("Seven ideals for local-first software: fast, multi-device, offline, collaborative, long-term, private, and user-controlled."));
+        wl2.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("PKM") });
+        wl2.properties.insert(QStringLiteral("category"), QStringLiteral("article"));
+        wl2.properties.insert(QStringLiteral("topics"), QJsonArray{ QStringLiteral("technology"), QStringLiteral("design") });
+        wl2.properties.insert(QStringLiteral("reviewed"), false);
+        wl2.blocks.append(para(QStringLiteral("Core inspiration for YAOP's sync and encrypted vault architecture.")));
+        ws->saveObject(wl2);
+
+        Object wl3;
+        wl3.id = QStringLiteral("web-showcase-reviewed");
+        wl3.typeId = TypeId::Web;
+        wl3.title = QStringLiteral("Qt 6 QML Best Practices & Scene Graph Architecture");
+        wl3.createdAt = nowIso;
+        wl3.updatedAt = nowIso;
+        wl3.properties.insert(QStringLiteral("url"), QStringLiteral("https://doc.qt.io/qt-6/qtquick-bestpractices.html"));
+        wl3.properties.insert(QStringLiteral("description"), QStringLiteral("Performance and declarative structure guidelines for Qt Quick desktop apps."));
+        wl3.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("Coding") });
+        wl3.properties.insert(QStringLiteral("category"), QStringLiteral("docs"));
+        wl3.properties.insert(QStringLiteral("topics"), QJsonArray{ QStringLiteral("programming") });
+        wl3.properties.insert(QStringLiteral("reviewed"), true);
+        wl3.blocks.append(para(QStringLiteral("Reviewed and filed for desktop reference.")));
+        ws->saveObject(wl3);
     }
     {
         const QString h1 = ws->createObject(QStringLiteral("habit"), QStringLiteral("Leer 30 min"));

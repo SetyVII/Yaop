@@ -34,6 +34,11 @@ qt_add_executable(yaop-desktop
     src/searchindex.cpp
     src/cachecrypto.h
     src/cachecrypto.cpp
+    src/capturebridge.h
+    src/capturebridge.cpp
+    src/linkpreview.h
+    src/linkpreview_parse.cpp
+    src/linkpreview_fetch.cpp
     src/outbox.h
     src/outbox.cpp
     src/syncclient.h
@@ -44,6 +49,7 @@ qt_add_executable(yaop-desktop
     src/workspace_objects.cpp
     src/workspace_search.cpp
     src/workspace_weblinks.cpp
+    src/workspace_history.cpp
     src/workspace_media.cpp
     src/workspace_sync.cpp
     src/workspace_backup.cpp

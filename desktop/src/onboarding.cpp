@@ -398,7 +398,9 @@ void PairingFlow::guestStart(const QString &qrJson)
             const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             reply->deleteLater();
             if (status != 202) {
-                setState(QStringLiteral("failed"), tr("Could not reach the server."));
+                setState(QStringLiteral("failed"),
+                         status == 409 ? tr("Another device already used this code. Create a new one on the other device.")
+                                       : tr("Could not reach the server."));
                 return;
             }
             m_code = vault::pairingCode(m_shared);

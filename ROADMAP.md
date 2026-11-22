@@ -53,12 +53,22 @@ mobile and desktop, then a test that both pass.
 
 ## Object model
 
+- [ ] Mobile reads the standard types from `spec/fixtures/types/standard.json` (`spec/types.md`)
+      instead of `DefaultTypes`, with a test on the same fixture. C++, desktop and Go already do.
 - [ ] Type templates in the UI; editable icon and cover per object (§4.3).
-- [ ] Change an object's type; rename / reorder / change the kind of a property with preview
-      (§16, new `spec/schema.md`). Do not delete objects that have backlinks: show them first.
-- [ ] Version history per object, restore by object or block (§16.3).
+- [ ] Change an object's type: contract `spec/schema.md` + fixture, done in Go and desktop; mobile
+      still missing.
+- [ ] Rename / reorder / change the kind of a property with preview (§16.2, extend
+      `spec/schema.md`). Do not delete objects that have backlinks: show them first.
+- [ ] Block references (§14): `block_id` on mention runs is in `spec/text.md` and round-trips on Go,
+      C++ and Kotlin; desktop counts them (`blockReferenceCounts`). UI (copy reference, counter,
+      jump to block) missing on both apps.
+- [ ] Version history (§16.3): desktop keeps local snapshots (one per editing session, zstd, 30 days)
+      and restores by object or block (`pkmcore/editor/history`, `workspace_history.cpp`). Missing:
+      diffs with a full snapshot every 10, syncing snapshots (needs a contract), UI, mobile.
 - [ ] Kanban and calendar views for sets and collections; editable table columns.
-- [ ] Duplicate objects; merge objects and tags (rewrites mentions to the survivor).
+- [ ] Duplicate objects: done on desktop (`pkmcore/editor/objectops`), mobile still missing.
+- [ ] Merge objects and tags (rewrites mentions to the survivor).
 - [ ] Find and replace inside an object (desktop has find only).
 - [ ] Property kinds `content`, `media`, `email`, `phone` (clickable).
 - [ ] Multi-select of **objects** in lists (move to collection, trash, change type).
@@ -75,10 +85,12 @@ mobile and desktop, then a test that both pass.
 
 ## Capture and recall
 
-- [ ] Global and local graph (§10).
+- [ ] Unlinked mentions (text that names an object without linking it, no AI): data and "link it"
+      on desktop (`pkmcore/editor/unlinked`); not yet in `docs/product.md`, UI and mobile missing.
+- [ ] Global and local graph (§10): data done on desktop (`pkmcore/editor/graph`, `Workspace::graphData`); UI and mobile missing.
 - [ ] Verify: pasting an image in the desktop editor creates an Image object (§8.2).
 - [ ] OCR to suggest image titles; reading progress for web links and PDFs.
-- [ ] Browser extension that hands captures to the local desktop (§22.5); web highlights.
+- [x] Browser extension that hands captures to the local desktop (§22.5); web highlights.
 - [ ] CalDAV / calendar in the journal (§14).
 
 ## Ecosystem

@@ -16,8 +16,8 @@ Rectangle {
     anchors.bottomMargin: 16
     width: row.implicitWidth + 20
     height: 38
-    radius: 19
-    color: Theme.panel2
+    radius: Theme.noir ? 0 : 19
+    color: Theme.noir ? Theme.sheet : Theme.panel2
     border.width: 1
     border.color: Theme.line2
 

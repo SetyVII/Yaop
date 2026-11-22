@@ -1520,6 +1520,61 @@ void EditorModel::formatLink(const QString &url, QQuickTextDocument *doc, int se
     span::applyLink(doc->textDocument(), url, selStart, selEnd);
 }
 
+QString EditorModel::selectionText(QQuickTextDocument *doc, int selStart, int selEnd) const
+{
+    if (!doc || !doc->textDocument())
+        return {};
+    const int from = qMin(selStart, selEnd);
+    const int to = qMax(selStart, selEnd);
+    if (to <= from)
+        return {};
+    QTextCursor c(doc->textDocument());
+    c.setPosition(from);
+    c.setPosition(to, QTextCursor::KeepAnchor);
+    return c.selectedText().replace(QChar(0x2029), QLatin1Char(' ')).trimmed();
+}
+
+void EditorModel::replaceSelectionWithMention(int row, QQuickTextDocument *doc, int selStart, int selEnd,
+                                              const QString &objectId, const QString &labelIn)
+{
+    const int idx = visibleRowToBlockIndex(row);
+    if (idx < 0 || !doc || !doc->textDocument() || objectId.isEmpty())
+        return;
+    const int from = qMin(selStart, selEnd);
+    const int to = qMax(selStart, selEnd);
+    QTextCursor c(doc->textDocument());
+    c.setPosition(from);
+    c.setPosition(to, QTextCursor::KeepAnchor);
+    c.removeSelectedText();
+    QString label = labelIn;
+    while (label.startsWith(QLatin1Char('@')))
+        label.remove(0, 1);
+    if (label.isEmpty())
+        label = objectId;
+    insertAnchorText(doc, from, QLatin1Char('@') + label,
+                     QStringLiteral("yaop://object/") + objectId, "#BFE3FF", QString());
+    m_blocks[idx].runs = runsFromDoc(doc);
+    emit dataChanged(index(row), index(row), { HtmlRole, PlainTextRole, HasMentionRole });
+    markDirty();
+    setFocus(m_blocks[idx].id, from + label.length() + 1);
+}
+
+void EditorModel::setEmbedViewMode(int row, const QString &mode)
+{
+    if (mode != QLatin1String("inline") && mode != QLatin1String("card")
+        && mode != QLatin1String("wide") && mode != QLatin1String("full"))
+        return;
+    const int idx = visibleRowToBlockIndex(row);
+    if (idx < 0)
+        return;
+    Block &b = m_blocks[idx];
+    if (b.type != BlockType::Embed || b.viewMode == mode)
+        return;
+    b.viewMode = mode;
+    emit dataChanged(index(row), index(row), { EmbedViewModeRole });
+    markDirty();
+}
+
 void EditorModel::setCaption(int rowStart, QQuickTextDocument *doc, int endIndex)
 {
     Q_UNUSED(endIndex);
@@ -1531,6 +1586,22 @@ void EditorModel::setCaption(int rowStart, QQuickTextDocument *doc, int endIndex
         return;
     b.runs = runsFromDoc(doc);
     markDirty();
+}
+
+int EditorModel::insertLineBreak(QQuickTextDocument *doc, int selStart, int selEnd)
+{
+    if (!doc || !doc->textDocument())
+        return -1;
+    QTextDocument *td = doc->textDocument();
+    const int len = qMax(0, td->characterCount() - 1);
+    const int a = qBound(0, qMin(selStart, selEnd), len);
+    const int b = qBound(0, qMax(selStart, selEnd), len);
+    QTextCursor c(td);
+    c.setPosition(a);
+    if (b > a)
+        c.setPosition(b, QTextCursor::KeepAnchor);
+    c.insertText(QString(QChar::LineSeparator));
+    return c.position();
 }
 
 void EditorModel::setComponentSize(int row, double widthPercent)
@@ -1604,6 +1675,43 @@ void EditorModel::insertEmbedBlockAfter(int row, const QString &targetObjectId)
     m_blocks.insert(insertAt, b);
     applyCollapseAwareReset();
     markDirty();
+}
+
+void EditorModel::pasteUrlAs(int row, int caret, QQuickTextDocument *doc,
+                             const QString &url, const QString &mode)
+{
+    const QString clean = url.trimmed();
+    if (clean.isEmpty())
+        return;
+    QUrl u(clean);
+    QString host = u.host();
+    if (host.startsWith(QLatin1String("www.")))
+        host = host.mid(4);
+    const QString label = host.isEmpty() ? clean : host;
+
+    if (mode == QLatin1String("link")) {
+        insertLinkAt(row, caret, caret, doc, clean);
+        return;
+    }
+    const QString wlId = m_ws ? m_ws->createWebLinkFromUrl(clean) : QString();
+    if (mode == QLatin1String("chip") && !wlId.isEmpty() && doc) {
+        replaceSelectionWithMention(row, doc, caret, caret, wlId, label);
+        return;
+    }
+    if (mode == QLatin1String("wide") && !wlId.isEmpty()) {
+        const int idx = visibleRowToBlockIndex(row);
+        const int insertAt = idx < 0 ? int(m_blocks.size()) : idx + 1;
+        Block b;
+        b.id = newUuid();
+        b.type = BlockType::Embed;
+        b.objectId = wlId;
+        b.viewMode = QStringLiteral("wide");
+        m_blocks.insert(insertAt, b);
+        applyCollapseAwareReset();
+        markDirty();
+        return;
+    }
+    insertBookmarkAfter(row, clean, wlId);
 }
 
 void EditorModel::insertBookmarkAfter(int row, const QString &url, const QString &weblinkId)

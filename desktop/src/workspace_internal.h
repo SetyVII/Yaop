@@ -2,10 +2,36 @@
 // Helpers shared by the workspace_*.cpp files (one Workspace class, split by concern).
 
 #include "workspace.h"
+#include <QByteArray>
+#include <QHash>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QLocale>
 #include <QString>
 #include <QVariantMap>
 
 namespace pkm::detail {
+
+struct EncodedImage {
+    QByteArray bytes;
+    QString mime;
+    QString ext;
+    int width = 0;
+    int height = 0;
+    bool ok = false;
+};
+
+// Decodes raw image bytes (EXIF auto-transform), optionally rejects tiny tracking pixels (<32px),
+// downscales proportionally to maxSidePx (when >0), and encodes as WebP (JPEG fallback only if the
+// Qt runtime lacks the webp plugin). Preserves already-WebP bytes when no resize is needed.
+EncodedImage encodeImageAsWebP(const QByteArray &rawBytes, int maxSidePx, int quality,
+                               bool rejectTiny = false);
+
+// Language for standard-type labels (spec/types.md): Spanish or English, from the system locale.
+inline QString uiLanguage()
+{
+    return QLocale::system().language() == QLocale::Spanish ? QStringLiteral("es") : QStringLiteral("en");
+}
 
 inline QString assetExtensionForMime(const QString &mime)
 {
@@ -29,6 +55,13 @@ inline QString assetExtensionForMime(const QString &mime)
         return QStringLiteral(".ogg");
     return {};
 }
+
+// Adds the standard types (spec/types.md) to `types`: missing ones are created, a synced copy
+// keeps its fields and gets the standard properties first (rule 5).
+void seedStandardTypes(QHash<QString, ObjectType> &types, const QString &lang);
+
+// [{id, label, color}] for a select / multi_select value; unknown ids keep their raw id as label.
+QVariantList selectedOptions(const QJsonValue &val, const QJsonArray &options);
 
 // Wire fields whose equality means "the merge changes nothing that converges";
 // presentation passthrough (content/updated_at/revision/…) never forces a
@@ -90,6 +123,17 @@ inline QVariantMap objectToVariant(const Object &o, const Workspace::ObjectView 
     m.insert("faviconUrl", faviconUrl);
     m.insert("description", o.propertyString(QStringLiteral("description")));
     m.insert("tags", QVariant::fromValue(o.propertyStringList(QStringLiteral("tags"))));
+    m.insert("category", o.propertyString(QStringLiteral("category")));
+    m.insert("topics", QVariant::fromValue(o.propertyStringList(QStringLiteral("topics"))));
+    if (o.properties.value(QStringLiteral("reviewed")).isBool())
+        m.insert("reviewed", o.properties.value(QStringLiteral("reviewed")).toBool());
+    m.insert("author", o.propertyString(QStringLiteral("author")));
+    m.insert("status", o.propertyString(QStringLiteral("status")));
+    const QJsonValue rv = o.properties.value(QStringLiteral("rating"));
+    m.insert("rating", rv.isDouble() ? rv.toInt() : rv.toString().toInt());
+    m.insert("duration", o.properties.value(QStringLiteral("duration")).toDouble());
+    m.insert("pageCount", o.properties.value(QStringLiteral("page_count")).toInt());
+    m.insert("lastReadPage", o.properties.value(QStringLiteral("last_read_page")).toInt());
     Q_UNUSED(localPath);
     return m;
 }

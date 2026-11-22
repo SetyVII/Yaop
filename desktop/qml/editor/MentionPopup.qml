@@ -88,7 +88,7 @@ Popup {
     closePolicy: Popup.NoAutoClose
 
     background: Rectangle {
-        radius: 18
+        radius: Theme.noir ? 0 : 18
         color: Theme.sheet
         border.color: Theme.line2
         border.width: 1
@@ -133,7 +133,8 @@ Popup {
                 required property int index
                 width: list.width
                 height: mp.rowHeight
-                color: index === mp.currentIndex ? Theme.panel3 : "transparent"
+                readonly property bool isCur: index === mp.currentIndex
+                color: isCur ? (Theme.noir ? Theme.accent : Theme.panel3) : "transparent"
 
                 readonly property string assetId: mp.mode === "object"
                     ? (modelData.assetId && modelData.assetId.length > 0 ? modelData.assetId
@@ -192,7 +193,8 @@ Popup {
                                  ? qsTr("+ Create #%1").arg(row.modelData.name)
                                  : "#" + row.modelData.name)
                          : row.modelData.label
-                    color: (row.modelData.createNew === true || row.modelData.kind === "type")
+                    color: (row.isCur && Theme.noir) ? Theme.accentInk
+                         : (row.modelData.createNew === true || row.modelData.kind === "type")
                                ? (mp.mode === "tag" ? Theme.accent : Theme.ice)
                                : (mp.mode === "tag" ? Theme.accent : mp.mode === "date" ? Theme.journal : Theme.text)
                     font.family: mp.mode === "tag" ? Theme.mono : Theme.body
@@ -214,7 +216,7 @@ Popup {
                           : row.modelData.kind === "type"
                           ? Theme.caps(qsTr("TYPE · %1")).arg(row.modelData.title)
                           : Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : "")
-                    color: Theme.faint
+                    color: (row.isCur && Theme.noir) ? Theme.accentInk : Theme.faint
                     font.family: Theme.mono
                     font.pixelSize: 11
                     elide: Text.ElideRight

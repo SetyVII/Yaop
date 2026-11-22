@@ -23,9 +23,12 @@
 #include <memory>
 #include <QTimer>
 
-class QNetworkAccessManager;
-
 namespace pkm {
+
+namespace linkpreview {
+class LinkPreviewFetcher;
+struct LinkPreviewData;
+} // namespace linkpreview
 
 class Workspace : public QObject {
     Q_OBJECT
@@ -86,6 +89,11 @@ public:
     // editors
     Q_INVOKABLE EditorModel *openObject(const QString &id);
     Q_INVOKABLE void closeObject(const QString &id);
+    // Version history (product §16.3): [{id, createdAt, title, blockCount, preview}], newest first.
+    Q_INVOKABLE QVariantList objectHistory(const QString &id) const;
+    // Restores the whole object, or only `blockId`, from a snapshot. The current state is kept as
+    // a snapshot first, so a restore can be undone by restoring again.
+    Q_INVOKABLE bool restoreVersion(const QString &id, qint64 snapshotId, const QString &blockId = QString());
     Q_INVOKABLE bool hasEditorFor(const QString &id) { return m_editors.contains(id); }
     // Keyboard modifiers of the current input event (Qt.ControlModifier, Qt.ShiftModifier…):
     // Ctrl+click opens the place in a new tab, Shift+click in the side pane.
@@ -101,6 +109,26 @@ public:
 
     // object CRUD + queries (all local; the server only syncs)
     Q_INVOKABLE QString createObject(const QString &typeId, const QString &title);
+    // New local copy with fresh ids (pkmcore objectops); "" for media, journal and tag objects.
+    Q_INVOKABLE QString duplicateObject(const QString &id);
+    // spec/schema.md: changes type_id, keeps every value; keys the new type lacks become loose.
+    Q_INVOKABLE bool changeObjectType(const QString &id, const QString &toTypeId);
+    // {error: ""|"fixed_type"|…, loose: [{key}], properties: target type's properties}
+    Q_INVOKABLE QVariantMap previewTypeChange(const QString &id, const QString &toTypeId) const;
+    QStringList typePropertyKeys(const QString &typeId) const;
+    // Text in other objects that names targetId without linking it: [{objectId, blockId, runIndex,
+    // runOffset, length, snippet, title, typeId}]. linkUnlinkedMention turns one into a mention.
+    // Block references (spec/text.md): blockId -> how many runs point at that block of objectId.
+    Q_INVOKABLE QVariantMap blockReferenceCounts(const QString &objectId) const;
+    Q_INVOKABLE QVariantList unlinkedMentions(const QString &targetId) const;
+    Q_INVOKABLE bool linkUnlinkedMention(const QString &targetId, const QVariantMap &match);
+    QHash<QString, Object> objectsWithEditors() const; // stored objects with unsaved editor edits
+    // Moves blocks (with their children) to the end of another object; returns how many moved.
+    Q_INVOKABLE int moveBlocksToObject(const QString &fromId, const QStringList &blockIds, const QString &toId);
+    // {nodes: [{id, typeId, title, degree}], edges: [{from, to}]}. Empty focusId = whole graph;
+    // otherwise the local graph within `depth` hops. `types` empty = every type.
+    Q_INVOKABLE QVariantMap graphData(const QString &focusId = QString(), int depth = 1,
+                                      const QStringList &types = {}) const;
     Q_INVOKABLE void deleteObject(const QString &id);
     Q_INVOKABLE void restoreObject(const QString &id);
     // Drops objects 30+ days in the trash whose tombstone already reached the server; returns how many.
@@ -135,16 +163,32 @@ public:
     Q_INVOKABLE QVariantList allTypes() const;
     Q_INVOKABLE QVariantMap typeInfo(const QString &typeId) const;
     Q_INVOKABLE QString createCustomType(const QString &name, const QString &colorNameOrHex = QString(),
-                                         const QVariantList &propDefs = {});
+                                         const QVariantList &propDefs = {}, const QString &icon = QString());
     Q_INVOKABLE bool addPropertyToType(const QString &typeId, const QString &propName, const QString &kind);
+    Q_INVOKABLE bool addOptionToProperty(const QString &typeId, const QString &propKey,
+                                         const QString &label, const QString &color = QStringLiteral("blue"));
+    Q_INVOKABLE bool removeOptionFromProperty(const QString &typeId, const QString &propKey, const QString &optionId);
+    Q_INVOKABLE QVariantMap resolveOption(const QString &typeId, const QString &propKey, const QString &optionId) const;
+    Q_INVOKABLE QVariantMap resolvePersonByValue(const QString &raw) const;
+    Q_INVOKABLE QVariantList collectionsForObject(const QString &objectId) const;
+    Q_INVOKABLE QVariantMap projectProgress(const QString &projectId) const;
+    Q_INVOKABLE QString clipboardText() const;
     Q_INVOKABLE QVariantList typeProperties(const QString &typeId) const;
     Q_INVOKABLE QVariantList objectPropertyEntries(const QString &objectId) const;
+    // select: picks optionId (picking the current one clears it); multi: adds or removes it.
+    Q_INVOKABLE void toggleOption(const QString &objectId, const QString &key, const QString &optionId, bool multi);
+    Q_INVOKABLE void removeObjectProperty(const QString &objectId, const QString &key);
     Q_INVOKABLE void setObjectProperty(const QString &objectId, const QString &key, const QVariant &value,
                                        const QString &kind = QString(), const QString &label = QString(),
                                        bool addToType = false);
     // Habits (spec §24): day records are properties "d:AAAA-MM-DD" (true | number | "skip").
     Q_INVOKABLE QVariantList habits() const;
     Q_INVOKABLE QVariantList inbox() const;   // objects with reviewed == false
+    Q_INVOKABLE QVariantList reviewedItems(int limit = 30) const; // objects with reviewed == true
+    Q_INVOKABLE QVariantList allTagsWithCounts() const;
+    Q_INVOKABLE QVariantList objectsForTag(const QString &tagName) const;
+    Q_INVOKABLE void copyTextToClipboard(const QString &text) const;
+    Q_INVOKABLE bool copyBlockReference(const QString &objectId, const QString &blockId) const;
     Q_INVOKABLE void markReviewed(const QString &id);
     Q_INVOKABLE void setHabitDay(const QString &habitId, const QString &isoDate, const QVariant &value);
     Q_INVOKABLE QVariantList tasksFor(const QString &scope) const; // "today"|"upcoming"|"done"
@@ -168,6 +212,16 @@ public:
     Q_INVOKABLE QString createWebLinkFromUrl(const QString &url, const QString &sourceObjectId = QString(),
                                              const QString &sourceBlockId = QString());
     Q_INVOKABLE void setWebCoverUrl(const QString &objectId, const QString &imageUrl);
+    // Inject a custom LinkPreviewFetcher (e.g., offline transport in --selftest); Workspace takes ownership.
+    void setLinkPreviewFetcher(linkpreview::LinkPreviewFetcher *fetcher);
+
+    // Local capture API (used by the browser extension bridge over 127.0.0.1, product §22.5).
+    QJsonObject captureMeta() const;
+    QJsonObject lookupWebLink(const QString &url) const;
+    QJsonObject captureWebLink(const QJsonObject &req);
+    QJsonObject captureImage(const QJsonObject &req);
+    QJsonObject captureNote(const QJsonObject &req);
+    QString secretScope() const { return m_secretScope; }
 
     // media
     Q_INVOKABLE QString ensureAssetBlocking(const QString &assetId);
@@ -211,6 +265,7 @@ signals:
     void editorReloadRequested(const QString &objectId);
     void typesChanged();
     void objectPropertiesChanged(const QString &objectId);
+    void browserCaptureReceived(const QString &kind, const QString &title, const QString &objectId);
 
 private slots:
     void onLiveEvent(const QJsonObject &event);
@@ -231,6 +286,8 @@ public:
 
 private:
     void loadFromStore();
+    void captureSnapshot(const QString &id); // one per editing session, when content changed
+    void purgeOldSnapshots();                // older than 30 days
     // ---- /v1 transport pieces (spec/sync.md) ----
     void bootstrapVault();          // VaultKey + subkeys + SQLCipher open
     bool serverConfigured() const { return !m_client.baseUrl().isEmpty() && !m_client.token().isEmpty(); }
@@ -259,8 +316,13 @@ private:
     void requeueAssetUploads();
     void startAssetUpload(const Store::PendingUpload &u);
     void storeToken(const QString &token);
+    linkpreview::LinkPreviewFetcher *ensureLinkPreviewFetcher();
     void fetchWebLinkMetadata(const QString &url, const QString &weblinkId);
+    void applyWebLinkPreview(const QString &weblinkId, const QString &originalUrl,
+                             const linkpreview::LinkPreviewData &preview);
     void downloadWebCoverAsset(const QString &targetObjectId, const QString &imageUrl);
+    bool storeWebCoverBytes(const QString &targetObjectId, const QByteArray &rawBytes,
+                            const QString &sourceUrl, const QString &thumbnailUrl);
     QString readStoredDeviceToken(const QString &scope);
     QString storeAssetFile(const QString &assetId, const QString &ext, const QByteArray &bytes);
     void refreshViews();
@@ -289,7 +351,7 @@ private:
     void syncError(const QString &what);
 
     SyncClient m_client;
-    QNetworkAccessManager *m_webNet = nullptr;
+    linkpreview::LinkPreviewFetcher *m_linkPreview = nullptr;
     Store *m_store = nullptr;
     QHash<QString, Object> m_objects;      // authoritative in-memory copy
     QHash<QString, ObjectType> m_types;

@@ -67,7 +67,7 @@ Item {
         }
     }
 
-    // active pill: raised like the sidebar's open row
+    // active pill: raised like the sidebar's open row; in noir: accent bottom line + subtle surface
     Rectangle {
         id: activePill
         y: (strip.height - height) / 2
@@ -75,9 +75,17 @@ Item {
         width: strip.tabW
         height: strip.tabH
         radius: Theme.radius
-        color: Theme.panel2
+        color: Theme.noir ? Theme.panel2 : Theme.panel2
         border.width: 1
-        border.color: Theme.line2
+        border.color: Theme.noir ? Theme.line2 : Theme.line2
+        Rectangle {
+            visible: Theme.noir
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 2
+            color: Theme.accent
+        }
         Behavior on x { NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
         Behavior on width { NumberAnimation { duration: strip.slide; easing.type: strip.easing } }
     }

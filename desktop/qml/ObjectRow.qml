@@ -119,7 +119,7 @@ Rectangle {
         }
 
         IconButton {
-            visible: Theme.slate && hover.hovered && summary.trashed !== true
+            visible: Theme.modern && hover.hovered && summary.trashed !== true
             icon: "layout-columns"
             onClicked: root.openInPaneRequested()
             ToolTip.visible: hovered; ToolTip.text: qsTr("Open in side pane (Shift+click)"); ToolTip.delay: 400
