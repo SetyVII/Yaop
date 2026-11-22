@@ -1,5 +1,7 @@
 // Workspace: startup, vault keys, config and open editors.
 #include "workspace.h"
+#include <functional>
+#include <memory>
 #include "backup.h"
 #include "syncpolicy.h"
 #include "query.h"
@@ -286,7 +288,7 @@ void Workspace::initialize()
                     m_store->queueOp(newSyncOpId(), it.key(), it.value().toJson(true));
                 }
                 requeueAssetUploads(); // the media bytes live on the old server, not on this one
-                m_pendingCount = m_store->pendingOps().size();
+                m_pendingCount = m_store->pendingOpCount();
             }
             requeueAssetUploads(); // self-heal: any local media the server still lacks goes up
             m_hasBootstrap = !r.body.value(QLatin1String("bootstrap_seq")).isNull();
@@ -323,10 +325,11 @@ void Workspace::loadFromStore()
             m_objects.insert(o.id, o);
         for (const ObjectType &t : m_store->types())
             m_types.insert(t.id, t);
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
     }
     pkm::detail::seedStandardTypes(m_types, pkm::detail::uiLanguage());
     purgeOldSnapshots();
+    refreshStoredLinks();
     refreshViews();
     emit syncStateChanged();
 }
@@ -496,11 +499,14 @@ void Workspace::saveObject(const Object &object, EditorModel *editor)
     const Object prev = isNew ? Object() : existing.value();
     if (!local.stamp(isNew ? nullptr : &prev, newHlc()) && !isNew)
         return;
+    // keep the derived links current (spec/object.md) so graph and queries read them, instead
+    // of re-deriving every object's links from its wire on each graph build
+    local.links = deriveLinks(local.toJson(true));
     m_objects.insert(local.id, local);
     m_store->putObject(local);
 
     m_store->queueOp(newSyncOpId(), local.id, local.toJson(true));
-    m_pendingCount = m_store->pendingOps().size();
+    m_pendingCount = m_store->pendingOpCount();
     emit syncStateChanged();
     emit objectUpdated(local.id);
     refreshViews();
@@ -508,6 +514,38 @@ void Workspace::saveObject(const Object &object, EditorModel *editor)
     emit objectListChanged();
 
     schedulePush(2000);
+}
+
+// Objects saved before links were derived on save may carry stale `links`. Fix them once, in
+// small batches on the event loop so startup stays responsive; a kv flag marks it done.
+void Workspace::refreshStoredLinks()
+{
+    if (!m_store || m_store->kv(QStringLiteral("derived_links_v1")) == QLatin1String("1"))
+        return;
+    auto ids = std::make_shared<QStringList>(m_objects.keys());
+    auto step = std::make_shared<std::function<void()>>();
+    *step = [this, ids, step]() {
+        if (m_shuttingDown || !m_store)
+            return;
+        for (int n = 0; n < 25 && !ids->isEmpty(); ++n) { // ~15 ms per batch at most
+            auto it = m_objects.find(ids->takeLast());
+            if (it == m_objects.end())
+                continue;
+            const QStringList links = deriveLinks(it->toJson(true));
+            if (links != it->links) {
+                it->links = links;
+                m_store->putObject(it.value()); // local cache only: nothing to sync
+            }
+        }
+        if (ids->isEmpty()) {
+            m_store->setKv(QStringLiteral("derived_links_v1"), QStringLiteral("1"));
+            ++m_listRevision;
+            emit objectListChanged();
+            return;
+        }
+        QTimer::singleShot(5, this, *step); // input and paint run between batches
+    };
+    QTimer::singleShot(1500, this, *step);
 }
 
 void Workspace::refreshViews()

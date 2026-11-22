@@ -57,7 +57,7 @@ Popup {
             Layout.fillWidth: true
             placeholderText: qsTr("Place a query in this page…")
             color: Theme.text
-            placeholderTextColor: Theme.faint
+            placeholderTextColor: Theme.label
             font.family: Theme.body; font.pixelSize: 14
             background: Rectangle { color: Theme.panel; border.width: 1; border.color: search.activeFocus ? Theme.line3 : Theme.line2 }
             onTextChanged: qp.filter = text

@@ -62,6 +62,81 @@ static void testAudioPeaks()
     CHECK(pkm::AudioPlayback::peaksFromPcm(QByteArray(), 8).isEmpty(), "no audio, no peaks");
 }
 
+// YAOP_BENCH=1: what one save costs the views that listen to listRevision (5k objects).
+static void benchUiCosts()
+{
+    if (qEnvironmentVariableIsEmpty("YAOP_BENCH"))
+        return;
+    QTemporaryDir tmp;
+    const QByteArray oldData = qgetenv("XDG_DATA_HOME"), oldCfg = qgetenv("XDG_CONFIG_HOME"),
+                     oldSvc = qgetenv("YAOP_KEYCHAIN_SERVICE"), oldPass = qgetenv("YAOP_VAULT_PASSPHRASE");
+    struct Restore {
+        std::function<void()> f;
+        ~Restore() { f(); }
+    } restore{ [&] {
+        auto put = [](const char *k, const QByteArray &v) { if (v.isEmpty()) qunsetenv(k); else qputenv(k, v); };
+        put("XDG_DATA_HOME", oldData); put("XDG_CONFIG_HOME", oldCfg);
+        put("YAOP_KEYCHAIN_SERVICE", oldSvc); put("YAOP_VAULT_PASSPHRASE", oldPass);
+    } };
+    qputenv("XDG_DATA_HOME", tmp.filePath(QStringLiteral("data")).toUtf8());
+    qputenv("XDG_CONFIG_HOME", tmp.filePath(QStringLiteral("cfg")).toUtf8());
+    qputenv("YAOP_KEYCHAIN_SERVICE", "YAOP-selftest-bench");
+    qputenv("YAOP_VAULT_PASSPHRASE", "selftest-passphrase");
+    Workspace ws;
+    ws.initialize();
+    const QString now = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+    QElapsedTimer seed; seed.start();
+    for (int i = 0; i < 5000; ++i) {
+        Object o;
+        o.id = QStringLiteral("bench-%1").arg(i);
+        o.typeId = i % 5 == 0 ? TypeId::Book : TypeId::Note;
+        o.title = QStringLiteral("Bench object %1").arg(i);
+        o.createdAt = now; o.updatedAt = now;
+        for (int b = 0; b < 20; ++b) {
+            Run r; r.text = QStringLiteral("Some words in paragraph %1 of object %2, enough to count.").arg(b).arg(i);
+            Run m; m.text = QStringLiteral("link"); m.objectId = QStringLiteral("bench-%1").arg((i + b) % 5000);
+            o.blocks << Block::makeParagraph(QStringLiteral("b%1-%2").arg(i).arg(b), { r, m });
+        }
+        ws.saveObject(o);
+    }
+    std::printf("BENCH seed 5000 objects: %lld ms\n", seed.elapsed());
+    const QString id = QStringLiteral("bench-7");
+    for (int v = 0; v < 15; ++v) { // 15 versions of one object
+        ws.openObject(id);
+        Object o;
+        for (const Object &x : ws.e2eAllObjects()) if (x.id == id) o = x;
+        o.blocks[0].runs[0].text += QStringLiteral(" v%1").arg(v);
+        ws.saveObject(o);
+        ws.closeObject(id);
+    }
+    const QString set = ws.createSet(QStringLiteral("Books"), QVariantMap{ { "types", QVariantList{ "book" } } });
+    ws.openObject(id);
+    auto time = [](const char *name, const std::function<void()> &f) {
+        QElapsedTimer t; t.start();
+        for (int i = 0; i < 10; ++i) f();
+        std::printf("BENCH %-22s %7.2f ms\n", name, t.nsecsElapsed() / 10 / 1e6);
+    };
+    time("objectStats", [&] { ws.objectStats(id); });
+    time("containedObjects", [&] { ws.containedObjects(id); });
+    time("objectHistory(15)", [&] { ws.objectHistory(id); });
+    time("versionBlocks", [&] { ws.versionBlocks(id, ws.objectHistory(id).first().toMap().value("id").toLongLong()); });
+    time("typeViews", [&] { ws.typeViews(QStringLiteral("book")); });
+    time("templatesFor", [&] { ws.templatesFor(QStringLiteral("book")); });
+    time("runSet(1000 books)", [&] { ws.runSet(set); });
+    time("runSet(limit 8)", [&] { ws.runSet(set, 8); });
+    time("objectSummary", [&] { ws.objectSummary(id); });
+    time("graphData(local)", [&] { ws.graphData(id, 1, {}); });
+    time("graphData(global)", [&] { ws.graphData(QString(), 1, {}); });
+    time("unlinkedMentions", [&] { ws.unlinkedMentions(id); });
+    time("backlinksFor", [&] { ws.backlinksFor(id); });
+    time("collections", [&] { ws.collections(); });
+    time("sidebar counts (old)", [&] { for (const QVariant &t : ws.allTypes()) ws.objectsByType(t.toMap().value("id").toString(), 0).size(); });
+    time("inbox", [&] { ws.inbox(); });
+    time("typeCounts", [&] { ws.typeCounts(); });
+    time("tasks today+upcoming", [&] { ws.tasksFor("today"); ws.tasksFor("upcoming"); });
+    time("optionNeighborhood", [&] { ws.optionNeighborhood(QStringLiteral("book"), QStringLiteral("status"), QStringLiteral("reading")); });
+}
+
 static void testMathRender()
 {
     tex::Result r = tex::render(QStringLiteral("\\frac{a+b}{c} = \\sqrt{d^2 + e^2}"),
@@ -1403,6 +1478,7 @@ static void testWorkspaceWebLinkEnrichment()
 int runAll()
 {
     std::printf("== desktop app ==\n");
+    benchUiCosts();
     testMathRender();
     testAudioPeaks();
     testOutboxBatches();

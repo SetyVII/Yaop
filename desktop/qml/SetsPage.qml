@@ -11,7 +11,7 @@ Item {
     property var appWindow: null
     signal openObjectRequested(string objectId)
 
-    readonly property int dataRev: ws ? ws.listRevision : 0
+    readonly property int dataRev: (visible && ws) ? ws.listRevision : 0
     property string currentSetId: ""
     property var info: ({})
     property var query: ({ version: 1 })

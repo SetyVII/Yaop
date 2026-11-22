@@ -188,7 +188,7 @@ void Workspace::pushBatches(const QList<QList<PushOp>> &batches, int index)
                 m_store->putObject(it.value());
             }
         }
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         pushBatches(batches, index + 1);
     });
 }
@@ -521,7 +521,7 @@ void Workspace::applyRemoteObject(const QJsonObject &remote, const QString &kind
         // with the merged state under a fresh op_id.
         m_store->dequeueOpsFor(id);
         m_store->queueOp(newSyncOpId(), id, merged);
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         emit syncStateChanged();
         schedulePush(1500);
     }

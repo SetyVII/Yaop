@@ -69,7 +69,7 @@ FocusScope {
                     anchors.leftMargin: 10
                     anchors.rightMargin: 6
                     spacing: 10
-                    Text { text: String(row.index + 1); color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11; Layout.preferredWidth: 18 }
+                    Text { text: String(row.index + 1); color: Theme.label; font.family: Theme.mono; font.pixelSize: 11; Layout.preferredWidth: 18 }
                     TypeBadge { typeId: row.modelData.typeId || ""; size: 14 }
                     Text {
                         Layout.fillWidth: true
@@ -96,13 +96,13 @@ FocusScope {
             visible: cv.items.length === 0
             Layout.topMargin: 6
             text: qsTr("Empty. Use “+ Add”, or “Add to collection…” in any object's ⋯ menu.")
-            color: Theme.faint; font.family: Theme.body; font.pixelSize: 12
+            color: Theme.label; font.family: Theme.body; font.pixelSize: 12
         }
         Text {
             visible: cv.items.length > 1
             Layout.topMargin: 6
             text: qsTr("Click to select · double-click or Enter opens · Alt+↑/↓ reorders · Delete removes")
-            color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11
+            color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
         }
     }
 
@@ -110,6 +110,7 @@ FocusScope {
         id: adder
         placeholder: qsTr("Add an object to this collection…")
         exclude: [cv.collectionId].concat(cv.items.map(i => i.id))
+        preferType: cv.collectionId && ws ? (ws.fieldText(cv.collectionId, "item_type_id") || "") : ""
         onPickedId: (id) => ws.addToCollection(cv.collectionId, id)
     }
 }

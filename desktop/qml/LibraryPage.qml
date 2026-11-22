@@ -32,6 +32,7 @@ Item {
 
     // Named views of a type (spec/query.md "Type view"): "" = every object of the type.
     property string currentViewId: ""
+    property string renameViewId: ""
     readonly property bool typeScoped: filterType !== "all" && filterType !== "trash"
     readonly property var typeViewList: { dataRev; return ws && typeScoped ? ws.typeViews(filterType) : [] }
     readonly property int templateCount: { dataRev; return ws && typeScoped ? ws.templatesFor(filterType).length : 0 }
@@ -101,6 +102,7 @@ Item {
                 : qsTr("View %1").arg(typeViewList.length + 1)
         const id = ws.createTypeView(filterType, n, currentQuery(), viewMode)
         clearQuickFilters()
+        renameViewId = id // its tab opens in rename mode so the view gets a real name
         Qt.callLater(() => selectView(id))
         if (appWindow) appWindow.showToast(qsTr("Saved view “%1”").arg(n))
         return id
@@ -111,7 +113,7 @@ Item {
         if (appWindow) appWindow.navigate("types")
     }
 
-    readonly property int dataRev: ws ? ws.listRevision : 0
+    readonly property int dataRev: (visible && ws) ? ws.listRevision : 0 // hidden pages do not recompute on saves
     property var allTypeItems: []
     property var items: []
     readonly property real gridGap: 14
@@ -287,7 +289,7 @@ Item {
     onFilterTagChanged: if (visible) recompute()
     onFilterRulesChanged: if (visible) recompute()
     onDataRevChanged: if (visible) recompute()
-    onVisibleChanged: if (visible) recompute()
+    // becoming visible changes dataRev, which recomputes
     Component.onCompleted: recompute()
 
     Connections {
@@ -476,6 +478,10 @@ Item {
                             title: modelData.title
                             fixed: !!modelData.fixed
                             current: library.currentViewId === modelData.id
+                            Component.onCompleted: if (modelData.id.length > 0 && modelData.id === library.renameViewId) {
+                                library.renameViewId = ""
+                                Qt.callLater(startEdit)
+                            }
                             onPicked: library.selectView(modelData.id)
                             onRenamed: (name) => ws.renameObject(modelData.id, name)
                             onRemoved: {

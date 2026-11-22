@@ -21,6 +21,10 @@ Rectangle {
     signal openObjectRequested(string objectId)
 
     readonly property int dataRev: ws ? ws.listRevision : 0
+    readonly property var typeCounts: { dataRev; return ws ? ws.typeCounts() : ({}) }
+    // the type list changes rarely: rebuilding its rows on every save made them flicker
+    property int typesRev: 0
+    Connections { target: ws; function onTypesChanged() { sidebar.typesRev++ } }
 
     color: Theme.bg2
     implicitWidth: Theme.sidebarW
@@ -258,10 +262,10 @@ Rectangle {
                     }
                 }
                 Repeater {
-                    model: { sidebar.dataRev; return ws ? ws.allTypes() : [] }
+                    model: { sidebar.typesRev; return ws ? ws.allTypes() : [] }
                     delegate: ShellNavRow {
                         required property var modelData
-                        readonly property int n: { sidebar.dataRev; return ws ? ws.objectsByType(modelData.id, 0).length : 0 }
+                        readonly property int n: sidebar.typeCounts[modelData.id] || 0
                         readonly property bool builtIn: Theme.typeIcon(modelData.id) !== "shape"
                         readonly property string rawIcon: modelData.icon ? String(modelData.icon) : ""
                         visible: (n > 0 || modelData.id === "tag") && modelData.id !== "task"

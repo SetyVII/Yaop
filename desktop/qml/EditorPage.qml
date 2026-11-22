@@ -188,6 +188,7 @@ Item {
     function openObjectMenu(anchor) {
         if (!session) return
         const a = anchor || (webSplitActive ? webMoreBtn : moreBtn)
+        objectMenu.refresh() // read once on open, not on every save
         objectMenu.popup(a, a.width - objectMenu.width, a.height + 4)
     }
     function showVersion(i) {
@@ -1710,7 +1711,20 @@ Item {
             NumberAnimation { property: "scale"; from: 0.97; to: 1; duration: Theme.fast; easing.type: Easing.OutCubic }
         }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Theme.fast } }
-        readonly property bool pinned: { ws ? ws.listRevision : 0; return !!session && !!ws && ws.objectSummary(session.objectId).pinned }
+        property bool pinned: false
+        property bool isTpl: false
+        property var tpls: []
+        property int words: 0
+        property int versions: 0
+        function refresh() {
+            if (!session || !ws) return
+            const sum = ws.objectSummary(session.objectId)
+            pinned = !!sum.pinned
+            isTpl = sum.isTemplate === true
+            tpls = ws.templatesFor(session.typeId).filter(t => t.id !== session.objectId)
+            words = ws.objectStats(session.objectId).words || 0
+            versions = ws.objectHistory(session.objectId).length
+        }
         MenuRow {
             text: objectMenu.pinned ? qsTr("Unpin from the sidebar") : qsTr("Pin to the sidebar")
             onTriggered: if (session) ws.togglePinned(session.objectId)
@@ -1744,7 +1758,7 @@ Item {
             onTriggered: collectionPicker.open()
         }
         MenuRow {
-            readonly property bool isTpl: { ws ? ws.listRevision : 0; return !!session && !!ws && ws.objectSummary(session.objectId).isTemplate === true }
+            readonly property bool isTpl: objectMenu.isTpl
             enabled: !!session && ["image", "audio", "pdf", "video", "file", "journal", "tag", "set"].indexOf(session.typeId) < 0
             text: isTpl ? qsTr("Stop being a template") : qsTr("Use as a template for this type")
             onTriggered: if (session) {
@@ -1754,21 +1768,18 @@ Item {
             }
         }
         MenuRow {
-            readonly property var tpls: { ws ? ws.listRevision : 0; return session && ws ? ws.templatesFor(session.typeId).filter(t => t.id !== session.objectId) : [] }
+            readonly property var tpls: objectMenu.tpls
             enabled: tpls.length > 0
             text: tpls.length > 0 ? qsTr("Apply a template… · %1").arg(tpls.length) : qsTr("Apply a template…")
             onTriggered: templatePicker.open()
         }
         MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: Theme.line } }
         MenuRow {
-            text: {
-                const st = session && ws ? ws.objectStats(session.objectId) : null
-                return st ? qsTr("Details · %1 words").arg(st.words || 0) : qsTr("Details")
-            }
+            text: qsTr("Details · %1 words").arg(objectMenu.words)
             onTriggered: editPage.showRailTab(2)
         }
         MenuRow {
-            readonly property int count: { ws ? ws.listRevision : 0; return session && ws ? ws.objectHistory(session.objectId).length : 0 }
+            readonly property int count: objectMenu.versions
             text: count > 0 ? qsTr("Version history · %1").arg(count) : qsTr("Version history")
             onTriggered: count > 0 ? editPage.showVersion(0) : editPage.showRailTab(2)
         }

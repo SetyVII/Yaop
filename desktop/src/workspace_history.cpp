@@ -71,8 +71,9 @@ QVariantList Workspace::versionBlocks(const QString &id, qint64 snapshotId) cons
         return out;
     const Object snap = Object::fromJson(QJsonDocument::fromJson(snapshot).object());
     QHash<QString, QString> now; // current text by block id
-    for (const Block &b : objectsWithEditors().value(id).blocks)
-        now.insert(b.id, b.plainText());
+    if (const std::optional<Object> cur = currentObject(id))
+        for (const Block &b : cur->blocks)
+            now.insert(b.id, b.plainText());
     for (const Block &b : snap.blocks) {
         const QString text = b.plainText();
         const QString state = !now.contains(b.id) ? QStringLiteral("removed")

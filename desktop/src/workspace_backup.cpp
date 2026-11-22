@@ -140,7 +140,7 @@ QString Workspace::restoreBackup(const QString &path)
     }
     if (!epoch)
         return QStringLiteral("error: %1").arg(err);
-    m_pendingCount = m_store->pendingOps().size();
+    m_pendingCount = m_store->pendingOpCount();
     emit syncStateChanged();
     notifyObjectListChanged();
 #ifdef Q_OS_LINUX

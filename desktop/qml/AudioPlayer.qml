@@ -169,7 +169,7 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 text: root.caption
-                color: Theme.faint
+                color: Theme.label
                 font.family: Theme.mono
                 font.pixelSize: 11
                 elide: Text.ElideRight

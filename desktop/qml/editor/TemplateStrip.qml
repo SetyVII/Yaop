@@ -8,12 +8,14 @@ Item {
     id: strip
     property var session: null
     property var appWindow: null
+    // Cheap checks first: most saves are of objects with text, where nothing here can change.
     readonly property int rev: typeof ws !== "undefined" && ws ? ws.listRevision : 0
     readonly property string oid: session ? session.objectId : ""
-    readonly property bool isTemplate: { rev; return !!oid && ws.objectSummary(oid).isTemplate === true }
-    readonly property var templates: { rev; return session && !isTemplate ? ws.templatesFor(session.typeId) : [] }
-    readonly property bool empty: { rev; return !!session && session.blockCount <= 1 && (ws.objectStats(oid).words || 0) === 0 }
-    readonly property bool showPicker: templates.length > 0 && empty
+    readonly property var summary: { rev; return oid ? ws.objectSummary(oid) : ({}) }
+    readonly property bool isTemplate: summary.isTemplate === true
+    readonly property bool empty: !!session && session.blockCount <= 1 && (summary.snippet || "").trim().length === 0
+    readonly property var templates: { rev; return empty && !isTemplate && session ? ws.templatesFor(session.typeId) : [] }
+    readonly property bool showPicker: templates.length > 0
 
     visible: isTemplate || showPicker
     implicitHeight: visible ? row.implicitHeight + 28 : 0

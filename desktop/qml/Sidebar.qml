@@ -110,7 +110,7 @@ Rectangle {
                     dot: sidebar.compact ? "transparent" : "transparent"
                     count: {
                         sidebar.dataRev
-                        const n = ws ? ws.objectsByType(modelData.id, 0).length : 0
+                        const n = ws ? (ws.typeCounts()[modelData.id] || 0) : 0
                         return n > 0 ? String(n) : ""
                     }
                     active: false

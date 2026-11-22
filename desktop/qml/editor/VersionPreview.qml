@@ -180,15 +180,15 @@ Popup {
             Row {
                 spacing: 6
                 Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; color: Theme.accent }
-                Text { text: qsTr("changed since"); color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11 }
+                Text { text: qsTr("changed since"); color: Theme.label; font.family: Theme.mono; font.pixelSize: 11 }
             }
             Row {
                 spacing: 6
                 Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; color: Theme.danger }
-                Text { text: qsTr("removed since"); color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11 }
+                Text { text: qsTr("removed since"); color: Theme.label; font.family: Theme.mono; font.pixelSize: 11 }
             }
             Item { Layout.fillWidth: true }
-            Text { text: qsTr("↑↓ changed blocks · Enter restores one · Esc close"); color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11 }
+            Text { text: qsTr("↑↓ changed blocks · Enter restores one · Esc close"); color: Theme.label; font.family: Theme.mono; font.pixelSize: 11 }
         }
     }
 }

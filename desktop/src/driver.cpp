@@ -1281,7 +1281,6 @@ QString seedShowcase(Workspace *ws)
         col.title = QStringLiteral("Lecturas 2026");
         col.createdAt = nowIso;
         col.updatedAt = nowIso;
-        col.properties.insert(QStringLiteral("item_type_id"), QStringLiteral("book"));
         col.properties.insert(QStringLiteral("items"), QJsonArray{ bookId, personId, QStringLiteral("web-showcase-2") });
         ws->saveObject(col);
     }

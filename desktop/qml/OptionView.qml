@@ -382,7 +382,7 @@ Popup {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: rn.modelData.objectIds.length
-                                color: Theme.faint
+                                color: Theme.label
                                 font.family: Theme.mono
                                 font.pixelSize: 10
                             }
@@ -403,7 +403,7 @@ Popup {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: 44
                     text: qsTr("Nothing carries this value yet.")
-                    color: Theme.faint
+                    color: Theme.label
                     font.family: Theme.body
                     font.pixelSize: 13
                 }
@@ -485,7 +485,7 @@ Popup {
             Layout.margins: 10
             Layout.leftMargin: 18
             text: qsTr("↑↓ select · Enter open · click a value on the outer ring to follow it · Backspace back · Esc close")
-            color: Theme.faint
+            color: Theme.label
             font.family: Theme.mono
             font.pixelSize: 11
             elide: Text.ElideRight

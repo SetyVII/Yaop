@@ -175,24 +175,41 @@ int Workspace::moveBlocksToObject(const QString &fromId, const QStringList &bloc
 QVariantMap Workspace::graphData(const QString &focusId, int depth, const QStringList &types) const
 {
     // links are derived from content (spec/object.md); recompute so local edits count at once.
-    QHash<QString, Object> objs;
-    objs.reserve(m_objects.size());
-    for (const Object &o : m_objects) {
-        Object c = o;
-        if (auto *ed = m_editors.value(o.id))
-            c.blocks = ed->m_blocks;
-        c.links = deriveLinks(c.toJson(true));
-        objs.insert(c.id, c);
+    // stored links are kept current on save (Workspace::saveObject); only objects open in an
+    // editor may have unsaved references, so only those are re-derived
+    QHash<QString, QStringList> overrides;
+    for (auto it = m_editors.constBegin(); it != m_editors.constEnd(); ++it) {
+        const auto o = m_objects.constFind(it.key());
+        if (o == m_objects.constEnd() || !it.value())
+            continue;
+        Object c = o.value();
+        c.blocks = it.value()->m_blocks;
+        overrides.insert(c.id, deriveLinks(c.toJson(true)));
     }
-    pkm::Graph g = pkm::buildGraph(objs, QSet<QString>(types.begin(), types.end()));
-    if (!focusId.isEmpty())
-        g = pkm::localGraph(g, focusId, depth);
+    const QSet<QString> typeSet(types.begin(), types.end());
+    const pkm::Graph g = focusId.isEmpty() ? pkm::buildGraph(m_objects, typeSet, overrides)
+                                           : pkm::localGraphOf(m_objects, focusId, depth, typeSet, overrides);
     QVariantList nodes, edges;
     for (const pkm::GraphNode &n : g.nodes)
         nodes.append(QVariantMap{ { "id", n.id }, { "typeId", n.typeId }, { "title", n.title }, { "degree", n.degree } });
     for (const pkm::GraphEdge &e : g.edges)
         edges.append(QVariantMap{ { "from", e.from }, { "to", e.to } });
     return { { "nodes", nodes }, { "edges", edges } };
+}
+
+// One object as the user sees it now: the stored copy with its open editor's unsaved blocks.
+// O(1); use it instead of objectsWithEditors() when only this object is needed.
+std::optional<Object> Workspace::currentObject(const QString &id) const
+{
+    const auto it = m_objects.constFind(id);
+    if (it == m_objects.constEnd())
+        return std::nullopt;
+    Object o = it.value();
+    if (auto *ed = m_editors.value(id)) {
+        o.blocks = ed->m_blocks;
+        o.title = ed->m_title;
+    }
+    return o;
 }
 
 QHash<QString, Object> Workspace::objectsWithEditors() const
@@ -230,10 +247,10 @@ QVariantList Workspace::unlinkedMentions(const QString &targetId) const
 
 QVariantMap Workspace::objectStats(const QString &id) const
 {
-    const QHash<QString, Object> objs = objectsWithEditors();
-    if (!objs.contains(id))
+    const std::optional<Object> cur = currentObject(id);
+    if (!cur)
         return {};
-    const Object &o = objs[id];
+    const Object &o = *cur;
     const pkm::TextStats s = pkm::textStats(o.blocks);
     return { { "words", s.words }, { "sentences", s.sentences }, { "paragraphs", s.paragraphs },
              { "characters", s.characters }, { "createdAt", o.createdAt }, { "updatedAt", o.updatedAt } };
@@ -242,12 +259,12 @@ QVariantMap Workspace::objectStats(const QString &id) const
 QVariantList Workspace::containedObjects(const QString &id) const
 {
     QVariantList out;
-    const QHash<QString, Object> objs = objectsWithEditors();
-    if (!objs.contains(id))
+    const std::optional<Object> cur = currentObject(id);
+    if (!cur)
         return out;
-    for (const QString &cid : pkm::containedObjectIds(objs[id].blocks, id)) {
-        const auto it = objs.constFind(cid);
-        if (it == objs.constEnd() || !it->trashedAt.isEmpty())
+    for (const QString &cid : pkm::containedObjectIds(cur->blocks, id)) {
+        const auto it = m_objects.constFind(cid);
+        if (it == m_objects.constEnd() || !it->trashedAt.isEmpty())
             continue;
         out.append(QVariantMap{ { "id", cid }, { "title", plainTitleFor(*it) }, { "typeId", it->typeId } });
     }
@@ -344,7 +361,7 @@ void Workspace::deleteObject(const QString &id)
     // object state (kind obj), like on mobile; the merge propagates it.
     m_store->dequeueOpsFor(id);
     m_store->queueOp(newSyncOpId(), it.value().id, it.value().toJson(true));
-    m_pendingCount = m_store->pendingOps().size();
+    m_pendingCount = m_store->pendingOpCount();
     emit syncStateChanged();
     closeObject(id);
     refreshViews();
@@ -367,7 +384,7 @@ void Workspace::restoreObject(const QString &id)
     m_store->putObject(it.value());
     m_store->dequeueOpsFor(id);
     m_store->queueOp(newSyncOpId(), it.value().id, it.value().toJson(true));
-    m_pendingCount = m_store->pendingOps().size();
+    m_pendingCount = m_store->pendingOpCount();
     emit syncStateChanged();
     refreshViews();
     ++m_listRevision;
@@ -397,10 +414,15 @@ static QJsonObject queryWireOf(const Object &o)
 
 QVariantMap Workspace::runQuery(const QVariantMap &query, const QString &today) const
 {
+    // `types` is a plain filter on type_id (spec/query.md): apply it before building the wire of
+    // every object, which is most of the cost of a query over a large vault.
+    QSet<QString> types;
+    for (const QVariant &t : query.value(QStringLiteral("types")).toList())
+        types.insert(normalizeTypeId(t.toString()));
     QVector<QJsonObject> objects;
-    objects.reserve(m_objects.size());
+    objects.reserve(types.isEmpty() ? m_objects.size() : 256);
     for (const Object &o : m_objects)
-        if (o.trashedAt.isEmpty())
+        if (o.trashedAt.isEmpty() && (types.isEmpty() || types.contains(normalizeTypeId(o.typeId))))
             objects << queryWireOf(o);
     const QString day = today.isEmpty() ? QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd")) : today;
     const query::Result r = query::evaluate(QJsonObject::fromVariantMap(query), objects, day);
@@ -566,7 +588,7 @@ QString Workspace::createTypeView(const QString &typeId, const QString &name, co
     return id;
 }
 
-QVariantMap Workspace::runSet(const QString &setId) const
+QVariantMap Workspace::runSet(const QString &setId, int limit) const
 {
     const auto it = m_objects.constFind(setId);
     if (it == m_objects.constEnd())
@@ -581,12 +603,16 @@ QVariantMap Workspace::runSet(const QString &setId) const
         return out;
     }
     QVariantList items;
+    int total = 0;
     for (const QString &id : r.value(QStringLiteral("ids")).toStringList()) {
         if (id == setId)
             continue; // a set never lists itself
-        items << objectSummary(id);
+        if (limit <= 0 || total < limit)
+            items << objectSummary(id);
+        ++total;
     }
     out.insert(QStringLiteral("items"), items);
+    out.insert(QStringLiteral("total"), total);
     return out;
 }
 
@@ -781,6 +807,18 @@ QVariantList Workspace::objectsByType(const QString &typeId, int limit) const
     return out;
 }
 
+QVariantMap Workspace::typeCounts() const
+{
+    QHash<QString, int> n;
+    for (const Object &o : m_objects)
+        if (o.trashedAt.isEmpty() && !o.isTemplate())
+            ++n[o.typeId];
+    QVariantMap out;
+    for (auto it = n.constBegin(); it != n.constEnd(); ++it)
+        out.insert(it.key(), it.value());
+    return out;
+}
+
 QVariantList Workspace::allTypes() const
 {
     // Stable, meaningful order (QHash iteration order is arbitrary): standard types first in a
@@ -870,7 +908,7 @@ QString Workspace::createCustomType(const QString &name, const QString &colorNam
         m_store->putType(t);
         m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
         m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         emit syncStateChanged();
         schedulePush(1200);
     }
@@ -905,7 +943,7 @@ bool Workspace::addPropertyToType(const QString &typeId, const QString &propName
         m_store->putType(t);
         m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
         m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         emit syncStateChanged();
         schedulePush(1200);
     }
@@ -957,7 +995,7 @@ bool Workspace::addOptionToProperty(const QString &typeId, const QString &propKe
         m_store->putType(t);
         m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
         m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         emit syncStateChanged();
         schedulePush(1200);
     }
@@ -1001,7 +1039,7 @@ bool Workspace::removeOptionFromProperty(const QString &typeId, const QString &p
         m_store->putType(t);
         m_store->dequeueOpsFor(QStringLiteral("type:") + t.id);
         m_store->queueOp(newSyncOpId(), QStringLiteral("type:") + t.id, t.toJson());
-        m_pendingCount = m_store->pendingOps().size();
+        m_pendingCount = m_store->pendingOpCount();
         emit syncStateChanged();
         schedulePush(1200);
     }

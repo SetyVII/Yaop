@@ -23,6 +23,7 @@ Item {
     property var unlinked: []
     property var historyList: []
     property var contained: []
+    property bool selfSave: false
     property var stats: ({})
     property var localGraph: ({ nodes: [], edges: [] })
 
@@ -42,6 +43,9 @@ Item {
         else pendingVersion = i
     }
 
+    // Only the visible tab is computed, and never on every keystroke: saves arrive every ~1 s
+    // while typing, and graph / unlinked mentions walk the whole vault (hundreds of ms at 5k
+    // objects). Edits of this object refresh after a pause; edits elsewhere wait longer.
     function refreshAll() {
         if (!workspace || !session) {
             backlinks = []
@@ -52,37 +56,55 @@ Item {
             localGraph = { nodes: [], edges: [] }
             return
         }
+        refreshTab(activeTab, true)
+    }
+    function refreshTab(tab, withUnlinked) {
+        if (!workspace || !session || !rail.visible) return
         const oid = session.objectId
-        backlinks = workspace.backlinksFor(oid) || []
-        unlinked = workspace.unlinkedMentions(oid) || []
-        historyList = workspace.objectHistory(oid) || []
-        contained = workspace.containedObjects(oid) || []
-        stats = workspace.objectStats(oid) || ({})
-        if (pendingVersion >= 0 && historyList.length > pendingVersion) {
-            versionPreview.show(historyList[pendingVersion])
-            pendingVersion = -1
+        if (tab === 0) {
+            backlinks = workspace.backlinksFor(oid) || []
+            if (withUnlinked) unlinked = workspace.unlinkedMentions(oid) || []
+        } else if (tab === 1) {
+            localGraph = workspace.graphData(oid, graphDepth) || { nodes: [], edges: [] }
+            localGraphCanvas.requestPaint()
+        } else if (tab === 2) {
+            historyList = workspace.objectHistory(oid) || []
+            stats = workspace.objectStats(oid) || ({})
+            if (pendingVersion >= 0 && historyList.length > pendingVersion) {
+                versionPreview.show(historyList[pendingVersion])
+                pendingVersion = -1
+            }
+        } else if (tab === 3) {
+            contained = workspace.containedObjects(oid) || []
         }
-        localGraph = workspace.graphData(oid, graphDepth) || { nodes: [], edges: [] }
-        localGraphCanvas.requestPaint()
     }
 
     onSessionChanged: {
         backlinkFilter = "all"
+        refreshTimer.interval = 60
         refreshTimer.restart()
     }
-    onGraphDepthChanged: {
-        if (workspace && session) {
-            localGraph = workspace.graphData(session.objectId, graphDepth) || { nodes: [], edges: [] }
-            localGraphCanvas.requestPaint()
-        }
-    }
-    onActiveTabChanged: if (activeTab === 1) localGraphCanvas.requestPaint()
+    onGraphDepthChanged: refreshTab(1, false)
+    onActiveTabChanged: refreshTab(activeTab, true)
+    onVisibleChanged: if (visible) refreshTab(activeTab, true)
 
     Timer {
         id: refreshTimer
         interval: 60
         repeat: false
         onTriggered: rail.refreshAll()
+    }
+    // edits of this object: the tab without the vault-wide unlinked scan
+    Timer {
+        id: selfTimer
+        interval: 700
+        onTriggered: rail.refreshTab(rail.activeTab, false)
+    }
+    // edits of other objects (they may link here): everything, rarely
+    Timer {
+        id: othersTimer
+        interval: 2500
+        onTriggered: rail.refreshTab(rail.activeTab, true)
     }
 
     Connections {
@@ -91,9 +113,17 @@ Item {
             if (session && objectId === session.objectId)
                 rail.backlinks = objects
         }
-        function onObjectListChanged() { rail.rev++; refreshTimer.restart() }
-        function onObjectUpdated(id) { if (session && id === session.objectId) refreshTimer.restart() }
-        function onObjectPropertiesChanged(id) { if (session && id === session.objectId) refreshTimer.restart() }
+        // saveObject emits objectUpdated(id) then objectListChanged: a save of this object alone
+        // must not trigger the vault-wide refresh
+        function onObjectListChanged() {
+            rail.rev++
+            if (rail.selfSave) rail.selfSave = false
+            else othersTimer.restart()
+        }
+        function onObjectUpdated(id) {
+            if (session && id === session.objectId) { rail.selfSave = true; selfTimer.restart() }
+        }
+        function onObjectPropertiesChanged(id) { if (session && id === session.objectId) selfTimer.restart() }
     }
 
     // Backlink type breakdown for filter chips (Person.dc.html)
@@ -398,7 +428,7 @@ Item {
                         visible: rail.contained.length === 0
                         Layout.fillWidth: true
                         text: qsTr("Mention an object with @ or embed it, and it shows here.")
-                        color: Theme.faint; font.family: Theme.body; font.pixelSize: 12
+                        color: Theme.label; font.family: Theme.body; font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
                 }

@@ -31,7 +31,7 @@ MenuItem {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             text: item.hint
-            color: item.highlighted ? Theme.accentInk : Theme.faint
+            color: item.highlighted ? Theme.accentInk : Theme.label
             font.family: Theme.mono
             font.pixelSize: 11
         }

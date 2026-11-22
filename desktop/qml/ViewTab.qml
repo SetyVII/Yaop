@@ -51,7 +51,7 @@ Item {
             visible: !tab.editing
             anchors.verticalCenter: parent.verticalCenter
             text: tab.title
-            color: tab.current ? Theme.text : (hov.hovered || tab.activeFocus ? Theme.bodyText : (tab.muted ? Theme.faint : Theme.label))
+            color: tab.current ? Theme.text : (hov.hovered || tab.activeFocus ? Theme.bodyText : (tab.muted ? Theme.label : Theme.muted))
             font.family: Theme.body
             font.pixelSize: 13
             font.weight: tab.current ? Font.Medium : Font.Normal
@@ -74,7 +74,7 @@ Item {
             visible: !tab.fixed && !tab.editing && (hov.hovered || tab.activeFocus)
             anchors.verticalCenter: parent.verticalCenter
             text: "×"
-            color: xHov.hovered ? Theme.danger : Theme.faint
+            color: xHov.hovered ? Theme.danger : Theme.label
             font.pixelSize: 14
             HoverHandler { id: xHov; cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: tab.removed() }

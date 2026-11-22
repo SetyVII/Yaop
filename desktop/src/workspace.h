@@ -160,7 +160,8 @@ public:
     Q_INVOKABLE QVariantMap setInfo(const QString &setId) const;
     Q_INVOKABLE void setSetQuery(const QString &setId, const QVariantMap &query);
     Q_INVOKABLE void setSetActiveView(const QString &setId, const QString &kind);
-    Q_INVOKABLE QVariantMap runSet(const QString &setId) const;
+    // `limit` > 0 builds only that many summaries; `total` always says how many matched.
+    Q_INVOKABLE QVariantMap runSet(const QString &setId, int limit = 0) const;
     // Saved views of a type (spec/query.md: sets with `properties.type_view_of`), oldest first:
     // [{id, title, kind}]. createTypeView saves `query` (types = [typeId] is added) as a new one.
     Q_INVOKABLE QVariantList typeViews(const QString &typeId) const;
@@ -169,6 +170,9 @@ public:
     // Display text of one field of an object (table cells): lists joined, object refs as titles.
     Q_INVOKABLE QString fieldText(const QString &objectId, const QString &prop) const;
     Q_INVOKABLE QVariantList objectsByType(const QString &typeId, int limit = 0) const;
+    // {typeId: count} of alive, non-template objects: what the sidebar shows, without building
+    // a summary per object (objectsByType(...).length cost ~250 ms per save at 5k objects).
+    Q_INVOKABLE QVariantMap typeCounts() const;
     Q_INVOKABLE QVariantList searchObjects(const QString &query, int limit = 50);
     Q_INVOKABLE QVariantList mentionSearch(const QString &rawQuery, int limit = 14);
     Q_INVOKABLE QVariantList tagSuggestions(const QString &query, int limit = 16) const;
@@ -318,6 +322,8 @@ private:
     void loadFromStore();
     void captureSnapshot(const QString &id); // one per editing session, when content changed
     bool writeCollection(const QString &collectionId, const QStringList &items);
+    std::optional<Object> currentObject(const QString &id) const;
+    void refreshStoredLinks();
     void purgeOldSnapshots();                // older than 30 days
     // ---- /v1 transport pieces (spec/sync.md) ----
     void bootstrapVault();          // VaultKey + subkeys + SQLCipher open

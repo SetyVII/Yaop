@@ -139,7 +139,7 @@ Item {
                             delegate: Rectangle {
                                 required property var modelData
                                 readonly property bool active: !page.creating && page.selectedTypeId === modelData.id
-                                readonly property int count: { page.dataRev; return ws ? ws.objectsByType(modelData.id, 0).length : 0 }
+                                readonly property int count: { page.dataRev; return ws ? (ws.typeCounts()[modelData.id] || 0) : 0 }
                                 readonly property color tone: {
                                     if (Theme.typeIcon(modelData.id) !== "shape") return Theme.typeColor(modelData.id)
                                     const c = String(modelData.color || "")

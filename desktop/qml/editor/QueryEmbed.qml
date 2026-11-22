@@ -15,16 +15,30 @@ Rectangle {
     property bool expanded: false
     signal openRequested(string objectId)
 
-    readonly property int rev: typeof ws !== "undefined" && ws ? ws.listRevision : 0
-    readonly property var info: { rev; return ws && setId ? ws.setInfo(setId) : ({}) }
-    readonly property var result: { rev; return ws && setId ? ws.runSet(setId) : ({}) }
+    // Results are fetched on load, then at most once per pause after changes (a query over a big
+    // vault costs tens of ms; saves arrive every second while typing). Only what is shown is built.
+    property var info: ({})
+    property var result: ({})
     readonly property var items: result.items || []
+    readonly property int total: result.total !== undefined ? result.total : items.length
+    function reload() {
+        if (!ws || !setId) { info = ({}); result = ({}); return }
+        info = ws.setInfo(setId)
+        result = ws.runSet(setId, expanded ? 200 : (kind === "gallery" ? 6 : 8))
+    }
+    Component.onCompleted: reload()
+    onSetIdChanged: reload()
+    onExpandedChanged: reload()
+    Timer { id: reloadTimer; interval: 600; onTriggered: if (qe.visible) qe.reload() }
+    Connections {
+        target: typeof ws !== "undefined" ? ws : null
+        function onObjectListChanged() { reloadTimer.restart() }
+    }
     readonly property string kind: {
         const k = info.activeView ? info.activeView.kind : "list"
         return k === "gallery" || k === "table" ? k : "list"
     }
-    readonly property int limit: expanded ? 200 : (kind === "gallery" ? 6 : 8)
-    readonly property var shown: items.slice(0, limit)
+    readonly property var shown: items
 
     implicitHeight: col.implicitHeight + 2
     color: Theme.page
@@ -58,8 +72,8 @@ Rectangle {
                 Layout.maximumWidth: qe.width * 0.5
             }
             Text {
-                text: qe.result.error ? qsTr("error: %1").arg(qe.result.error) : String(qe.items.length)
-                color: qe.result.error ? Theme.danger : Theme.faint
+                text: qe.result.error ? qsTr("error: %1").arg(qe.result.error) : String(qe.total)
+                color: qe.result.error ? Theme.danger : Theme.label
                 font.family: Theme.mono; font.pixelSize: 11
             }
             Item { Layout.fillWidth: true }
@@ -78,7 +92,7 @@ Rectangle {
                         icon: modelData.icon
                         tip: modelData.tip
                         active: qe.kind === modelData.key
-                        onClicked: ws.setSetActiveView(qe.setId, modelData.key)
+                        onClicked: { ws.setSetActiveView(qe.setId, modelData.key); qe.reload() }
                     }
                 }
             }
@@ -127,7 +141,7 @@ Rectangle {
                         Layout.preferredWidth: 70
                         horizontalAlignment: Text.AlignRight
                         text: r.modelData.updatedAt ? Qt.formatDateTime(new Date(r.modelData.updatedAt), "d MMM") : ""
-                        color: Theme.faint; font.family: Theme.mono; font.pixelSize: 11
+                        color: Theme.label; font.family: Theme.mono; font.pixelSize: 11
                     }
                 }
                 HoverHandler { id: rHov; cursorShape: Qt.PointingHandCursor }
@@ -181,22 +195,22 @@ Rectangle {
         }
 
         Text {
-            visible: qe.items.length === 0 && !qe.result.error
+            visible: qe.total === 0 && !qe.result.error
             Layout.margins: 12
             text: qsTr("Nothing matches this query yet.")
-            color: Theme.faint; font.family: Theme.body; font.pixelSize: 12
+            color: Theme.label; font.family: Theme.body; font.pixelSize: 12
         }
 
         // show all / fewer
         Rectangle {
-            visible: qe.items.length > (qe.kind === "gallery" ? 6 : 8)
+            visible: qe.total > (qe.kind === "gallery" ? 6 : 8)
             Layout.fillWidth: true
             implicitHeight: 32
             color: moreHov.hovered ? Theme.panel2 : "transparent"
             Rectangle { width: parent.width; height: 1; color: Theme.lineSubtle }
             Text {
                 anchors.centerIn: parent
-                text: qe.expanded ? qsTr("Show fewer") : qsTr("Show all %1").arg(qe.items.length)
+                text: qe.expanded ? qsTr("Show fewer") : qsTr("Show all %1").arg(qe.total)
                 color: moreHov.hovered ? Theme.text : Theme.muted
                 font.family: Theme.body; font.pixelSize: 12
             }

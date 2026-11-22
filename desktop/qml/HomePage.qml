@@ -52,9 +52,8 @@ Item {
         dataRev
         let n = 0
         if (ws) {
-            const types = ws.allTypes()
-            for (let i = 0; i < types.length; ++i)
-                n += ws.objectsByType(types[i].id, 0).length
+            const c = ws.typeCounts()
+            for (const k in c) n += c[k]
         }
         return n
     }

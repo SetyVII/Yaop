@@ -37,7 +37,7 @@ Popup {
             Layout.fillWidth: true
             placeholderText: pl.placeholder
             color: Theme.text
-            placeholderTextColor: Theme.faint
+            placeholderTextColor: Theme.label
             font.family: Theme.body; font.pixelSize: 14
             background: Rectangle { color: Theme.panel; border.width: 1; border.color: search.activeFocus ? Theme.line3 : Theme.line2 }
             onTextChanged: pl.filter = text
@@ -84,7 +84,7 @@ Popup {
                     Text {
                         visible: (row.modelData.hint || "").length > 0
                         text: row.modelData.hint || ""
-                        color: row.lit ? Theme.accentInk : Theme.faint
+                        color: row.lit ? Theme.accentInk : Theme.label
                         font.family: Theme.mono; font.pixelSize: 11
                     }
                 }
@@ -96,7 +96,7 @@ Popup {
             visible: pl.entries.length === 0
             Layout.margins: 8
             text: qsTr("Nothing found.")
-            color: Theme.faint; font.family: Theme.body; font.pixelSize: 12
+            color: Theme.label; font.family: Theme.body; font.pixelSize: 12
         }
     }
 }
