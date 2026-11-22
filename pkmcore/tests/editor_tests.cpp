@@ -930,6 +930,25 @@ static void testGraph()
 
     const pkm::Graph people = pkm::buildGraph(all, { "person", "journal" });
     CHECK(people.nodes.size() == 2 && people.edges.size() == 1, "type filter keeps only those types");
+
+    // the direct local graph gives exactly what building the whole graph does
+    auto same = [](const pkm::Graph &a, const pkm::Graph &b) {
+        if (a.nodes.size() != b.nodes.size() || a.edges.size() != b.edges.size()) return false;
+        for (int i = 0; i < a.nodes.size(); ++i)
+            if (a.nodes[i].id != b.nodes[i].id || a.nodes[i].degree != b.nodes[i].degree) return false;
+        for (int i = 0; i < a.edges.size(); ++i)
+            if (a.edges[i].from != b.edges[i].from || a.edges[i].to != b.edges[i].to) return false;
+        return true;
+    };
+    for (const QString &focus : { "day", "book", "far", "ghost", "nope", "gone" })
+        for (int depth : { 1, 2, 3 })
+            CHECK(same(pkm::localGraphOf(all, focus, depth), pkm::localGraph(g, focus, depth)),
+                  qPrintable(QStringLiteral("localGraphOf matches localGraph for %1 depth %2").arg(focus).arg(depth)));
+    const QHash<QString, QStringList> ov{ { "far", { "ana" } } };
+    CHECK(same(pkm::localGraphOf(all, "ana", 1, {}, ov), pkm::localGraph(pkm::buildGraph(all, {}, ov), "ana", 1)),
+          "localGraphOf honours link overrides");
+    CHECK(same(pkm::localGraphOf(all, "day", 1, { "person", "journal" }), pkm::localGraph(people, "day", 1)),
+          "localGraphOf honours the type filter");
 }
 
 
