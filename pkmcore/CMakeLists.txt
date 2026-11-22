@@ -24,9 +24,19 @@ add_library(pkmcore STATIC
     editor/spancodec.h editor/spancodec.cpp
     editor/query.h editor/query.cpp
     editor/mentionquery.h editor/mentionquery.cpp
+    editor/standardtypes.h editor/standardtypes.cpp
+    editor/imagecolors.h editor/imagecolors.cpp
+    editor/objectops.h editor/objectops.cpp
+    editor/graph.h editor/graph.cpp
+    editor/unlinked.h editor/unlinked.cpp
+    editor/history.h editor/history.cpp
 )
 target_include_directories(pkmcore PUBLIC editor)
 target_link_libraries(pkmcore PUBLIC Qt6::Core Qt6::Gui)
+# Standard types (spec/types.md) are baked in, never downloaded: resource :/types/standard.json
+qt_add_resources(pkmcore "pkmcore_types"
+    PREFIX "/" BASE "${PKMCORE_SPEC_DIR}/fixtures"
+    FILES "${PKMCORE_SPEC_DIR}/fixtures/types/standard.json")
 
 if(PKMCORE_VAULT)
     find_package(PkgConfig REQUIRED)

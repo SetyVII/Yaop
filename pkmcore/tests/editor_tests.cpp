@@ -5,6 +5,14 @@
 #include "model.h"
 #include "query.h"
 #include "spancodec.h"
+#include "standardtypes.h"
+#include "imagecolors.h"
+#include "objectops.h"
+#include "graph.h"
+#include "unlinked.h"
+#include "history.h"
+#include <QImage>
+#include <QPainter>
 #include <QElapsedTimer>
 #include <QClipboard>
 #include <QGuiApplication>
@@ -381,6 +389,11 @@ static void testCodecLiveEditRoundTrip()
     h.text = "resaltado";
     h.highlight = true;
     runs.append(h);
+    Run br;
+    br.objectId = "obj-retro";
+    br.blockId = "blk-42";
+    br.text = "Retro";
+    runs.append(br);
 
     const QString html = span::runsToHtml(runs);
     CHECK(html.contains("<b>"), "bold html");
@@ -392,7 +405,7 @@ static void testCodecLiveEditRoundTrip()
     CHECK(runsToPlainText(parsed) == runsToPlainText(runs),
           "visible text identical after doc round trip");
     bool foundBold = false, foundMention = false, foundTag = false, foundDate = false,
-         foundCode = false, foundHighlight = false, foundRed = false;
+         foundCode = false, foundHighlight = false, foundRed = false, foundBlockRef = false;
     for (const Run &r : parsed) {
         if (r.bold && r.text == "negrita")
             foundBold = true;
@@ -408,7 +421,10 @@ static void testCodecLiveEditRoundTrip()
             foundDate = true;
         if (r.highlight)
             foundHighlight = true;
+        if (r.objectId == "obj-retro")
+            foundBlockRef = r.blockId == "blk-42";
     }
+    CHECK(foundBlockRef, "block reference keeps its block id through the live editor");
     CHECK(foundBold, "bold recovered");
     CHECK(foundRed, "named text color recovered");
     CHECK(foundCode, "code mark recovered");
@@ -505,6 +521,17 @@ static void testColorArtifactNormalization()
     CHECK(colored.size() == 1 && !colored.first().textColor.isEmpty()
               && colored.first().textColor != QLatin1String("#000000"),
           "explicit color preserved");
+
+    // Soft line breaks (Shift+Enter) round-trip as '\n' <-> '<br>' inside the same block.
+    Run multi;
+    multi.text = QStringLiteral("line one\nline two");
+    const QString multiHtml = span::runsToHtml({ multi });
+    CHECK(multiHtml.contains(QLatin1String("<br>")), "soft newline encodes to <br>");
+    QTextDocument multiDoc;
+    multiDoc.setHtml(multiHtml);
+    const QVector<Run> multiBack = span::documentToRuns(&multiDoc, QColor("#F2F2EC"));
+    CHECK(runsToPlainText(multiBack) == QLatin1String("line one\nline two"),
+          "soft newline round-trips through QTextDocument as '\\n'");
 }
 
 static void testConformanceHlc()
@@ -700,6 +727,288 @@ static QByteArray mergCanon(const QJsonObject &o)
     return QJsonDocument(n).toJson(QJsonDocument::Compact);
 }
 
+
+// spec/types.md: the baked-in standard types are the fixture, valid, and resolve labels per language.
+static void testStandardTypes()
+{
+    const auto fx = loadFixtures(QStringLiteral("types"));
+    CHECK(fx.size() == 1, "types fixture present");
+    if (fx.isEmpty())
+        return;
+    const QJsonObject file = fx.first().second;
+    CHECK(pkm::standardTypesDoc() == file, "baked-in :/types/standard.json equals spec/fixtures/types/standard.json");
+    const QStringList problems = pkm::validateStandardTypes(file);
+    CHECK(problems.isEmpty(), qPrintable(QStringLiteral("standard types valid: ") + problems.join(QStringLiteral("; "))));
+
+    // Wire values shared with Kotlin (DefaultTypes) must not drift.
+    auto optionIds = [](const QString &type, const QString &key) {
+        QStringList ids;
+        for (const QJsonValue &v : pkm::standardPropertyDefs(type, QStringLiteral("en"))) {
+            const QJsonObject d = v.toObject();
+            if (d.value(QLatin1String("key")).toString() == key)
+                for (const QJsonValue &o : d.value(QLatin1String("options")).toArray())
+                    ids << o.toObject().value(QLatin1String("id")).toString();
+        }
+        return ids;
+    };
+    CHECK(optionIds("task", "status") == QStringList({ "todo", "in_progress", "done" }), "task status ids");
+    CHECK(optionIds("book", "medium") == QStringList({ "paperback", "hardcover", "ebook", "audiobook" }), "book medium ids");
+    CHECK(optionIds("book", "status") == QStringList({ "to_read", "reading", "finished", "abandoned" }), "book status ids");
+    CHECK(optionIds("web", "category").size() == 30 && optionIds("web", "topics").size() == 29, "web category/topic counts");
+    CHECK(optionIds("image", "colors").size() == 21, "image colors count");
+
+    // Labels: Spanish when asked, English fallback for an unknown language.
+    const QJsonArray es = pkm::standardPropertyDefs(QStringLiteral("web"), QStringLiteral("es"));
+    const QJsonArray xx = pkm::standardPropertyDefs(QStringLiteral("web"), QStringLiteral("xx"));
+    QString esCat, xxCat;
+    for (const QJsonValue &v : es) if (v.toObject().value("key").toString() == "category") esCat = v.toObject().value("name").toString();
+    for (const QJsonValue &v : xx) if (v.toObject().value("key").toString() == "category") xxCat = v.toObject().value("name").toString();
+    CHECK(esCat == QStringLiteral("Categoría") && xxCat == QStringLiteral("Category"), "property labels per language");
+    CHECK(pkm::standardTypeLabel(QStringLiteral("web"), QStringLiteral("es")) == QStringLiteral("Enlace web"), "type label es");
+
+    // Rule 5: a synced copy extends the standard type, never replaces a standard key.
+    const QJsonArray extra{ QJsonObject{ { "key", "category" }, { "name", "Mine" }, { "kind", "text" } },
+                            QJsonObject{ { "key", "my_prop" }, { "name", "My prop" }, { "kind", "text" } } };
+    const QJsonArray merged = pkm::mergeStandardPropertyDefs(es, extra);
+    CHECK(merged.size() == es.size() + 1 && merged.last().toObject().value("key").toString() == "my_prop",
+          "synced type extends the standard definitions");
+}
+
+
+// Dominant colors use the ids of image.colors in spec/types.md and pick the largest areas.
+static void testImageColors()
+{
+    QStringList fixtureIds;
+    for (const QJsonValue &v : pkm::standardPropertyDefs(QStringLiteral("image"), QStringLiteral("en")))
+        if (v.toObject().value("key").toString() == QLatin1String("colors"))
+            for (const QJsonValue &o : v.toObject().value("options").toArray())
+                fixtureIds << o.toObject().value("id").toString();
+    CHECK(pkm::referenceColorIds() == fixtureIds, "reference colors match image.colors options, same order");
+
+    QImage img(100, 100, QImage::Format_ARGB32);
+    img.fill(Qt::white);
+    QPainter p(&img);
+    p.fillRect(0, 0, 60, 100, QColor(220, 30, 35));   // 60 % red
+    p.fillRect(60, 0, 40, 40, QColor(20, 20, 20));    // 16 % black
+    p.end();
+    CHECK(pkm::dominantColorIds(img) == QStringList({ "red", "white", "black" }), "largest shares first");
+    CHECK(pkm::dominantColorIds(img, 1) == QStringList({ "red" }), "max limits the result");
+
+    QImage clear(10, 10, QImage::Format_ARGB32);
+    clear.fill(Qt::transparent);
+    CHECK(pkm::dominantColorIds(clear).isEmpty() && pkm::dominantColorIds(QImage()).isEmpty(),
+          "transparent or null image has no colors");
+}
+
+
+// Duplicate: a new local object with fresh ids and no merge stamps; single-instance types refuse.
+static void testDuplicateObject()
+{
+    Object src;
+    src.id = QStringLiteral("orig");
+    src.typeId = QStringLiteral("book");
+    src.title = QStringLiteral("Notas inteligentes");
+    src.hlc = QStringLiteral("0001");
+    src.fieldHlc.insert(QStringLiteral("title"), QStringLiteral("0001"));
+    src.trashedAt = QStringLiteral("2026-11-01T00:00:00Z");
+    src.properties.insert(QStringLiteral("pinned"), true);
+    src.properties.insert(QStringLiteral("genre"), QJsonArray{ QStringLiteral("essay") });
+    Block a = Block::makeParagraph(QStringLiteral("b1"));
+    a.groupId = QStringLiteral("g1");
+    Block b = Block::makeParagraph(QStringLiteral("b2"));
+    b.groupId = QStringLiteral("g1");
+    src.blocks = { a, b, Block::makeParagraph(QStringLiteral("b3")) };
+
+    int n = 0;
+    const Object d = pkm::duplicateObject(src, QStringLiteral("copy"), QStringLiteral("2026-11-22T10:00:00Z"),
+                                          [&n] { return QStringLiteral("n%1").arg(++n); });
+    CHECK(d.id == QLatin1String("copy") && d.title == src.title && d.typeId == src.typeId, "duplicate keeps title and type");
+    CHECK(d.hlc.isEmpty() && d.fieldHlc.isEmpty() && d.trashedAt.isEmpty() && d.syncStatus == QLatin1String("local"),
+          "duplicate has no stamps, is alive and local");
+    CHECK(!d.properties.contains(QStringLiteral("pinned")) && d.properties.value("genre") == src.properties.value("genre"),
+          "duplicate is not pinned and keeps properties");
+    CHECK(d.blocks.size() == 3 && d.blocks[0].id != QLatin1String("b1") && d.blocks[0].groupId == d.blocks[1].groupId
+              && d.blocks[0].groupId != QLatin1String("g1") && d.blocks[2].groupId.isEmpty(),
+          "duplicate gets new block ids and one new id per group");
+    Object img = src;
+    img.typeId = QStringLiteral("image");
+    CHECK(pkm::duplicateObject(img, QStringLiteral("x"), QString(), [] { return QStringLiteral("y"); }).id.isEmpty(),
+          "media, journal and tag objects are not duplicated");
+}
+
+
+// spec/fixtures/schema/change_type.json: same loose keys and errors as Go and Kotlin.
+static void testConformanceChangeType()
+{
+    int ran = 0;
+    for (const auto &fx : loadFixtures(QStringLiteral("schema"))) {
+        for (const QJsonValue &cv : fx.second.value(QLatin1String("cases")).toArray()) {
+            const QJsonObject c = cv.toObject();
+            const QString label = fx.first + QLatin1Char('/') + c.value(QLatin1String("name")).toString();
+            const Object src = Object::fromJson(c.value(QLatin1String("object")).toObject());
+            QStringList toKeys;
+            for (const QJsonValue &k : c.value(QLatin1String("to_keys")).toArray())
+                toKeys << k.toString();
+            const pkm::TypeChange r = pkm::changeObjectType(src, c.value(QLatin1String("to")).toString(), toKeys);
+            const QJsonObject expect = c.value(QLatin1String("expect")).toObject();
+            ++ran;
+            if (expect.contains(QLatin1String("error"))) {
+                CHECK(r.error == expect.value(QLatin1String("error")).toString(), qPrintable(label));
+                continue;
+            }
+            QStringList loose;
+            for (const QJsonValue &k : expect.value(QLatin1String("loose")).toArray())
+                loose << k.toString();
+            CHECK(r.error.isEmpty() && r.object.typeId == expect.value(QLatin1String("type_id")).toString(), qPrintable(label + QStringLiteral(": type")));
+            CHECK(r.loose == loose, qPrintable(label + QStringLiteral(": loose ") + r.loose.join(QLatin1Char(','))));
+            if (expect.contains(QLatin1String("properties"))) {
+                const QJsonObject want = expect.value(QLatin1String("properties")).toObject();
+                CHECK(r.object.properties == want && r.object.blocks.size() == src.blocks.size(),
+                      qPrintable(label + QStringLiteral(": properties and blocks kept")));
+            }
+        }
+    }
+    CHECK(ran >= 6, "change_type fixture ran");
+}
+
+
+// Move blocks to another object: subtree travels, indents shift to 0, ids are kept.
+static void testMoveBlocksToObject()
+{
+    auto para = [](const QString &id, int indent) { Block b = Block::makeParagraph(id); b.indentLevel = indent; return b; };
+    Object a; a.id = QStringLiteral("A");
+    a.blocks = { para("a1", 0), para("a2", 1), para("a3", 2), para("a4", 1), para("a5", 0) };
+    Object b; b.id = QStringLiteral("B");
+    b.blocks = { para("b1", 0) };
+    const pkm::BlockMove r = pkm::moveBlocksToObject(a, b, { QStringLiteral("a2") }, [] { return QStringLiteral("new"); });
+    QStringList fromIds, toIds; QList<int> toIndents;
+    for (const Block &x : r.from.blocks) fromIds << x.id;
+    for (const Block &x : r.to.blocks) { toIds << x.id; toIndents << x.indentLevel; }
+    CHECK(r.moved == 2 && fromIds == QStringList({ "a1", "a4", "a5" }), "moved block takes its children out of the source");
+    CHECK(toIds == QStringList({ "b1", "a2", "a3" }) && toIndents == QList<int>({ 0, 0, 1 }),
+          "moved blocks land at the end of the target, shallowest at level 0");
+    const pkm::BlockMove all = pkm::moveBlocksToObject(a, b, { QStringLiteral("a1"), QStringLiteral("a5") }, [] { return QStringLiteral("new"); });
+    CHECK(all.moved == 5 && all.from.blocks.size() == 1 && all.from.blocks[0].text.isEmpty() && all.from.blocks[0].id == QLatin1String("new"),
+          "emptying the source leaves one empty paragraph");
+    CHECK(pkm::moveBlocksToObject(a, a, { QStringLiteral("a1") }, [] { return QStringLiteral("new"); }).moved == 0, "moving into the same object does nothing");
+}
+
+
+// Graph: undirected edges from links and property links; trashed, templates and filtered types out.
+static void testGraph()
+{
+    auto obj = [](const QString &id, const QString &type, QStringList links, QStringList props = {}) {
+        Object o; o.id = id; o.typeId = type; o.title = id; o.links = links; o.propertyLinks = props; return o;
+    };
+    QHash<QString, Object> all;
+    all.insert("day", obj("day", "journal", { "ana", "book", "day" }));
+    all.insert("book", obj("book", "book", { "ana" }, { "tag_pkm" }));
+    all.insert("ana", obj("ana", "person", { "day" }));
+    all.insert("tag_pkm", obj("tag_pkm", "tag", {}));
+    all.insert("far", obj("far", "note", { "tag_pkm" }));
+    Object gone = obj("gone", "note", { "ana" }); gone.trashedAt = "2026-11-01T00:00:00Z"; all.insert("gone", gone);
+    all.insert("ghost", obj("ghost", "note", { "missing" }));
+
+    const pkm::Graph g = pkm::buildGraph(all);
+    QStringList nodes; for (const auto &n : g.nodes) nodes << n.id;
+    QStringList edges; for (const auto &e : g.edges) edges << e.from + "-" + e.to;
+    CHECK(nodes == QStringList({ "ana", "book", "day", "far", "ghost", "tag_pkm" }), "graph nodes: alive objects, sorted");
+    CHECK(edges == QStringList({ "ana-book", "ana-day", "book-day", "book-tag_pkm", "far-tag_pkm" }),
+          "graph edges: undirected, once, no self or dangling links");
+    int bookDegree = 0; for (const auto &n : g.nodes) if (n.id == "book") bookDegree = n.degree;
+    CHECK(bookDegree == 3, "degree counts distinct neighbours");
+
+    const pkm::Graph local = pkm::localGraph(g, "day", 1);
+    QStringList ln; for (const auto &n : local.nodes) ln << n.id;
+    CHECK(ln == QStringList({ "ana", "book", "day" }) && local.edges.size() == 3, "local graph depth 1 with edges among them");
+    QStringList l2; for (const auto &n : pkm::localGraph(g, "day", 2).nodes) l2 << n.id;
+    CHECK(l2.contains("tag_pkm") && !l2.contains("far"), "local graph depth 2");
+    CHECK(pkm::localGraph(g, "nope").nodes.isEmpty(), "local graph of a missing node is empty");
+
+    const pkm::Graph people = pkm::buildGraph(all, { "person", "journal" });
+    CHECK(people.nodes.size() == 2 && people.edges.size() == 1, "type filter keeps only those types");
+}
+
+
+// Unlinked mentions: whole-word title/alias matches in plain runs of other objects; linking splits the run.
+static void testUnlinkedMentions()
+{
+    auto para = [](const QString &id, QVector<Run> runs) { Block b = Block::makeParagraph(id); b.runs = runs; b.text = runsToPlainText(runs); return b; };
+    Run plain; plain.text = QStringLiteral("Hablé con ana lópez y con Anabel.");
+    Run linked; linked.text = QStringLiteral("Ana López"); linked.objectId = QStringLiteral("ana");
+    Run code; code.text = QStringLiteral("ana lópez"); code.code = true;
+    QHash<QString, Object> all;
+    Object ana; ana.id = "ana"; ana.title = QStringLiteral("Ana López"); all.insert(ana.id, ana);
+    Object day; day.id = "day"; day.blocks = { para("b1", { plain }), para("b2", { linked }), para("b3", { code }) }; all.insert(day.id, day);
+    Object trashed = day; trashed.id = "old"; trashed.trashedAt = "2026-11-01T00:00:00Z"; all.insert(trashed.id, trashed);
+
+    const QVector<pkm::UnlinkedMention> found = pkm::findUnlinkedMentions(all, QStringLiteral("ana"));
+    CHECK(found.size() == 1 && found[0].objectId == QLatin1String("day") && found[0].blockId == QLatin1String("b1")
+              && found[0].runOffset == 10 && found[0].length == 9,
+          "finds the whole-word, case-insensitive match only; skips mentions, code, trash and partial words");
+    CHECK(!found.isEmpty() && found[0].snippet.contains(QStringLiteral("ana lópez")), "snippet shows the match");
+
+    if (!found.isEmpty()) {
+        const Block linkedBlock = pkm::linkUnlinkedMention(day.blocks[0], found[0], QStringLiteral("ana"));
+        CHECK(linkedBlock.runs.size() == 3 && linkedBlock.runs[1].objectId == QLatin1String("ana")
+                  && linkedBlock.runs[0].text == QStringLiteral("Hablé con ")
+                  && linkedBlock.runs[2].text == QStringLiteral(" y con Anabel."),
+              "linking splits the run around a mention");
+    }
+    Object shortName; shortName.id = "x"; shortName.title = QStringLiteral("AB"); all.insert("x", shortName);
+    CHECK(pkm::findUnlinkedMentions(all, QStringLiteral("x")).isEmpty(), "names under 3 characters are ignored");
+}
+
+
+// Block reference counter: runs with object_id + block_id in alive objects.
+static void testBlockReferenceCounts()
+{
+    auto ref = [](const QString &obj, const QString &blk) { Run r; r.objectId = obj; r.blockId = blk; r.text = "x"; return r; };
+    Run plainMention; plainMention.objectId = "retro"; plainMention.text = "Retro";
+    QHash<QString, Object> all;
+    Object a; a.id = "a"; Block b1 = Block::makeParagraph("p1"); b1.runs = { ref("retro", "blk-1"), ref("retro", "blk-2"), plainMention }; a.blocks = { b1 };
+    Object b; b.id = "b"; Block b2 = Block::makeParagraph("p2"); b2.runs = { ref("retro", "blk-1"), ref("other", "blk-1") }; b.blocks = { b2 };
+    Object t = b; t.id = "t"; t.trashedAt = "2026-11-01T00:00:00Z";
+    all.insert(a.id, a); all.insert(b.id, b); all.insert(t.id, t);
+    const QHash<QString, int> c = pkm::blockReferenceCounts(all, "retro");
+    CHECK(c.value("blk-1") == 2 && c.value("blk-2") == 1 && c.size() == 2,
+          "counts block references per block; plain mentions, other objects and trash do not count");
+}
+
+
+// Version history rules (product §16.3).
+static void testHistory()
+{
+    auto para = [](const QString &id, const QString &text) { Block b = Block::makeParagraph(id); Run r; r.text = text; b.runs = { r }; b.text = text; return b; };
+    Object v1; v1.id = "o"; v1.typeId = "note"; v1.title = "Plan"; v1.blocks = { para("a", "uno"), para("b", "dos"), para("c", "tres") };
+    v1.properties.insert("status", "draft");
+    const QByteArray s1 = pkm::history::snapshotContent(v1);
+    Object stamped = v1; stamped.hlc = "999"; stamped.updatedAt = "2026-11-22T10:00:00Z"; stamped.revision = 7;
+    CHECK(!pkm::history::shouldSnapshot(s1, pkm::history::snapshotContent(stamped)), "stamps and sync state do not make a new snapshot");
+    Object v2 = v1; v2.title = "Plan final"; v2.blocks = { para("a", "uno!"), para("c", "tres") }; v2.properties.insert("status", "done");
+    CHECK(pkm::history::shouldSnapshot(s1, pkm::history::snapshotContent(v2)) && pkm::history::shouldSnapshot({}, s1),
+          "content changes (or no snapshot yet) make a new snapshot");
+
+    Object cur = v2; cur.hlc = "h2";
+    const Object back = pkm::history::restoreObject(cur, s1);
+    CHECK(back.id == "o" && back.hlc == "h2" && back.title == "Plan" && back.blocks.size() == 3
+              && back.properties.value("status").toString() == QLatin1String("draft"),
+          "restoring the object takes its content back and keeps id and stamps");
+
+    const Object oneBlock = pkm::history::restoreBlock(cur, s1, "b");
+    QStringList ids; for (const Block &b : oneBlock.blocks) ids << b.id;
+    CHECK(ids == QStringList({ "a", "b", "c" }) && oneBlock.title == QLatin1String("Plan final")
+              && oneBlock.blocks[0].text == QLatin1String("uno!"),
+          "restoring a deleted block puts it back after its earlier neighbour, nothing else changes");
+    const Object replaced = pkm::history::restoreBlock(cur, s1, "a");
+    CHECK(replaced.blocks[0].text == QLatin1String("uno") && replaced.blocks.size() == 2, "restoring an existing block replaces its content");
+    CHECK(pkm::history::restoreBlock(cur, s1, "zz").blocks.size() == 2, "unknown block leaves the object as it is");
+
+    const QVector<pkm::history::SnapshotMeta> metas = { { 1, "2026-10-01T00:00:00.000Z" }, { 2, "2026-11-20T00:00:00.000Z" }, { 3, "garbage" } };
+    CHECK(pkm::history::expiredSnapshots(metas, "2026-11-22T00:00:00.000Z") == QVector<qint64>({ 1 }),
+          "snapshots older than 30 days expire; unreadable dates never do");
+}
+
 // spec/fixtures/query: same vault + query + today -> same ids, order and groups as Go and Kotlin.
 static void testConformanceQuery()
 {
@@ -875,6 +1184,15 @@ int runEditorTests()
     testConformanceStamp();
     testConformanceMerge();
     testConformanceQuery();
+    testStandardTypes();
+    testImageColors();
+    testDuplicateObject();
+    testConformanceChangeType();
+    testMoveBlocksToObject();
+    testGraph();
+    testUnlinkedMentions();
+    testBlockReferenceCounts();
+    testHistory();
     testConformanceMergeAssoc();
     testObjectStampRoundTrip();
     if (failures == before)
