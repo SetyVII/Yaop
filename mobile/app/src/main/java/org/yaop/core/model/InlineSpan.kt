@@ -85,6 +85,8 @@ sealed interface InlineSpan {
     data class Mention(
         val targetObjectId: String,
         val fallbackText: String? = null,
+        /** Block reference inside [targetObjectId] (spec/text.md `block_id`); null = whole object. */
+        val targetBlockId: String? = null,
     ) : InlineSpan
 
     @Serializable

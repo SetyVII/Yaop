@@ -27,6 +27,7 @@ constexpr int kPaletteSize = int(sizeof(kPalette) / sizeof(PaletteEntry));
 QString escapeHtml(const QString &s)
 {
     QString out = s.toHtmlEscaped();
+    out.replace(QLatin1Char('\n'), QStringLiteral("<br>"));
     out.replace(QChar(0x2028), QStringLiteral("<br>"));
     return out;
 }
@@ -48,7 +49,8 @@ QString monoFamily()
 QString anchorFor(const Run &r)
 {
     if (!r.objectId.isEmpty())
-        return QStringLiteral("yaop://object/") + r.objectId;
+        return QStringLiteral("yaop://object/") + r.objectId
+               + (r.blockId.isEmpty() ? QString() : QLatin1Char('#') + r.blockId);
     if (!r.tagId.isEmpty() || !r.tagName.isEmpty())
         return QStringLiteral("yaop-tag://") + (r.tagId.isEmpty()
                                                         ? tagKey(r.tagName)
@@ -201,7 +203,7 @@ QVector<Run> documentToRuns(const QTextDocument *doc, const QColor &baseForegrou
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
         if (wroteAnything) {
             Run r;
-            r.text = QStringLiteral(" ");
+            r.text = QStringLiteral("\n");
             out.append(r);
         }
         for (auto it = block.begin(); !it.atEnd(); ++it) {
@@ -250,10 +252,14 @@ QVector<Run> documentToRuns(const QTextDocument *doc, const QColor &baseForegrou
             }
 
             Run r;
-            r.text = text;
+            r.text = QString(text).replace(QChar(0x2028), QLatin1Char('\n'));
             const QString href = f.isAnchor() ? f.anchorHref() : QString();
             if (href.startsWith(QStringLiteral("yaop://object/"))) {
                 r.objectId = href.mid(int(strlen("yaop://object/")));
+                if (const int hash = r.objectId.indexOf(QLatin1Char('#')); hash >= 0) {
+                    r.blockId = r.objectId.mid(hash + 1);
+                    r.objectId.truncate(hash);
+                }
                 if (r.objectId.isEmpty())
                     r.objectId = text;
                 QString label = text;

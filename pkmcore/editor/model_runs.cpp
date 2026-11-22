@@ -271,6 +271,7 @@ QVector<Run> runsFromJson(const QJsonArray &arr)
         r.textColor = normalizeColorName(optStr(run, "text_color"));
         r.bgColor = normalizeColorName(optStr(run, "bg_color"));
         r.objectId = optStr(run, "object_id");
+        r.blockId = optStr(run, "block_id");
         r.tagId = optStr(run, "tag_id");
         r.tagName = optStr(run, "tag_name");
         r.date = optStr(run, "date");
@@ -308,6 +309,7 @@ QVector<Run> runsFromJson(const QJsonArray &arr)
             }
             Run m;
             m.objectId = resolved;
+            m.blockId = r.blockId;
             m.text = r.text.isEmpty() ? resolved : r.text;
             out.append(m);
             continue;
@@ -362,6 +364,8 @@ QJsonArray runsToJson(const QVector<Run> &runs)
             const QString label = span.text.isEmpty() ? span.objectId : span.text;
             run.insert("text", label);
             run.insert("object_id", span.objectId);
+            if (!span.blockId.isEmpty())
+                run.insert("block_id", span.blockId);
             arr.append(run);
             continue;
         }

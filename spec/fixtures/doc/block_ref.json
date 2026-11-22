@@ -1,0 +1,20 @@
+{
+  "name": "block reference: a mention with block_id keeps both ids",
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "paragraph",
+      "text": "como dije en @Retro de noviembre",
+      "runs": [
+        {
+          "text": "como dije en "
+        },
+        {
+          "text": "Retro de noviembre",
+          "object_id": "obj-retro",
+          "block_id": "blk-42"
+        }
+      ]
+    }
+  ]
+}

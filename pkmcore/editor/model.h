@@ -113,6 +113,7 @@ struct Run {
 
     // Atomic inline nodes
     QString objectId;   // mention target (wire: object_id)
+    QString blockId;    // block reference inside objectId (wire: block_id, spec/text.md)
     QString tagId;
     QString tagName;    // without '#'
     QString date;       // ISO date

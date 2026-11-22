@@ -828,6 +828,7 @@ object SyncContractCodec {
                             val label = span.fallbackText?.takeIf { it.isNotBlank() } ?: span.targetObjectId
                             put("text", label)
                             put("object_id", span.targetObjectId)
+                            span.targetBlockId?.takeIf { it.isNotBlank() }?.let { put("block_id", it) }
                         }
                         is InlineSpan.Tag -> {
                             put("text", "#${span.tagName.removePrefix("#")}")
@@ -868,7 +869,8 @@ object SyncContractCodec {
                 }
                 objectId.isNotBlank() || href.startsWith("lumen://object/") -> {
                     val resolvedId = objectId.ifBlank { href.removePrefix("lumen://object/") }.ifBlank { text }
-                    out.add(InlineSpan.Mention(targetObjectId = resolvedId, fallbackText = text.ifBlank { resolvedId }))
+                    out.add(InlineSpan.Mention(targetObjectId = resolvedId, fallbackText = text.ifBlank { resolvedId },
+                        targetBlockId = run.optStr("block_id", "").takeIf { it.isNotBlank() }))
                 }
                 tagId.isNotBlank() || tagName.isNotBlank() -> {
                     val cleanName = tagName.ifBlank { text.removePrefix("#") }

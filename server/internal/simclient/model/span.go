@@ -40,6 +40,7 @@ type Run struct {
 	TextColor     string  `json:"text_color,omitempty"`
 	BgColor       string  `json:"bg_color,omitempty"`
 	ObjectID      string  `json:"object_id,omitempty"`
+	BlockID       string  `json:"block_id,omitempty"` // block reference (spec/text.md)
 	TagID         string  `json:"tag_id,omitempty"`
 	TagName       string  `json:"tag_name,omitempty"`
 	Date          string  `json:"date,omitempty"`

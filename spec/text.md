@@ -41,7 +41,7 @@ export (looked up by `id` in the received blocks), even if the block is edited.
 | Span | Shape |
 |---|---|
 | text | `{text, bold?, italic?, underline?, strike?, code?, highlight?, href?, text_color?, bg_color?}`; only active marks (`true`) are emitted |
-| mention | `{text: label, object_id}`. No `href`; on import a mention `href` is accepted and dropped. |
+| mention | `{text: label, object_id, block_id?}`. No `href`; on import a mention `href` is accepted and dropped. With `block_id` it is a **block reference** (product §14): it points at that block inside `object_id`, the UI jumps there, and the block shows how many references point at it. It still counts as a mention of `object_id` in `links`. There is no transclusion: the referenced block is never rendered inline. |
 | tag | `{text: "#name", tag_id, tag_name}` |
 | date | `{text: iso, date: iso, has_time?}` |
 | inline math | `{text: "￼", type: "math", latex, display?}` |
