@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import "."
 
 // Icon button: in noir, sharp 0px square, accent fill with #000 icon when active.
@@ -6,6 +7,9 @@ Rectangle {
     id: root
     property string icon: "search"
     property bool active: false
+    // Shown on hover after a short delay and read by screen readers.
+    property string tip: ""
+    property bool focusRing: true
     readonly property alias hovered: hover.hovered
     signal clicked()
 
@@ -28,4 +32,12 @@ Rectangle {
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     TapHandler { id: press; onTapped: root.clicked() }
+    activeFocusOnTab: true
+    Keys.onSpacePressed: root.clicked()
+    Keys.onReturnPressed: root.clicked()
+    Accessible.role: Accessible.Button
+    Accessible.name: root.tip
+    ToolTip.visible: root.tip.length > 0 && hover.hovered
+    ToolTip.text: root.tip
+    ToolTip.delay: 500
 }

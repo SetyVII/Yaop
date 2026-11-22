@@ -19,6 +19,7 @@
 #include "texrender_internal.h"
 #include "workspace_internal.h"
 #include "history.h"
+#include "audioplayback.h"
 #include <QElapsedTimer>
 #include <QClipboard>
 #include <QGuiApplication>
@@ -47,6 +48,19 @@
 namespace pkm::selftest {
 using namespace pkm::testing;
 
+
+static void testAudioPeaks()
+{
+    // 4 buckets of 2 samples: silence, quiet, loud, half
+    const qint16 samples[] = { 0, 0, 1000, -1000, 8000, -8000, 4000, 4000 };
+    const QByteArray pcm(reinterpret_cast<const char *>(samples), sizeof(samples));
+    const QVariantList p = pkm::AudioPlayback::peaksFromPcm(pcm, 4);
+    CHECK(p.size() == 4, "one peak per bucket");
+    CHECK(p.size() == 4 && p[0].toDouble() == 0.0 && qFuzzyCompare(p[2].toDouble(), 1.0)
+              && qAbs(p[3].toDouble() - 0.5) < 1e-6 && qAbs(p[1].toDouble() - 0.125) < 1e-6,
+          "peaks are RMS scaled to the loudest bucket");
+    CHECK(pkm::AudioPlayback::peaksFromPcm(QByteArray(), 8).isEmpty(), "no audio, no peaks");
+}
 
 static void testMathRender()
 {
@@ -1371,6 +1385,7 @@ int runAll()
 {
     std::printf("== desktop app ==\n");
     testMathRender();
+    testAudioPeaks();
     testOutboxBatches();
     testLiveBackoff();
     testCacheCipher();

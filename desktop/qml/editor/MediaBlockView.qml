@@ -28,8 +28,7 @@ Item {
     // Enter / Space in block mode: audio plays or stops; image and PDF open their object.
     function activate() {
         if (blockType === "audio") {
-            if (playback.playing) playback.stop()
-            else playback.play()
+            audioPlayer.toggle()
         } else {
             openImageObject()
         }
@@ -99,17 +98,6 @@ Item {
     }
 
     implicitHeight: contentCol.implicitHeight + 12
-
-    AudioPlayback {
-        id: playback
-        assetId: mb.assetId
-        durationSeconds: mb.durationSeconds > 0 ? mb.durationSeconds : 0
-        path: mb.assetPath
-        onPlayingChanged: {
-            if (playing)
-                mb.view.session.setFocusedBlock(mb.blockId, true)
-        }
-    }
 
     // Assets finish downloading asynchronously; refresh assetPath when ready.
     Connections {
@@ -413,6 +401,19 @@ Item {
             }
         }
 
+        // ---------------- audio ----------------
+        AudioPlayer {
+            id: audioPlayer
+            visible: blockType === "audio"
+            Layout.fillWidth: true
+            Layout.preferredHeight: visible ? 64 : 0
+            assetId: mb.assetId
+            path: mb.assetPath
+            ready: mb.assetReady
+            durationSeconds: mb.durationSeconds > 0 ? Math.round(mb.durationSeconds) : 0
+            onPlayingChanged: if (playing) mb.view.session.setFocusedBlock(mb.blockId, true)
+        }
+
         // caption below the player (audio only; image caption lives in the editor pane)
         TextEdit {
             id: captionEdit
@@ -453,93 +454,6 @@ Item {
                 function onCaptionHtmlChanged() {
                     if (!captionEdit.captionLoading && !captionEdit.activeFocus)
                         captionEdit.text = mb.captionHtml
-                }
-            }
-        }
-
-        // ---------------- audio ----------------
-        Rectangle {
-            visible: blockType === "audio"
-            Layout.fillWidth: true
-            Layout.preferredHeight: visible ? 76 : 0
-            color: Theme.panel
-            border.color: Theme.line
-            border.width: 1
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 14
-
-                Rectangle {
-                    Layout.preferredWidth: 34
-                    Layout.preferredHeight: 34
-                    color: playMouse.hovered ? Theme.panel3 : Theme.panel2
-                    border.color: Theme.line2
-                    border.width: 1
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: playback.playing ? "◼" : "▶"
-                        color: Theme.accent
-                        font.family: Theme.mono
-                        font.pixelSize: 13
-                    }
-                    HoverHandler { id: playMouse; cursorShape: Qt.PointingHandCursor }
-                    TapHandler {
-                        onTapped: {
-                            if (playback.playing)
-                                playback.stop()
-                            else
-                                playback.play()
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    spacing: 4
-                    Layout.fillWidth: true
-
-                    Row {
-                        spacing: 2
-                        Repeater {
-                            model: 44
-                            delegate: Rectangle {
-                                width: 2
-                                color: (index % 9 === 0) ? Theme.accent : "#222226"
-                                height: 8 + ((index * 7919) % 13)
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: 8
-                        Text {
-                            text: Theme.caps(qsTr("AUDIO"))
-                            color: Theme.faint
-                            font.family: Theme.mono
-                            font.pixelSize: 11
-                            font.letterSpacing: Theme.track(1.2)
-                        }
-                        Text {
-                            text: {
-                                const s = Math.max(0, Math.round(playback.durationSeconds))
-                                const m = Math.floor(s / 60)
-                                return m + ":" + String(s % 60).padStart(2, "0")
-                            }
-                            color: Theme.muted
-                            font.family: Theme.mono
-                            font.pixelSize: 11
-                        }
-                        Item { Layout.fillWidth: true }
-                        Text {
-                            visible: !mb.assetReady
-                            text: qsTr("downloading…")
-                            color: Theme.faint
-                            font.family: Theme.mono
-                            font.pixelSize: 11
-                        }
-                    }
                 }
             }
         }

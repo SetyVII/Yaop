@@ -975,11 +975,15 @@ ListView {
     }
 
     ScrollBar.vertical: ScrollBar {
+        id: vbar
         policy: ScrollBar.AsNeeded
         contentItem: Rectangle {
             implicitWidth: 3
             radius: Theme.radiusSm
             color: Theme.faint
+            // only while scrolling or hovered, and never when everything fits
+            opacity: vbar.size < 1 && (vbar.active || vbar.hovered) ? 0.9 : 0
+            Behavior on opacity { NumberAnimation { duration: Theme.normal } }
         }
     }
 

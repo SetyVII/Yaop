@@ -9,6 +9,8 @@
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
+#include <QProcess>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1434,6 +1436,49 @@ QString seedShowcase(Workspace *ws)
         wl3.properties.insert(QStringLiteral("reviewed"), true);
         wl3.blocks.append(para(QStringLiteral("Reviewed and filed for desktop reference.")));
         ws->saveObject(wl3);
+
+        const struct { const char *id, *title, *cat; QStringList topics; QStringList tags; } more[] = {
+            { "web-yt-1", "Building a QML editor from scratch", "video", { "programming", "design" }, { "Coding" } },
+            { "web-yt-2", "Zettelkasten in 10 minutes", "video", { "productivity" }, { "PKM" } },
+            { "web-tut-1", "Scene graph tutorial", "tutorial", { "programming" }, { "Coding" } },
+            { "web-blog-1", "Why local-first wins", "blog_post", { "technology", "design" }, { "PKM" } },
+            { "web-rec-1", "Pan de masa madre", "recipe", { "food" }, {} },
+            { "web-info-1", "Color theory infographic", "infographic", { "design" }, { "Design" } },
+        };
+        for (const auto &m : more) {
+            Object w;
+            w.id = QString::fromUtf8(m.id);
+            w.typeId = TypeId::Web;
+            w.title = QString::fromUtf8(m.title);
+            w.createdAt = nowIso;
+            w.updatedAt = nowIso;
+            w.properties.insert(QStringLiteral("url"), QStringLiteral("https://example.org/") + w.id);
+            w.properties.insert(QStringLiteral("category"), QString::fromUtf8(m.cat));
+            w.properties.insert(QStringLiteral("topics"), QJsonArray::fromStringList(m.topics));
+            w.properties.insert(QStringLiteral("tags"), QJsonArray::fromStringList(m.tags));
+            w.properties.insert(QStringLiteral("reviewed"), true);
+            ws->saveObject(w);
+        }
+    }
+    {
+        // An audio object with a real file (when ffmpeg is installed) for the player.
+        const QString wavPath = QDir::tempPath() + QStringLiteral("/yaop-showcase.wav");
+        QProcess::execute(QStringLiteral("ffmpeg"), { QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("quiet"),
+                                                      QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                                                      QStringLiteral("aevalsrc=sin(330*2*PI*t)*(0.2+0.8*abs(sin(t*0.9))*abs(sin(t*2.3))):d=42"), wavPath });
+        const QString audioAsset = QFileInfo::exists(wavPath) ? ws->importFileAsAsset(wavPath) : QString();
+        Object au;
+        au.id = QStringLiteral("audio-showcase");
+        au.typeId = TypeId::Audio;
+        au.title = QStringLiteral("Nota de voz · 08:10");
+        au.createdAt = nowIso;
+        au.updatedAt = nowIso;
+        au.properties.insert(QStringLiteral("asset_id"), audioAsset);
+        au.properties.insert(QStringLiteral("file_name"), QStringLiteral("nota-de-voz.wav"));
+        au.properties.insert(QStringLiteral("mime"), QStringLiteral("audio/wav"));
+        au.properties.insert(QStringLiteral("tags"), QJsonArray{ QStringLiteral("PKM") });
+        au.blocks.append(para(QStringLiteral("Ideas for the weekly review.")));
+        ws->saveObject(au);
     }
     {
         const QString h1 = ws->createObject(QStringLiteral("habit"), QStringLiteral("Leer 30 min"));

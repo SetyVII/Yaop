@@ -584,18 +584,25 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
-                    Button {
-                        visible: editPage.width >= 820
+                    IconButton {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Theme.caps(qsTr("COVER"))
-                        small: true
+                        icon: "photo"
+                        tip: qsTr("Cover")
                         onClicked: webCoverPopup.open()
                     }
-                    Button {
-                        visible: editPage.width >= 820
+                    IconButton {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Theme.caps(qsTr("TRASH"))
-                        small: true
+                        icon: "link"
+                        tip: qsTr("Copy web address")
+                        onClicked: if (session && session.url) {
+                            ws.copyTextToClipboard(session.url)
+                            if (editPage.appWindow) editPage.appWindow.showToast(qsTr("Link copied."))
+                        }
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "trash"
+                        tip: qsTr("Move to trash")
                         onClicked: editPage.requestTrashCurrent()
                     }
                     IconButton {
@@ -1198,53 +1205,67 @@ Item {
                                 }
                             }
 
-                            Button {
-                                visible: !editPage.webSplitActive && !Theme.compact && editPage.width >= 620
-                                text: Theme.caps(qsTr("COVER"))
-                                small: true
-                                onClicked: webCoverPopup.open()
-                            }
-                            Button {
-                                visible: !editPage.webSplitActive && !Theme.compact && editPage.width >= 620
-                                text: Theme.caps(qsTr("SHARE"))
-                                small: true
-                                onClicked: appWindow.showToast(qsTr("Link copied."))
-                            }
-                            Button {
-                                visible: !editPage.webSplitActive
-                                text: Theme.caps(qsTr("TRASH"))
-                                small: true
-                                onClicked: editPage.requestTrashCurrent()
-                            }
-                            IconButton {
-                                // outline / backlinks rail: docked when wide, on demand when narrow
-                                visible: !editPage.webSplitActive && editPage.narrowRail
-                                icon: "adjustments-horizontal"
-                                onClicked: editPage.railOpen = !editPage.railOpen
-                            }
-                            IconButton {
-                                // "Show images in this note": only while privacy covers notes
-                                visible: Privacy.active && Privacy.store.scope === 0
-                                icon: Privacy.noteRevealed ? "eye" : "eye-off"
-                                active: !Privacy.noteRevealed
-                                onClicked: Privacy.noteRevealed = !Privacy.noteRevealed
-                            }
-                            IconButton {
-                                visible: !editPage.webSplitActive && Theme.noir && !editPage.inSidePane
-                                icon: "arrows-maximize"
-                                active: editPage.focusActive
-                                onClicked: if (editPage.appWindow) editPage.appWindow.focusMode = !editPage.appWindow.focusMode
-                                ToolTip.visible: hovered; ToolTip.text: qsTr("Focus mode (Ctrl+Shift+F)"); ToolTip.delay: 300
-                            }
-                            IconButton {
-                                visible: !editPage.webSplitActive
-                                icon: "asterisk"
-                                onClicked: if (session) ws.togglePinned(session.objectId)
-                            }
-                            IconButton {
-                                visible: !editPage.webSplitActive
-                                icon: "arrow-back"
-                                onClicked: editPage.closeRequested()
+                            // Object actions: compact icons so a long title keeps its width.
+                            Row {
+                                Layout.alignment: Qt.AlignTop
+                                spacing: 2
+                                IconButton {
+                                    visible: !editPage.webSplitActive && !!session && session.typeId !== "image"
+                                    icon: "photo"
+                                    tip: qsTr("Cover")
+                                    onClicked: webCoverPopup.open()
+                                }
+                                IconButton {
+                                    visible: !editPage.webSplitActive && !!session
+                                    icon: "link"
+                                    tip: editPage.isWebObject ? qsTr("Copy web address") : qsTr("Copy link to this object")
+                                    onClicked: {
+                                        const url = editPage.isWebObject && session.url ? session.url
+                                                                                       : "yaop://object/" + session.objectId
+                                        ws.copyTextToClipboard(url)
+                                        if (editPage.appWindow) editPage.appWindow.showToast(qsTr("Link copied."))
+                                    }
+                                }
+                                IconButton {
+                                    visible: !editPage.webSplitActive
+                                    icon: "trash"
+                                    tip: qsTr("Move to trash")
+                                    onClicked: editPage.requestTrashCurrent()
+                                }
+                                IconButton {
+                                    // outline / backlinks rail: docked when wide, on demand when narrow
+                                    visible: !editPage.webSplitActive && editPage.narrowRail
+                                    icon: "adjustments-horizontal"
+                                    tip: qsTr("Outline and backlinks")
+                                    onClicked: editPage.railOpen = !editPage.railOpen
+                                }
+                                IconButton {
+                                    // "Show images in this note": only while privacy covers notes
+                                    visible: Privacy.active && Privacy.store.scope === 0
+                                    icon: Privacy.noteRevealed ? "eye" : "eye-off"
+                                    active: !Privacy.noteRevealed
+                                    tip: qsTr("Show images in this note")
+                                    onClicked: Privacy.noteRevealed = !Privacy.noteRevealed
+                                }
+                                IconButton {
+                                    visible: !editPage.webSplitActive && Theme.noir && !editPage.inSidePane
+                                    icon: "arrows-maximize"
+                                    active: editPage.focusActive
+                                    tip: qsTr("Focus mode (Ctrl+Shift+F)")
+                                    onClicked: if (editPage.appWindow) editPage.appWindow.focusMode = !editPage.appWindow.focusMode
+                                }
+                                IconButton {
+                                    visible: !editPage.webSplitActive
+                                    icon: "asterisk"
+                                    tip: qsTr("Pin or unpin in the sidebar")
+                                    onClicked: if (session) ws.togglePinned(session.objectId)
+                                }
+                                IconButton {
+                                    visible: !editPage.webSplitActive
+                                    icon: "arrow-back"
+                                    tip: qsTr("Close")
+                                    onClicked: editPage.closeRequested()
+                                }
                             }
                         }
                     }
@@ -1481,16 +1502,9 @@ Item {
                                  && (editPage.session.typeId === "image" || editPage.session.typeId === "audio")
                         Layout.fillWidth: true
                         Layout.preferredHeight: editPage.session && editPage.session.typeId === "image" ? 240 : 64
+                        Layout.bottomMargin: editPage.session && editPage.session.typeId === "audio" ? 8 : 0
                         Layout.leftMargin: editPage.colMargin
                         Layout.rightMargin: editPage.colMargin
-
-                        AudioPlayback {
-                            id: objPlayback
-                            assetId: editPage.session ? editPage.session.assetId : ""
-                            path: editPage.session ? ws.assetLocalPath(editPage.session.assetId) : ""
-                            durationSeconds: editPage.session && editPage.session.assetId.length > 0
-                                             ? ws.assetDurationSeconds(editPage.session.assetId) : 0
-                        }
 
                         Rectangle {
                             visible: editPage.session && editPage.session.typeId === "image"
@@ -1528,59 +1542,20 @@ Item {
                             }
                         }
 
-                        Rectangle {
-                            visible: editPage.session && editPage.session.typeId === "audio"
+                        AudioPlayer {
+                            id: objAudio
+                            property int assetTick: 0
+                            visible: !!editPage.session && editPage.session.typeId === "audio"
                             anchors.fill: parent
-                            color: Theme.panel
-                            border.color: Theme.line
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 10
-                                spacing: 12
-
-                                Rectangle {
-                                    Layout.preferredWidth: 34
-                                    Layout.preferredHeight: 34
-                                    color: playObjMouse.hovered ? Theme.panel3 : Theme.panel2
-                                    border.color: Theme.line2
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: objPlayback.playing ? "◼" : "▶"
-                                        color: Theme.ice
-                                        font.family: Theme.mono
-                                        font.pixelSize: 13
-                                    }
-                                    HoverHandler { id: playObjMouse; cursorShape: Qt.PointingHandCursor }
-                                    TapHandler {
-                                        onTapped: {
-                                            if (objPlayback.playing) objPlayback.stop()
-                                            else objPlayback.play()
-                                        }
-                                    }
-                                }
-                                ColumnLayout {
-                                    spacing: 3
-                                    Layout.fillWidth: true
-                                    Text {
-                                        text: Theme.caps(qsTr("AUDIO"))
-                                        color: Theme.faint
-                                        font.family: Theme.mono
-                                        font.pixelSize: 11
-                                        font.letterSpacing: Theme.track(1.2)
-                                    }
-                                    Text {
-                                        text: {
-                                            const s = Math.max(0, Math.round(objPlayback.durationSeconds))
-                                            return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0")
-                                        }
-                                        color: Theme.muted
-                                        font.family: Theme.mono
-                                        font.pixelSize: 11
-                                    }
-                                }
+                            assetId: editPage.session ? editPage.session.assetId : ""
+                            path: { assetTick; return editPage.session ? ws.assetLocalPath(editPage.session.assetId) : "" }
+                            Connections {
+                                target: ws
+                                function onAssetReady(assetId, localPath) { if (assetId === objAudio.assetId) objAudio.assetTick++ }
                             }
+                            ready: path.length > 0
+                            durationSeconds: editPage.session && editPage.session.assetId.length > 0
+                                             ? ws.assetDurationSeconds(editPage.session.assetId) : 0
                         }
                     }
 
