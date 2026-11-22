@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — catálogo de bloques</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sec{margin:0 0 6px;padding-top:40px;font-size:22px;font-weight:400;letter-spacing:-0.01em}
+.row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:36px;padding:16px 0;border-bottom:1px solid #141414}
+.lab{padding-top:4px;color:#7a7a7a;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.04em;line-height:1.7}
+.doc{font-size:16px;line-height:1.65;color:#e6e6e6}
+.chip{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 8px;border:1px solid #2a2a2a;color:#e6e6e6;font-size:14px;vertical-align:1px;white-space:nowrap}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.li{position:relative;padding-left:24px}
+.li::before{content:'';position:absolute;left:5px;top:11px;width:5px;height:5px;background:#8b8b8b}
+.li.l2{margin-left:24px}.li.l2::before{background:transparent;border:1px solid #8b8b8b}
+.li.l3{margin-left:48px}.li.l3::before{width:7px;height:1px;top:13px}
+.nl{display:grid;grid-template-columns:28px minmax(0,1fr)}
+.nl span:first-child{color:#8b8b8b;font-family:'Geist Mono',monospace;font-size:13px;padding-top:2px}
+.todo{display:flex;align-items:flex-start;gap:12px;width:100%;padding:2px 0;border:0;background:transparent;color:#e6e6e6;font:400 16px/1.65 'Geist',sans-serif;text-align:left;cursor:pointer}
+.todo .bx{position:relative;flex:0 0 17px;height:17px;margin-top:5px;border:1px solid #5a5a5a}
+.todo .bx::after{content:'';position:absolute;inset:3px;background:var(--accent);transform:scale(0);transition:transform .3s cubic-bezier(.2,.8,.1,1)}
+.todo.done .bx{border-color:var(--accent)}.todo.done .bx::after{transform:scale(1)}
+.todo.done .tx{color:#7a7a7a;text-decoration:line-through;text-decoration-color:#444}
+.tg{display:flex;align-items:center;gap:10px;width:100%;padding:2px 0;border:0;background:transparent;color:#e6e6e6;font:400 16px/1.65 'Geist',sans-serif;text-align:left;cursor:pointer}
+.tg svg{transition:transform .35s cubic-bezier(.2,.8,.1,1)}
+.tg.open svg{transform:rotate(90deg)}
+.kid{overflow:hidden;animation:open .4s cubic-bezier(.2,.8,.1,1) both}
+@keyframes open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid #2a2a2a;background:transparent;color:#bdbdbd;font:400 12px 'Geist',sans-serif;cursor:pointer;transition:border-color .2s,color .2s}
+.btn:hover{border-color:#5a5a5a;color:#fff}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#000}
+.btn:focus-visible,.todo:focus-visible,.tg:focus-visible{outline:1px solid #f2f2f2;outline-offset:2px}
+.idx a{display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;color:#9a9a9a;text-decoration:none;font-size:13px;transition:color .2s,padding .3s cubic-bezier(.2,.8,.1,1)}
+.idx a:hover{color:#fff;padding-left:16px}
+.wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}
+.wave i{display:block;width:3px;background:#3a3a3a}
+.wave i.p{background:var(--accent)}
+@media (prefers-reduced-motion:reduce){.todo .bx::after,.tg svg{transition:none}.kid{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 2600px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<nav class="idx" aria-label="Índice de bloques" style="flex: 0 0 260px; border-right: 1px solid #1f1f1f; padding: 48px 16px">
+<p class="mono" style="margin: 0 10px 16px; color: #7a7a7a">21 tipos de bloque</p>
+<sc-for list="{{index}}" as="g" hint-placeholder-count="4">
+<p class="mono" style="margin: 18px 10px 4px; color: #7a7a7a">{{g.title}}</p>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="5">
+<a href="#{{i.id}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{i.d}}"></path></svg>{{i.label}}</a>
+</sc-for>
+</sc-for>
+</nav>
+
+<main style="flex: 1; min-width: 0; padding: 48px 96px 0 72px">
+<p class="mono" style="margin: 0 0 14px; color: #7a7a7a">Catálogo</p>
+<h1 style="margin: 0; font-size: 44px; line-height: 1.05; font-weight: 400; letter-spacing: -0.03em">Todos los bloques, tal como se ven.</h1>
+<p style="margin: 16px 0 0; max-width: 620px; font-size: 15px; line-height: 1.6; color: #a3a3a3">A la izquierda, el nombre del bloque en el formato de Yaop. Los mismos bloques salen igual en Android y en Linux.</p>
+
+<h2 class="sec" id="texto">Texto</h2>
+<div class="row" id="paragraph"><span class="lab">paragraph<br>marcas en línea</span>
+<div class="doc">Texto normal con <b>negrita</b>, <i>cursiva</i>, <u>subrayado</u>, <s>tachado</s>, <code style="font-family: 'Geist Mono', monospace; font-size: 14px; padding: 1px 5px; border: 1px solid #2a2a2a">código</code>, <span style="background: rgba(255,214,102,.22); padding: 0 2px">resaltado</span>, <a href="#" style="color: #f2f2f2; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px">un enlace</a>, <span style="color: #FF8FB3">texto rosa</span>, una mención <span class="chip"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López</span>, una fecha <span class="chip"><svg class="ic" style="width: 13px; height: 13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5"></path></svg>23 nov</span> y una fórmula <i style="font-family: 'Geist Mono', monospace; font-size: 14px">a² + b² = c²</i>.</div></div>
+<div class="row" id="heading"><span class="lab">heading<br>level 1 · 2 · 3 · 4</span>
+<div class="doc"><p style="margin: 0; font-size: 32px; line-height: 1.2; letter-spacing: -0.02em">Título 1</p><p style="margin: 8px 0 0; font-size: 24px; line-height: 1.25; letter-spacing: -0.015em">Título 2</p><p style="margin: 8px 0 0; font-size: 19px; font-weight: 500">Título 3</p><p class="mono" style="margin: 10px 0 0; font-size: 12px; color: #bdbdbd">Título 4</p></div></div>
+
+<h2 class="sec" id="listas">Listas</h2>
+<div class="row" id="bullet"><span class="lab">bullet_list<br>indent 0 · 1 · 2</span>
+<div class="doc"><div class="li">Ideas para el modo enfoque</div><div class="li l2">ocultar la barra lateral</div><div class="li l3">también el panel derecho</div><div class="li">Atajos para cambiar de día</div></div></div>
+<div class="row" id="numbered"><span class="lab">numbered_list<br>alphabetic_list<br>roman_list</span>
+<div class="doc" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+<div><div class="nl"><span>1.</span><span>Leer</span></div><div class="nl"><span>2.</span><span>Subrayar</span></div><div class="nl"><span>3.</span><span>Escribir</span></div></div>
+<div><div class="nl"><span>a.</span><span>Android</span></div><div class="nl"><span>b.</span><span>Linux</span></div><div class="nl"><span>c.</span><span>Servidor</span></div></div>
+<div><div class="nl"><span>i.</span><span>Contexto</span></div><div class="nl"><span>ii.</span><span>Problema</span></div><div class="nl"><span>iii.</span><span>Solución</span></div></div>
+</div></div>
+<div class="row" id="todo"><span class="lab">todo<br>checked</span>
+<div class="doc">
+<sc-for list="{{todos}}" as="t" hint-placeholder-count="3">
+<button type="button" class="todo {{t.cls}}" aria-pressed="{{t.pressed}}" onClick="{{t.toggle}}" style="padding-left: {{t.pad}}px"><span class="bx"></span><span class="tx">{{t.text}}</span></button>
+</sc-for>
+</div></div>
+<div class="row" id="toggle"><span class="lab">toggle<br>expanded</span>
+<div class="doc">
+<button type="button" class="tg {{tgCls}}" aria-expanded="{{tgExp}}" onClick="{{toggle}}"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l8 7-8 7z"></path></svg>Por qué no usamos un CRDT de texto</button>
+<sc-if value="{{tgOpen}}" hint-placeholder-val="{{ true }}"><div class="kid" style="padding-left: 26px; color: #bdbdbd">Un solo usuario: si dos dispositivos escriben el mismo bloque, gana la última escritura. Más simple y suficiente.</div></sc-if>
+</div></div>
+
+<h2 class="sec" id="bloques">Bloques</h2>
+<div class="row" id="quote"><span class="lab">quote</span>
+<div class="doc"><p style="margin: 0; padding: 2px 0 2px 20px; border-left: 1px solid #4a4a4a; font-size: 18px; line-height: 1.6; color: #d6d6d6">Las notas permanentes se escriben con tus palabras, como si fueran para otra persona.</p></div></div>
+<div class="row" id="callout"><span class="lab">callout<br>block_color</span>
+<div class="doc" style="display: grid; gap: 8px">
+<div style="display: flex; gap: 12px; padding: 14px 16px; background: rgba(110,170,255,.12)"><svg class="ic" style="width: 18px; height: 18px; color: #6EAAFF; margin-top: 3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M3 12a9 9 0 1018 0a9 9 0 10-18 0 M12 11v6 M12 7.5h.01"></path></svg><span>Información: el servidor es opcional.</span></div>
+<div style="display: flex; gap: 12px; padding: 14px 16px; background: rgba(255,176,122,.12)"><svg class="ic" style="width: 18px; height: 18px; color: #FFB07A; margin-top: 3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M12 3l10 18H2z M12 10v5 M12 18h.01"></path></svg><span>Aviso: guarda tus 24 palabras; sin ellas no se recupera el vault.</span></div>
+<div style="display: flex; gap: 12px; padding: 14px 16px; background: rgba(127,224,166,.12)"><svg class="ic" style="width: 18px; height: 18px; color: #7FE0A6; margin-top: 3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg><span>Hecho: sincronizado en 2 dispositivos.</span></div>
+</div></div>
+<div class="row" id="code"><span class="lab">code<br>language</span>
+<div class="doc"><div style="border: 1px solid #1f1f1f; background: #050505">
+<div style="display: flex; align-items: center; height: 36px; padding: 0 8px 0 14px; border-bottom: 1px solid #1a1a1a"><span class="mono" style="color: #8b8b8b">kotlin</span><button type="button" class="btn {{copyCls}}" onClick="{{copy}}" style="margin-left: auto">{{copyLabel}}</button></div>
+<pre style="margin: 0; padding: 14px 16px; font-family: 'Geist Mono', monospace; font-size: 13px; line-height: 1.7; color: #d6d6d6; overflow: hidden"><span style="color: #7a7a7a">1  </span><span style="color: #C2B2FF">fun</span> merge(a: Block, b: Block): Block =
+<span style="color: #7a7a7a">2  </span>    <span style="color: #C2B2FF">if</span> (a.hlc &gt;= b.hlc) a <span style="color: #C2B2FF">else</span> b</pre>
+</div></div></div>
+<div class="row" id="math"><span class="lab">math<br>display</span>
+<div class="doc"><div style="padding: 18px; text-align: center; font-family: 'Geist Mono', monospace; font-size: 20px; color: #f2f2f2; border: 1px solid #1a1a1a">∫₀¹ x² dx = ⅓</div></div></div>
+<div class="row" id="divider"><span class="lab">divider</span>
+<div class="doc" style="padding: 12px 0"><div style="height: 1px; background: #2a2a2a"></div></div></div>
+<div class="row" id="table"><span class="lab">table<br>align</span>
+<div class="doc"><div style="border: 1px solid #1f1f1f; font-size: 14px">
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr; background: #080808; color: #8b8b8b"><span style="padding: 10px 12px">Dispositivo</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a">Sistema</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a; text-align: right">Objetos</span></div>
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr; border-top: 1px solid #1a1a1a"><span style="padding: 10px 12px">Portátil</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a">Linux</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a; text-align: right; font-family: 'Geist Mono', monospace">2 431</span></div>
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr; border-top: 1px solid #1a1a1a"><span style="padding: 10px 12px">Móvil</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a">Android</span><span style="padding: 10px 12px; border-left: 1px solid #1a1a1a; text-align: right; font-family: 'Geist Mono', monospace">2 431</span></div>
+</div></div></div>
+
+<h2 class="sec" id="medios">Medios y objetos</h2>
+<div class="row" id="image"><span class="lab">image<br>width_percent 60</span>
+<div class="doc"><div style="position: relative; width: 60%">
+<svg width="100%" height="220" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Imagen de ejemplo (marcador de posición)" style="display: block; background: #0d0d0d"><g fill="none" stroke="#333"><path d="M0 170l90-70 70 50 60-40 180 90"></path></g><rect x="300" y="40" width="34" height="34" style="fill: var(--accent)"></rect></svg>
+<span style="position: absolute; right: -5px; top: 50%; width: 4px; height: 40px; margin-top: -20px; background: #f2f2f2" aria-hidden="true"></span>
+<p style="margin: 8px 0 0; font-size: 13px; color: #8b8b8b">Pie de foto · arrastra el borde para cambiar el ancho</p>
+</div></div></div>
+<div class="row" id="audio"><span class="lab">audio<br>duration_seconds</span>
+<div class="doc"><div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid #1f1f1f">
+<button type="button" class="btn {{playCls}}" aria-label="{{playLabel}}" onClick="{{play}}" style="width: 36px; height: 36px; justify-content: center; padding: 0"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{{playIcon}}"></path></svg></button>
+<span class="wave" aria-hidden="true"><sc-for list="{{wave}}" as="w" hint-placeholder-count="48"><i class="{{w.cls}}" style="height: {{w.h}}px"></i></sc-for></span>
+<span class="mono" style="color: #bdbdbd">{{playTime}} / 3:42</span>
+</div><p style="margin: 8px 0 0; font-size: 13px; color: #8b8b8b">Nota de voz · 21 nov, 08:10</p></div></div>
+<div class="row" id="pdf"><span class="lab">pdf<br>page_count<br>last_read_page</span>
+<div class="doc"><div style="display: flex; gap: 18px; padding: 14px; border: 1px solid #1f1f1f">
+<svg width="84" height="110" viewBox="0 0 84 110" aria-hidden="true" style="flex: 0 0 auto; background: #e9e9e9"><g fill="#bdbdbd"><rect x="10" y="12" width="50" height="5"></rect><rect x="10" y="24" width="64" height="3"></rect><rect x="10" y="31" width="64" height="3"></rect><rect x="10" y="38" width="44" height="3"></rect><rect x="10" y="52" width="64" height="30"></rect></g></svg>
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1"><span>local-first-paper.pdf</span><span class="mono" style="color: #8b8b8b">PDF · 40 páginas</span>
+<span style="display: block; height: 3px; background: #262626; margin-top: 8px"><span style="display: block; width: 30%; height: 3px; background: var(--accent)"></span></span>
+<span style="font-size: 13px; color: #bdbdbd">Ibas por la página 12 · <a href="#">Seguir leyendo</a></span></div>
+</div></div></div>
+<div class="row" id="bookmark"><span class="lab">bookmark<br>url · title · domain</span>
+<div class="doc"><a href="https://www.inkandswitch.com/local-first/" style="display: grid; grid-template-columns: minmax(0, 1fr) 180px; border: 1px solid #262626; text-decoration: none; color: #f2f2f2">
+<span style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px"><span style="font-size: 15px">Local-first software</span><span style="font-size: 13px; color: #8b8b8b; line-height: 1.5">Puedes tener la colaboración en la nube y a la vez conservar la propiedad de tus datos.</span><span class="mono" style="color: #7a7a7a">inkandswitch.com</span></span>
+<span style="display: block; border-left: 1px solid #262626; background: #070707"><svg width="180" height="110" viewBox="0 0 180 110" aria-hidden="true"><path d="M20 70l50-25 50 25-50 25z" fill="none" stroke="#3a3a3a"></path><path d="M55 62l15-7 15 7-15 7z" style="fill: var(--accent)"></path></svg></span>
+</a></div></div>
+<div class="row" id="embed"><span class="lab">embed<br>view_mode<br>chip · tarjeta · completo</span>
+<div class="doc">
+<div style="display: flex; gap: 6px; margin-bottom: 12px">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button type="button" class="btn {{m.cls}}" aria-pressed="{{m.sel}}" onClick="{{m.pick}}">{{m.label}}</button></sc-for>
+</div>
+<sc-if value="{{isChip}}" hint-placeholder-val="{{ false }}"><span class="chip kid"><span class="sq" style="background: #9B8CFF"></span>Cómo tomar notas inteligentes</span></sc-if>
+<sc-if value="{{isCard}}" hint-placeholder-val="{{ true }}"><div class="kid" style="display: flex; gap: 16px; padding: 14px; border: 1px solid #262626; max-width: 460px"><span style="width: 54px; height: 76px; border: 1px solid #333; display: flex; align-items: center; justify-content: center"><span style="width: 18px; height: 18px; background: var(--accent)"></span></span><span style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="color: #9B8CFF">Libro</span><span>Cómo tomar notas inteligentes</span><span style="font-size: 13px; color: #8b8b8b">Sönke Ahrens · Leyendo · 4/5</span></span></div></sc-if>
+<sc-if value="{{isFull}}" hint-placeholder-val="{{ false }}"><div class="kid" style="padding: 18px; border: 1px solid #262626"><span class="mono" style="color: #9B8CFF">Libro</span><p style="margin: 8px 0 6px; font-size: 20px">Cómo tomar notas inteligentes</p><p style="margin: 0; font-size: 14px; color: #bdbdbd">La idea central: una nota solo vale si se conecta con otras…</p></div></sc-if>
+</div></div>
+<div class="row" id="canvas"><span class="lab">canvas</span>
+<div class="doc"><div style="position: relative; height: 180px; border: 1px solid #1f1f1f; background-image: radial-gradient(#1f1f1f 1px, transparent 1px); background-size: 16px 16px">
+<span class="chip" style="position: absolute; left: 40px; top: 40px; background: #000"><span class="sq" style="background: #FFD166"></span>Proyecto Yaop</span>
+<span class="chip" style="position: absolute; left: 300px; top: 110px; background: #000"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López</span>
+<svg width="100%" height="180" style="position: absolute; inset: 0" aria-hidden="true"><path d="M170 64C230 64 250 120 300 122" fill="none" stroke="#5a5a5a"></path></svg>
+<span class="mono" style="position: absolute; right: 12px; bottom: 10px; color: #7a7a7a">Pizarra · abrir</span>
+</div></div></div>
+<div class="row" id="group"><span class="lab">group<br>group_id · columnas</span>
+<div class="doc" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px dashed #262626">
+<div style="padding: 12px 16px"><p style="margin: 0 0 4px; font-weight: 500">A favor</p><div class="li">Más simple</div><div class="li">Sin cuentas</div></div>
+<div style="padding: 12px 16px; border-left: 1px dashed #262626"><p style="margin: 0 0 4px; font-weight: 500">En contra</p><div class="li">Sin colaboración</div></div>
+</div></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":2600}}'>
+class Component extends DCLogic {
+  componentWillUnmount() { clearInterval(this._t); }
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      text: 'M5 6V4h14v2 M12 4v16 M9 20h6', heading: 'M5 5v14 M13 5v14 M5 12h8 M17 12l3-2v9',
+      list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01', numlist: 'M10 6h10 M10 12h10 M10 18h10 M4 5l1.5-1v5 M3.5 14h3l-3 4h3',
+      task: 'M4 4h16v16H4z M8 12l3 3 5-6', toggle: 'M8 5l8 7-8 7z', quote: 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7',
+      callout: 'M4 4h16v12H9l-5 4z', code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5', math: 'M18 5H6l7 7-7 7h12', divider: 'M3 12h18',
+      table: 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14', image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5),
+      audio: 'M4 10v4 M8 7v10 M12 4v16 M16 8v8 M20 11v2', pdf: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 13h6 M9 17h4',
+      weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2', embed: 'M4 4h7v7H4z M13 13h7v7h-7z M11 7.5h5v5.5',
+      canvas: 'M3 4h18v13H3z M8 21l4-4 4 4 M7 9h4 M7 12h7', group: 'M3 4h8v16H3z M13 4h8v16h-8z'
+    };
+    const st = this.state || {};
+    const done = st.done || { 0: true };
+    const open = st.open ?? true;
+    const mode = st.mode ?? 'card';
+    const playing = !!st.playing;
+    const pos = st.pos ?? 14;
+    const idx = [
+      ['Texto', [['paragraph', 'Párrafo', 'text'], ['heading', 'Títulos', 'heading']]],
+      ['Listas', [['bullet', 'Viñetas', 'list'], ['numbered', 'Numerada, letras, romanos', 'numlist'], ['todo', 'Tareas', 'task'], ['toggle', 'Desplegable', 'toggle']]],
+      ['Bloques', [['quote', 'Cita', 'quote'], ['callout', 'Aviso', 'callout'], ['code', 'Código', 'code'], ['math', 'Fórmula', 'math'], ['divider', 'Separador', 'divider'], ['table', 'Tabla', 'table']]],
+      ['Medios y objetos', [['image', 'Imagen', 'image'], ['audio', 'Audio', 'audio'], ['pdf', 'PDF', 'pdf'], ['bookmark', 'Enlace web', 'weblink'], ['embed', 'Objeto insertado', 'embed'], ['canvas', 'Pizarra', 'canvas'], ['group', 'Columnas', 'group']]]
+    ].map((g) => ({ title: g[0], items: g[1].map((i) => ({ id: i[0], label: i[1], d: I[i[2]] })) }));
+    const T = [['Probar el QR del servidor', 0], ['Escribir el fixture de anclas', 0], ['con un caso de borrado', 24]];
+    let seed = 3; const r = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const wave = []; for (let i = 0; i < 48; i++) wave.push({ h: 6 + Math.round(r() * 20), cls: i < pos ? 'p' : '' });
+    const sec = Math.round(pos / 48 * 222);
+    const play = () => {
+      if (playing) { clearInterval(this._t); this.setState({ playing: false }); return; }
+      clearInterval(this._t);
+      this._t = setInterval(() => { const p = ((this.state || {}).pos ?? 14) + 1; if (p > 48) { clearInterval(this._t); this.setState({ playing: false, pos: 0 }); } else this.setState({ pos: p }); }, 250);
+      this.setState({ playing: true });
+    };
+    return {
+      accent: this.props.accent ?? '#C8F04A', index: idx,
+      todos: T.map((t, i) => ({ text: t[0], pad: t[1], cls: done[i] ? 'done' : '', pressed: done[i] ? 'true' : 'false', toggle: () => this.setState({ done: Object.assign({}, done, { [i]: !done[i] }) }) })),
+      tgCls: open ? 'open' : '', tgExp: open ? 'true' : 'false', tgOpen: open, toggle: () => this.setState({ open: !open }),
+      copyCls: st.copied ? 'on' : '', copyLabel: st.copied ? 'Copiado' : 'Copiar',
+      copy: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1400); },
+      wave, play, playCls: playing ? 'on' : '', playLabel: playing ? 'Pausar' : 'Reproducir',
+      playIcon: playing ? 'M7 5h4v14H7z M13 5h4v14h-4z' : 'M8 5l11 7-11 7z',
+      playTime: Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'),
+      modes: [['chip', 'Chip'], ['card', 'Tarjeta'], ['full', 'Completo']].map((m) => ({ label: m[1], cls: m[0] === mode ? 'on' : '', sel: m[0] === mode ? 'true' : 'false', pick: () => this.setState({ mode: m[0] }) })),
+      isChip: mode === 'chip', isCard: mode === 'card', isFull: mode === 'full'
+    };
+  }
+}
+</script>
+</body>
+</html>

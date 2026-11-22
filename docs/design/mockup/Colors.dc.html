@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — colores</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.sw{display:flex;flex-direction:column;gap:8px}
+.sw .c{height:64px;border:1px solid #1f1f1f;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.sw:hover .c{transform:translateY(-4px)}
+.blk{padding:8px 12px;font-size:14px;line-height:1.5}
+@media (prefers-reduced-motion:reduce){.sw .c{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; padding: 56px 72px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px">
+<div>
+<p class="mono" style="margin: 0 0 12px; color: #8b8b8b">Colores</p>
+<h1 style="margin: 0; font-size: 40px; font-weight: 400; letter-spacing: -0.03em">Negro, gris y un solo acento.</h1>
+</div>
+<p style="margin: 0; max-width: 460px; font-size: 14px; line-height: 1.6; color: #a3a3a3">El acento solo marca lo activo: selección, fila elegida, cursor y foco. Los 10 colores de la paleta son para bloques, etiquetas y tipos, y aparecen en cuadrados pequeños, nunca como fondo grande.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px">
+<div>
+<p class="mono" style="margin: 0 0 10px; color: #8b8b8b">Base</p>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{base}}" as="s" hint-placeholder-count="6">
+<div class="sw"><span class="c" style="background: {{s.hex}}"></span><span style="font-size: 13px">{{s.name}}</span><span class="mono" style="color: #8b8b8b">{{s.hex}}</span></div>
+</sc-for>
+</div>
+<p class="mono" style="margin: 28px 0 10px; color: #8b8b8b">Texto sobre negro · contraste</p>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{text}}" as="s" hint-placeholder-count="4">
+<div style="border: 1px solid #1f1f1f; padding: 14px"><span style="display: block; font-size: 18px; color: {{s.hex}}">Aa</span><span class="mono" style="color: #8b8b8b">{{s.name}} · {{s.ratio}}</span></div>
+</sc-for>
+</div>
+<p class="mono" style="margin: 28px 0 10px; color: #8b8b8b">Acento</p>
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="width: 120px; height: 64px; background: var(--accent)"></span>
+<span style="font-size: 14px; color: #bdbdbd; line-height: 1.6">Relleno con texto negro.<br>Se cambia en Ajustes y en cada pantalla de este lienzo.</span>
+</div>
+</div>
+
+<div>
+<p class="mono" style="margin: 0 0 10px; color: #8b8b8b">Paleta de bloques · 10 nombres fijos</p>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{pal}}" as="s" hint-placeholder-count="10">
+<div class="sw"><span class="c" style="background: {{s.hex}}; height: 48px"></span><span style="font-size: 13px">{{s.name}}</span><span class="mono" style="color: #8b8b8b">{{s.key}}</span></div>
+</sc-for>
+</div>
+<p class="mono" style="margin: 28px 0 10px; color: #8b8b8b">En un bloque</p>
+<div style="border: 1px solid #1f1f1f">
+<div class="blk" style="background: rgba(255,214,102,.12)"><span style="color: #FFD666">Amarillo</span> · fondo del bloque al 12 %</div>
+<div class="blk" style="background: rgba(110,170,255,.12)"><span style="color: #6EAAFF">Azul</span> · un aviso con color</div>
+<div class="blk"><span style="color: #FF786E">Texto rojo</span> sin fondo, para marcar algo en una línea</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      base: [['Fondo', '#000000'], ['Visor', '#050505'], ['Menú', '#0A0A0A'], ['Línea', '#1A1A1A'], ['Borde', '#2A2A2A'], ['Hover', '#4A4A4A']].map((x) => ({ name: x[0], hex: x[1] })),
+      text: [['Principal', '#F2F2F2', '18:1'], ['Cuerpo', '#D6D6D6', '14:1'], ['Secundario', '#8B8B8B', '5,9:1'], ['Etiquetas', '#7A7A7A', '4,7:1']].map((x) => ({ name: x[0], hex: x[1], ratio: x[2] })),
+      pal: [['Amarillo', 'yellow', '#FFD666'], ['Naranja', 'orange', '#FFB07A'], ['Rojo', 'red', '#FF786E'], ['Rosa', 'pink', '#FF8FB3'], ['Morado', 'purple', '#C2B2FF'], ['Azul', 'blue', '#6EAAFF'], ['Hielo', 'ice', '#BFE3FF'], ['Turquesa', 'teal', '#7AF0D0'], ['Verde', 'green', '#7FE0A6'], ['Gris', 'gray', '#FFFFFF']].map((x) => ({ name: x[0], key: x[1], hex: x[2] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

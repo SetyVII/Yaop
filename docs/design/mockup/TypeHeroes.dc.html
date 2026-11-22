@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — cabecera de cada tipo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.card{display:flex;flex-direction:column;border:1px solid #1f1f1f;transition:border-color .25s,transform .45s cubic-bezier(.2,.8,.1,1)}
+.card:hover{border-color:#4a4a4a;transform:translateY(-3px)}
+.hero{height:190px;border-bottom:1px solid #1f1f1f;background:#050505;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px}
+.t{font-size:17px;letter-spacing:-.01em}
+.p{display:flex;justify-content:space-between;font-size:13px;color:#8b8b8b;border-top:1px solid #161616;padding-top:8px}
+.p span:last-child{color:#d6d6d6}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 1500px; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; padding: 56px 72px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px">
+<div><p class="mono" style="margin: 0 0 12px; color: #7a7a7a">16 tipos base · un solo editor</p><h1 style="margin: 0; font-size: 40px; font-weight: 400; letter-spacing: -0.03em">Solo cambia la cabecera.</h1></div>
+<p style="margin: 0; max-width: 460px; font-size: 14px; line-height: 1.6; color: #a3a3a3">Debajo de cada cabecera están los mismos bloques, etiquetas y enlaces entrantes. Tus tipos (Reunión, Receta…) usan la cabecera de Nota con su icono y color.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+
+<div class="card"><div class="hero" style="flex-direction: column; gap: 6px"><span class="mono" style="color: var(--accent)">Hoy</span><span style="font-size: 30px; letter-spacing: -0.02em">Sábado 21</span><span class="mono" style="color: #7a7a7a">Semana 47 · noviembre</span></div><div class="body"><span class="mono" style="color: #E8EEFF">Diario</span><span class="t">Sábado, 21 de noviembre</span><div class="p"><span>Secciones</span><span>Tareas · Referenciado · Creado</span></div></div></div>
+
+<div class="card"><div class="hero"><svg width="120" height="140" viewBox="0 0 120 140" aria-hidden="true"><path d="M10 10h70l30 30v90H10z M80 10v30h30" fill="none" stroke="#3a3a3a"></path><path d="M28 70h60 M28 86h50 M28 102h36" stroke="#3a3a3a"></path></svg></div><div class="body"><span class="mono" style="color: #BFE3FF">Nota</span><span class="t">Método Zettelkasten</span><div class="p"><span>Bloques</span><span>14</span></div></div></div>
+
+<div class="card"><div class="hero" style="flex-direction: column; gap: 14px"><span style="display: flex; gap: 6px"><span class="mono" style="padding: 6px 10px; border: 1px solid #2a2a2a; color: #7a7a7a">Sin empezar</span><span class="mono" style="padding: 6px 10px; background: var(--accent); color: #000">En curso</span><span class="mono" style="padding: 6px 10px; border: 1px solid #2a2a2a; color: #7a7a7a">Hecha</span></span><span class="mono" style="color: #FFB07A">Vence el lunes 23</span></div><div class="body"><span class="mono" style="color: #BFE3FF">Tarea</span><span class="t">Escribir el fixture de anclas</span><div class="p"><span>Estado · fecha</span><span>En curso · 23 nov</span></div></div></div>
+
+<div class="card"><div class="hero" style="flex-direction: column; align-items: stretch; padding: 0 28px; gap: 10px"><span style="display: flex; justify-content: space-between; font-size: 13px; color: #bdbdbd"><span>Progreso</span><span>7 de 12 tareas</span></span><span style="display: block; height: 4px; background: #262626"><span style="display: block; width: 58%; height: 4px; background: #FFD166"></span></span><span class="mono" style="color: #7a7a7a">3 notas · 2 personas</span></div><div class="body"><span class="mono" style="color: #FFD166">Proyecto</span><span class="t">Proyecto Yaop</span><div class="p"><span>Estado</span><span>Activo</span></div></div></div>
+
+<div class="card"><div class="hero"><span style="width: 92px; height: 92px; border: 1px solid #FFB38A; color: #FFB38A; display: flex; align-items: center; justify-content: center; font-size: 30px">AL</span></div><div class="body"><span class="mono" style="color: #FFB38A">Persona</span><span class="t">Ana López</span><div class="p"><span>Relación</span><span>Amiga</span></div></div></div>
+
+<div class="card"><div class="hero"><svg width="100" height="140" viewBox="0 0 100 140" aria-hidden="true"><rect x="1" y="1" width="98" height="138" fill="none" stroke="#4a4a4a"></rect><path d="M14 22h72 M14 32h50" stroke="#4a4a4a"></path><rect x="28" y="60" width="44" height="44" style="fill: var(--accent)"></rect></svg></div><div class="body"><span class="mono" style="color: #9B8CFF">Libro</span><span class="t">Cómo tomar notas inteligentes</span><div class="p"><span>Autor</span><span>Sönke Ahrens</span></div></div></div>
+
+<div class="card"><div class="hero"><svg width="100%" height="190" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M60 120l100-50 100 50-100 50z" fill="none" stroke="#3a3a3a"></path><path d="M130 110l30-15 30 15-30 15z" style="fill: var(--accent)"></path></svg><span class="mono" style="position: absolute; left: 12px; bottom: 10px; color: #7a7a7a">inkandswitch.com</span></div><div class="body"><span class="mono" style="color: #7AF0D0">Enlace web</span><span class="t">Local-first software</span><div class="p"><span>Revisado</span><span>No</span></div></div></div>
+
+<div class="card"><div class="hero" style="background: #0d0d0d"><svg width="100%" height="190" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 150l90-70 70 50 60-40 100 70" fill="none" stroke="#3a3a3a"></path><rect x="230" y="30" width="30" height="30" fill="#FF8FB3"></rect></svg></div><div class="body"><span class="mono" style="color: #FF8FB3">Imagen</span><span class="t">Pizarra del sprint</span><div class="p"><span>Tamaño</span><span>2400 × 1600</span></div></div></div>
+
+<div class="card"><div class="hero"><svg width="100%" height="190" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="190" fill="#0b0b0b"></rect><path d="M145 75l35 20-35 20z" style="fill: var(--accent)"></path><rect x="20" y="168" width="280" height="2" fill="#262626"></rect><rect x="20" y="168" width="90" height="2" style="fill: var(--accent)"></rect></svg><span class="mono" style="position: absolute; right: 12px; top: 10px; color: #bdbdbd">12:40</span></div><div class="body"><span class="mono" style="color: #BFE3FF">Vídeo</span><span class="t">CRDTs explicados</span><div class="p"><span>Duración</span><span>12:40</span></div></div></div>
+
+<div class="card"><div class="hero" style="gap: 3px; padding: 0 28px"><sc-for list="{{wave}}" as="w" hint-placeholder-count="40"><span style="display: block; width: 3px; height: {{w.h}}px; background: {{w.c}}"></span></sc-for></div><div class="body"><span class="mono" style="color: #BFE3FF">Audio</span><span class="t">Nota de voz · 08:10</span><div class="p"><span>Duración</span><span>3:42</span></div></div></div>
+
+<div class="card"><div class="hero"><svg width="110" height="150" viewBox="0 0 110 150" aria-hidden="true"><rect x="8" y="8" width="94" height="134" fill="#e9e9e9"></rect><rect x="0" y="0" width="94" height="134" fill="#f2f2f2" transform="translate(0 0)"></rect><g fill="#bdbdbd"><rect x="12" y="16" width="56" height="6"></rect><rect x="12" y="30" width="70" height="3"></rect><rect x="12" y="38" width="70" height="3"></rect><rect x="12" y="46" width="48" height="3"></rect><rect x="12" y="60" width="70" height="40"></rect></g></svg><span class="mono" style="position: absolute; right: 12px; bottom: 10px; color: #bdbdbd">pág. 12 / 40</span></div><div class="body"><span class="mono" style="color: #BFE3FF">PDF</span><span class="t">local-first-paper.pdf</span><div class="p"><span>Leído</span><span>30 %</span></div></div></div>
+
+<div class="card"><div class="hero" style="flex-direction: column; gap: 10px"><svg width="56" height="70" viewBox="0 0 24 30" fill="none" stroke="#5a5a5a" stroke-width="1" aria-hidden="true"><path d="M2 2h13l7 7v19H2z M15 2v7h7"></path></svg><span class="mono" style="color: #8b8b8b">.zip · 4,2 MB</span></div><div class="body"><span class="mono" style="color: #BFE3FF">Archivo</span><span class="t">exportacion-2026.zip</span><div class="p"><span>Tamaño</span><span>4,2 MB</span></div></div></div>
+
+<div class="card"><div class="hero" style="flex-direction: column; gap: 10px"><span style="display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 16px; border: 1px solid #DCEC4E; font-size: 18px"><span class="sq" style="background: #DCEC4E; width: 10px; height: 10px"></span>pkm</span><span class="mono" style="color: #7a7a7a">21 objetos · 6 bloques</span></div><div class="body"><span class="mono" style="color: #DCEC4E">Etiqueta</span><span class="t">pkm</span><div class="p"><span>Color</span><span>Amarillo verdoso</span></div></div></div>
+
+<div class="card"><div class="hero" style="background-image: radial-gradient(#1f1f1f 1px, transparent 1px); background-size: 14px 14px"><span style="position: absolute; left: 40px; top: 50px; padding: 6px 10px; border: 1px solid #2a2a2a; background: #000; font-size: 12px">Ideas</span><span style="position: absolute; right: 40px; top: 110px; padding: 6px 10px; border: 1px solid var(--accent); background: #000; font-size: 12px">Proyecto Yaop</span><svg width="100%" height="190" style="position: absolute; inset: 0" aria-hidden="true"><path d="M95 72C150 72 160 120 210 122" fill="none" stroke="#5a5a5a"></path></svg></div><div class="body"><span class="mono" style="color: #BFE3FF">Pizarra</span><span class="t">Mapa del sprint</span><div class="p"><span>Objetos</span><span>6</span></div></div></div>
+
+<div class="card"><div class="hero" style="padding: 0 22px"><div style="width: 100%; border: 1px solid #262626; font-size: 12px"><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: #0b0b0b; color: #8b8b8b"><span style="padding: 7px 8px">Mes</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">Gasto</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">Nota</span></div><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #1a1a1a"><span style="padding: 7px 8px">Oct</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">320</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">—</span></div><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #1a1a1a"><span style="padding: 7px 8px">Nov</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">280</span><span style="padding: 7px 8px; border-left: 1px solid #1a1a1a">viaje</span></div></div></div><div class="body"><span class="mono" style="color: #BFE3FF">Tabla</span><span class="t">Gastos 2026</span><div class="p"><span>Filas</span><span>11</span></div></div></div>
+
+<div class="card"><div class="hero" style="flex-direction: column; gap: 12px"><div style="display: grid; grid-template-columns: repeat(7, 14px); gap: 4px"><sc-for list="{{habit}}" as="h" hint-placeholder-count="28"><span style="width: 14px; height: 14px; background: {{h.c}}"></span></sc-for></div><span class="mono" style="color: #86E8A8">Racha · 6 días</span></div><div class="body"><span class="mono" style="color: #86E8A8">Hábito</span><span class="t">Correr 5 km</span><div class="p"><span>Frecuencia</span><span>3 por semana</span></div></div></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#C8F04A';
+    let s = 5; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const wave = []; for (let i = 0; i < 40; i++) wave.push({ h: 8 + Math.round(r() * 60), c: i < 14 ? accent : '#3a3a3a' });
+    const pattern = [1,0,1,0,0,1,0, 1,1,0,1,0,0,1, 0,1,1,0,1,0,1, 1,0,1,1,1,1,1];
+    const habit = pattern.map((p) => ({ c: p ? '#86E8A8' : '#1c1c1c' }));
+    return { accent, wave, habit };
+  }
+}
+</script>
+</body>
+</html>

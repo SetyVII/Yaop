@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — crear un tipo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.hit{position:relative;display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.hit .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.hit.on{color:#000}.hit.on .ac{transform:scaleX(1)}
+.hit .k{margin-left:auto;color: #7a7a7a;transition:color .3s}
+.hit.on .k{color:#000}
+.hit:focus-visible,.ib:focus-visible,.sw:focus-visible{outline:1px solid #f2f2f2;outline-offset:1px}
+.ib{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid #1f1f1f;background:transparent;color:#9a9a9a;cursor:pointer;isolation:isolate;transition:color .3s,border-color .2s}
+.ib:hover{border-color:#4a4a4a;color:#f2f2f2}
+.ib .ac{position:absolute;inset:-1px;z-index:-1;background:var(--accent);transform:scale(0);transition:transform .35s cubic-bezier(.2,.8,.1,1)}
+.ib.on{color:#000;border-color:var(--accent)}.ib.on .ac{transform:scale(1)}
+.sw{position:relative;width:32px;height:32px;border:1px solid transparent;background:transparent;padding:4px;cursor:pointer}
+.sw span{display:block;width:100%;height:100%}
+.sw.on{border-color:#f2f2f2}
+.in{display:flex;align-items:center;height:40px;padding:0 12px;border:1px solid #2a2a2a;font-size:15px;color:#f2f2f2}
+.pr{display:flex;align-items:center;gap:12px;height:44px;padding:0 4px;border-bottom:1px solid #1a1a1a;font-size:14px}
+.pr .kind{margin-left:auto}
+.pop{animation:pop .28s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hit .ac,.ib .ac{transition:none}.pop{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<aside style="flex: 0 0 300px; border-right: 1px solid #1f1f1f; padding: 28px 16px; overflow: hidden">
+<p class="mono" style="margin: 0 12px 10px; color: #7a7a7a">Tipos base · 16</p>
+<sc-for list="{{base}}" as="t" hint-placeholder-count="16">
+<div class="hit" style="height: 34px; padding: 0 12px; cursor: default"><svg class="ic" style="width: 16px; height: 16px; color: {{t.color}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{t.d}}"></path></svg><span>{{t.label}}</span><span class="k mono">{{t.n}}</span></div>
+</sc-for>
+</aside>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 40px; border-bottom: 1px solid #1f1f1f">
+<span class="mono" style="color: #7a7a7a">Ajustes / Tipos /</span><span style="font-size: 15px">Nuevo tipo</span>
+<button type="button" class="chip" style="margin-left: auto; height: 36px; background: var(--accent); border-color: var(--accent); color: #000">Crear tipo</button>
+</div>
+<div style="flex: 1; overflow: hidden; padding: 36px 40px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 48px">
+<div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 8px"><span class="mono" style="color: #7a7a7a">Nombre</span><span class="in">Reunión</span></label>
+<label style="display: flex; flex-direction: column; gap: 8px"><span class="mono" style="color: #7a7a7a">Plural</span><span class="in">Reuniones</span></label>
+</div>
+<p class="mono" style="margin: 26px 0 10px; color: #7a7a7a">Icono</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{icons}}" as="i" hint-placeholder-count="16">
+<button type="button" class="ib {{i.cls}}" aria-label="{{i.label}}" aria-pressed="{{i.sel}}" onClick="{{i.pick}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{i.d}}"></path></svg></button>
+</sc-for>
+</div>
+<p class="mono" style="margin: 26px 0 10px; color: #7a7a7a">Color · paleta de 10</p>
+<div style="display: flex; gap: 4px">
+<sc-for list="{{colors}}" as="s" hint-placeholder-count="10">
+<button type="button" class="sw {{s.cls}}" aria-label="{{s.label}}" aria-pressed="{{s.sel}}" onClick="{{s.pick}}"><span style="background: {{s.hex}}"></span></button>
+</sc-for>
+</div>
+
+<div style="position: relative">
+<p class="mono" style="margin: 30px 0 6px; color: #7a7a7a">Propiedades</p>
+<sc-for list="{{props}}" as="p" hint-placeholder-count="5">
+<div class="pr"><svg class="ic" style="width: 16px; height: 16px; color: #7a7a7a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{p.d}}"></path></svg><span>{{p.label}}</span><span class="kind mono" style="color: #8b8b8b">{{p.kind}}</span></div>
+</sc-for>
+<button type="button" class="chip" style="margin-top: 14px; border-style: dashed; color: #9a9a9a"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{plus}}"></path></svg>Propiedad</button>
+<div class="pop" role="listbox" aria-label="Clase de propiedad" style="position: absolute; left: 150px; top: 180px; z-index: 3; width: 290px; padding: 6px 0; background: #0a0a0a; border: 1px solid #2a2a2a; box-shadow: 0 24px 48px rgba(0,0,0,.6)">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="8">
+<button type="button" role="option" class="hit {{k.cls}}" aria-selected="{{k.sel}}" onMouseEnter="{{k.pick}}" onFocus="{{k.pick}}" style="height: 34px; padding: 0 14px"><span class="ac"></span><svg class="ic" style="width: 16px; height: 16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{k.d}}"></path></svg><span>{{k.label}}</span><span class="k mono">{{k.hint}}</span></button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div>
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">Así nace una reunión · plantilla</p>
+<div style="border: 1px solid #1f1f1f; padding: 26px 24px; min-height: 560px">
+<span class="chip"><svg class="ic" style="width: 14px; height: 14px; color: {{selHex}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="{{selIcon}}"></path></svg>Reunión</span>
+<p style="margin: 18px 0 18px; font-size: 26px; letter-spacing: -0.02em; color: #7a7a7a">Sin título</p>
+<div class="pr" style="font-size: 13px"><span style="color: #7a7a7a; width: 100px">Fecha</span><span>Hoy</span></div>
+<div class="pr" style="font-size: 13px"><span style="color: #7a7a7a; width: 100px">Asistentes</span><span class="chip" style="height: 22px; font-size: 12px"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Persona</span></div>
+<div class="pr" style="font-size: 13px"><span style="color: #7a7a7a; width: 100px">Proyecto</span><span style="color: #7a7a7a">Vacío</span></div>
+<div class="pr" style="font-size: 13px"><span style="color: #7a7a7a; width: 100px">Estado</span><span class="chip" style="height: 22px; font-size: 12px"><span class="sq" style="background: #FFD666"></span>Pendiente</span></div>
+<p style="margin: 24px 0 8px; font-size: 16px; font-weight: 500">Orden del día</p>
+<p style="margin: 0 0 18px; color: #7a7a7a; font-size: 14px">Escribe los puntos…</p>
+<p style="margin: 0 0 8px; font-size: 16px; font-weight: 500">Acuerdos</p>
+<div style="display: flex; align-items: center; gap: 10px; color: #7a7a7a; font-size: 14px"><span style="width: 14px; height: 14px; border: 1px solid #4a4a4a"></span>Tarea</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z', note: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h5',
+      task: 'M4 4h16v16H4z M8 12l3 3 5-6', person: c(12, 8, 4) + ' M4 21c1-4 4-6 8-6s7 2 8 6',
+      book: 'M5 4h11a3 3 0 013 3v14H8a3 3 0 01-3-3z M5 18a3 3 0 013-3h11',
+      weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2',
+      image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5), video: 'M3 6h13v12H3z M16 10l5-3v10l-5-3',
+      audio: 'M4 10v4 M8 7v10 M12 4v16 M16 8v8 M20 11v2', pdf: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 13h6 M9 17h4',
+      file: 'M6 3h9l4 4v14H6z M15 3v4h4', tag: 'M3 12V3h9l9 9-9 9z M7.5 7.5h.01', project: 'M3 7h7l2 2h9v11H3z',
+      whiteboard: 'M3 4h18v13H3z M8 21l4-4 4 4 M7 9h4 M7 12h7', table: 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14',
+      habit: 'M12 21a7 7 0 007-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 007 7z',
+      people: c(9, 8, 3.5) + ' M2 20c.8-3.5 3.5-5 7-5s6.2 1.5 7 5 M16 4.5a3.5 3.5 0 010 7 M18 15c2 .6 3.4 2.2 4 5',
+      quote: 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7', bulb: 'M9 18h6 M10 21h4 M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z',
+      code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5', star: 'M12 3l2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.8z',
+      pin: 'M9 3h6l-1 6 4 4H6l4-4z M12 13v8', recipe: 'M6 3v8a3 3 0 006 0V3 M9 3v18 M17 3c-2 2-2 6 0 8v10',
+      text: 'M5 6V4h14v2 M12 4v16 M9 20h6', number: 'M9 4L7 20 M17 4l-2 16 M4 9h16 M3 15h16', calendar: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5',
+      select: 'M4 6h16v12H4z M9 11l3 3 3-3', multi: 'M4 7h10 M4 12h10 M4 17h10 M17 7l1.5 1.5L21 6', check: 'M4 4h16v16H4z M8 12l3 3 5-6',
+      objref: 'M4 4h7v7H4z M13 13h7v7h-7z M11 7.5h5v5.5', plus: 'M12 5v14 M5 12h14'
+    };
+    const st = this.state || {};
+    const icon = st.icon ?? 'people';
+    const color = st.color ?? 'orange';
+    const kind = st.kind ?? 'objref';
+    const T = [['journal', 'Diario', '#E8EEFF', 37], ['note', 'Nota', '#BFE3FF', 112], ['task', 'Tarea', '#BFE3FF', 24], ['project', 'Proyecto', '#FFD166', 6], ['person', 'Persona', '#FFB38A', 18], ['book', 'Libro', '#9B8CFF', 7], ['weblink', 'Enlace web', '#7AF0D0', 29], ['image', 'Imagen', '#FF8FB3', 41], ['video', 'Vídeo', '#BFE3FF', 3], ['audio', 'Audio', '#BFE3FF', 5], ['pdf', 'PDF', '#BFE3FF', 9], ['file', 'Archivo', '#BFE3FF', 2], ['tag', 'Etiqueta', '#DCEC4E', 18], ['whiteboard', 'Pizarra', '#BFE3FF', 1], ['table', 'Tabla', '#BFE3FF', 2], ['habit', 'Hábito', '#86E8A8', 4]];
+    const PAL = [['yellow', 'Amarillo', '#FFD666'], ['orange', 'Naranja', '#FFB07A'], ['red', 'Rojo', '#FF786E'], ['pink', 'Rosa', '#FF8FB3'], ['purple', 'Morado', '#C2B2FF'], ['blue', 'Azul', '#6EAAFF'], ['ice', 'Hielo', '#BFE3FF'], ['teal', 'Turquesa', '#7AF0D0'], ['green', 'Verde', '#7FE0A6'], ['gray', 'Gris', '#FFFFFF']];
+    const ICS = [['people', 'Personas'], ['note', 'Nota'], ['quote', 'Cita'], ['bulb', 'Idea'], ['code', 'Código'], ['star', 'Favorito'], ['pin', 'Chincheta'], ['recipe', 'Receta'], ['book', 'Libro'], ['project', 'Carpeta'], ['calendar', 'Calendario'], ['audio', 'Audio'], ['video', 'Vídeo'], ['weblink', 'Enlace'], ['table', 'Tabla'], ['habit', 'Hábito']];
+    const KINDS = [['text', 'Texto', ''], ['number', 'Número', ''], ['calendar', 'Fecha', ''], ['select', 'Selección', '1 opción'], ['multi', 'Selección múltiple', 'varias'], ['check', 'Casilla', ''], ['weblink', 'URL', ''], ['objref', 'Referencia a objeto', '@tipo']];
+    const hex = PAL.find((p) => p[0] === color)[2];
+    return {
+      accent: this.props.accent ?? '#C8F04A', plus: I.plus,
+      base: T.map((t) => ({ d: I[t[0]], label: t[1], color: t[2], n: t[3] })),
+      icons: ICS.map((i) => ({ d: I[i[0]], label: i[1], cls: i[0] === icon ? 'on' : '', sel: i[0] === icon ? 'true' : 'false', pick: () => this.setState({ icon: i[0] }) })),
+      colors: PAL.map((p) => ({ hex: p[2], label: p[1], cls: p[0] === color ? 'on' : '', sel: p[0] === color ? 'true' : 'false', pick: () => this.setState({ color: p[0] }) })),
+      props: [['text', 'Título', 'Fijo'], ['calendar', 'Fecha', 'Fecha'], ['objref', 'Asistentes', 'Persona · varias'], ['objref', 'Proyecto', 'Proyecto'], ['select', 'Estado', 'Selección']].map((p) => ({ d: I[p[0]], label: p[1], kind: p[2] })),
+      kinds: KINDS.map((k) => ({ d: I[k[0]], label: k[1], hint: k[2], cls: k[0] === kind ? 'on' : '', sel: k[0] === kind ? 'true' : 'false', pick: () => this.setState({ kind: k[0] }) })),
+      selHex: hex, selIcon: I[icon]
+    };
+  }
+}
+</script>
+</body>
+</html>

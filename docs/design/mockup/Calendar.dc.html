@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — calendario</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.seg{position:relative;height:34px;padding:0 16px;border:0;background:transparent;color:#9a9a9a;font:400 13px 'Geist',sans-serif;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleY(1)}
+.seg:not(.on):hover{color:#f2f2f2}
+.cell{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:8px;border:0;border-right:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;background:transparent;color:#d6d6d6;font:400 12px 'Geist',sans-serif;text-align:left;cursor:pointer;overflow:hidden;transition:background .2s}
+.cell:hover{background:#0b0b0b}
+.cell.pad{color:#3a3a3a}
+.cell .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;font-size:13px}
+.cell.today .n{background:var(--accent);color:#000}
+.cell.sel{box-shadow:inset 0 0 0 1px #f2f2f2}
+.cell .it{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#bdbdbd}
+.seg:focus-visible,.cell:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.wk{display:flex;flex-direction:column;gap:6px;padding:10px;border-right:1px solid #1a1a1a;min-height:640px}
+.wk .card{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #1f1f1f;font-size:12px;color:#d6d6d6}
+.row{display:flex;align-items:center;gap:10px;height:40px;border-bottom:1px solid #1a1a1a;font-size:14px;color:#d6d6d6;animation:in .35s cubic-bezier(.2,.8,.1,1) both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.seg .ac{transition:none}.row{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 16px; height: 72px; padding: 0 32px; border-bottom: 1px solid #1f1f1f">
+<h1 style="margin: 0; font-size: 22px; font-weight: 400">Noviembre 2026</h1>
+<span class="mono" style="color: #7a7a7a">Semanas 44–49</span>
+<div role="tablist" style="margin-left: auto; display: flex; border: 1px solid #262626">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="2">
+<button type="button" role="tab" class="seg {{v.cls}}" aria-selected="{{v.sel}}" onClick="{{v.pick}}"><span class="ac"></span>{{v.label}}</button>
+</sc-for>
+</div>
+<button type="button" class="seg" onClick="{{goToday}}" style="border: 1px solid #262626">Hoy</button>
+</div>
+<div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); color: #7a7a7a; border-bottom: 1px solid #1a1a1a">
+<span style="padding: 10px">Lun</span><span style="padding: 10px">Mar</span><span style="padding: 10px">Mié</span><span style="padding: 10px">Jue</span><span style="padding: 10px">Vie</span><span style="padding: 10px">Sáb</span><span style="padding: 10px">Dom</span>
+</div>
+<sc-if value="{{isMonth}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr))">
+<sc-for list="{{cells}}" as="d" hint-placeholder-count="42">
+<button type="button" class="cell {{d.cls}}" aria-label="{{d.aria}}" onClick="{{d.pick}}"><span class="n">{{d.n}}</span>
+<sc-for list="{{d.items}}" as="it" hint-placeholder-count="0"><span class="it"><span class="sq" style="background: {{it.color}}"></span>{{it.t}}</span></sc-for>
+<sc-if value="{{d.more}}" hint-placeholder-val="{{ false }}"><span class="mono" style="color: #7a7a7a">+{{d.more}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+<sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+<div class="wk"><button type="button" class="cell {{d.cls}}" onClick="{{d.pick}}" style="border: 0; padding: 0 0 6px"><span class="n">{{d.n}}</span></button>
+<sc-for list="{{d.all}}" as="it" hint-placeholder-count="2"><span class="card"><span class="sq" style="background: {{it.color}}"></span>{{it.t}}</span></sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</main>
+
+<aside style="flex: 0 0 380px; border-left: 1px solid #1f1f1f; padding: 32px 28px">
+<p class="mono" style="margin: 0 0 8px; color: var(--accent)">{{dayKicker}}</p>
+<h2 style="margin: 0 0 6px; font-size: 26px; font-weight: 400; letter-spacing: -0.02em">{{dayTitle}}</h2>
+<p class="mono" style="margin: 0 0 26px; color: #7a7a7a">{{daySub}}</p>
+<p class="mono" style="margin: 0 0 4px; color: #7a7a7a">En este día</p>
+<sc-for list="{{dayItems}}" as="it" hint-placeholder-count="3">
+<div class="row"><span class="sq" style="background: {{it.color}}"></span>{{it.t}}<span class="mono" style="margin-left: auto; color: #7a7a7a">{{it.kind}}</span></div>
+</sc-for>
+<sc-if value="{{dayEmpty}}" hint-placeholder-val="{{ false }}"><p style="margin: 12px 0 0; color: #7a7a7a; font-size: 14px">Nada todavía. Empieza la nota del día.</p></sc-if>
+<p class="mono" style="margin: 30px 0 4px; color: #7a7a7a">Calendario externo (CalDAV) · próximamente</p>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const sel = st.sel ?? 21;
+    const view = st.view ?? 'month';
+    const K = { journal: ['#E8EEFF', 'Diario'], task: ['#BFE3FF', 'Tarea'], meeting: ['#FFB07A', 'Reunión'], web: ['#7AF0D0', 'Enlace web'], image: ['#FF8FB3', 'Imagen'], habit: ['#86E8A8', 'Hábito'], book: ['#9B8CFF', 'Libro'] };
+    const D = {
+      2: [['book', 'Notas inteligentes']], 3: [['journal', 'Nota del día']], 6: [['task', 'Renovar dominio']],
+      10: [['journal', 'Nota del día'], ['web', 'SQLite WAL']], 12: [['meeting', 'Taller de escritura']],
+      14: [['journal', 'Nota del día'], ['task', 'Fixture de anclas']], 17: [['journal', 'Nota del día'], ['task', 'Llamar a Ana']],
+      19: [['habit', 'Correr 5 km']], 20: [['image', 'Pizarra antigua']],
+      21: [['journal', 'Nota del día'], ['task', 'Probar el QR'], ['web', 'Local-first software'], ['image', 'Pizarra del sprint']],
+      23: [['task', 'Fixture de merge']], 26: [['meeting', 'Revisión con Marcos']], 28: [['habit', 'Correr 5 km']]
+    };
+    const W = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const pickDay = (n) => () => this.setState({ sel: n });
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const n = i - 5;
+      if (n < 1 || n > 30) { cells.push({ n: n < 1 ? 31 + n : n - 30, cls: 'pad', aria: '', items: [], more: 0, pick: () => {} }); continue; }
+      const list = (D[n] || []).map((x) => ({ t: x[1], color: K[x[0]][0] }));
+      cells.push({ n, cls: (n === 21 ? 'today ' : '') + (n === sel ? 'sel' : ''), aria: n + ' de noviembre', items: list.slice(0, 2), more: Math.max(0, list.length - 2), pick: pickDay(n) });
+    }
+    const start = sel - ((new Date(2026, 10, sel).getDay() + 6) % 7);
+    const week = [];
+    for (let d = start; d < start + 7; d++) {
+      const ok = d >= 1 && d <= 30;
+      week.push({ n: ok ? d : '', cls: (d === 21 ? 'today ' : '') + (d === sel ? 'sel' : ''), all: ok ? (D[d] || []).map((x) => ({ t: x[1], color: K[x[0]][0] })) : [], pick: ok ? pickDay(d) : () => {} });
+    }
+    const items = (D[sel] || []).map((x) => ({ t: x[1], color: K[x[0]][0], kind: K[x[0]][1] }));
+    const wd = new Date(2026, 10, sel).getDay();
+    return {
+      accent: this.props.accent ?? '#C8F04A', cells, week,
+      isMonth: view === 'month', isWeek: view === 'week',
+      views: [['month', 'Mes'], ['week', 'Semana']].map((v) => ({ label: v[1], cls: v[0] === view ? 'on' : '', sel: v[0] === view ? 'true' : 'false', pick: () => this.setState({ view: v[0] }) })),
+      goToday: () => this.setState({ sel: 21 }),
+      dayKicker: sel === 21 ? 'Hoy' : (sel < 21 ? 'Pasado' : 'Próximo'), dayTitle: W[wd] + ', ' + sel + ' de noviembre',
+      daySub: items.length + ' elementos', dayItems: items, dayEmpty: items.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

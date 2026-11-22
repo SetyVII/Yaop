@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — grafo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.sq{display:inline-block;width:8px;height:8px;flex:0 0 8px}
+.seg{position:relative;display:flex;align-items:center;gap:10px;width:100%;height:38px;padding:0 14px;border:0;background:transparent;color:#bdbdbd;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleX(1)}
+.seg.on .sq{outline:1px solid #000}
+.seg .n{margin-left:auto;color: #7a7a7a}
+.seg.on .n{color:#000}
+.seg:not(.on):hover{color:#fff}
+.seg:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+@media (prefers-reduced-motion:reduce){.seg .ac{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+<aside style="flex: 0 0 300px; border-right: 1px solid #1f1f1f; padding: 32px 16px">
+<h1 style="margin: 0 14px 6px; font-size: 22px; font-weight: 400">Grafo</h1>
+<p class="mono" style="margin: 0 14px 24px; color: #7a7a7a">72 objetos · 118 enlaces</p>
+<p class="mono" style="margin: 0 14px 8px; color: #7a7a7a">Filtrar por tipo</p>
+<sc-for list="{{types}}" as="t" hint-placeholder-count="8">
+<button type="button" class="seg {{t.cls}}" aria-pressed="{{t.sel}}" onClick="{{t.pick}}" onMouseEnter="{{t.hover}}" onMouseLeave="{{unhover}}"><span class="ac"></span><span class="sq" style="background: {{t.color}}"></span>{{t.label}}<span class="n mono">{{t.n}}</span></button>
+</sc-for>
+<p style="margin: 28px 14px 0; font-size: 13px; line-height: 1.6; color: #7a7a7a">Pasa el ratón por un nodo para ver con qué se enlaza. Las menciones, etiquetas y objetos puestos en una pizarra cuentan como enlace.</p>
+</aside>
+<div style="flex: 1; position: relative">
+<canvas ref="{{setCanvas}}" onMouseMove="{{move}}" onMouseLeave="{{leave}}" role="img" aria-label="Grafo de objetos coloreado por tipo" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block"></canvas>
+<div class="mono" style="position: absolute; left: 24px; bottom: 20px; color: #7a7a7a; pointer-events: none">{{caption}}</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const TY = [['journal', 'Diario', '#E8EEFF', 18], ['note', 'Nota', '#BFE3FF', 16], ['person', 'Persona', '#FFB38A', 8], ['book', 'Libro', '#9B8CFF', 6], ['weblink', 'Enlace web', '#7AF0D0', 10], ['image', 'Imagen', '#FF8FB3', 6], ['tag', 'Etiqueta', '#DCEC4E', 5], ['project', 'Proyecto', '#FFD166', 3]];
+    const on = st.on || {};
+    this._TY = TY; this._on = on; this._hoverType = st.hoverType || null;
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      types: TY.map((t) => ({ label: t[1], color: t[2], n: t[3], cls: on[t[0]] ? 'on' : '', sel: on[t[0]] ? 'true' : 'false',
+        pick: () => this.setState({ on: Object.assign({}, on, { [t[0]]: !on[t[0]] }) }), hover: () => this.setState({ hoverType: t[0] }) })),
+      unhover: () => this.setState({ hoverType: null }),
+      setCanvas: (el) => { this._cv = el; },
+      move: (e) => { const r = e.currentTarget.getBoundingClientRect(); this._mx = e.clientX - r.left; this._my = e.clientY - r.top; },
+      leave: () => { this._mx = -1e4; this._my = -1e4; },
+      caption: st.caption || 'Color por tipo · tamaño por número de enlaces'
+    };
+  }
+  componentDidMount() { this._go(); }
+  componentWillUnmount() { cancelAnimationFrame(this._raf); }
+  _go() {
+    const self = this;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const TY = this._TY;
+    const nodes = [], links = [];
+    const hubs = {};
+    TY.forEach((t, ti) => {
+      for (let i = 0; i < t[3]; i++) {
+        const a = ti / TY.length * Math.PI * 2;
+        nodes.push({ type: t[0], color: t[2], x: Math.cos(a) * 220 + (rnd() - .5) * 160, y: Math.sin(a) * 160 + (rnd() - .5) * 140, vx: 0, vy: 0, deg: 0, ph: rnd() * 6.28 });
+        if (i === 0) hubs[t[0]] = nodes.length - 1;
+      }
+    });
+    const idx = (type) => nodes.map((n, i) => n.type === type ? i : -1).filter((i) => i >= 0);
+    const add = (a, b) => { if (a !== b) { links.push([a, b]); nodes[a].deg++; nodes[b].deg++; } };
+    nodes.forEach((n, i) => { if (n.type !== 'journal') { const js = idx('journal'); add(i, js[Math.floor(rnd() * js.length)]); } });
+    for (let k = 0; k < 50; k++) add(Math.floor(rnd() * nodes.length), Math.floor(rnd() * nodes.length));
+    idx('tag').forEach((t) => { for (let k = 0; k < 4; k++) add(t, Math.floor(rnd() * nodes.length)); });
+    idx('project').forEach((p) => { for (let k = 0; k < 5; k++) add(p, Math.floor(rnd() * nodes.length)); });
+    for (let it = 0; it < 220; it++) {
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j]; let dx = a.x - b.x, dy = a.y - b.y; const d2 = dx * dx + dy * dy; const f = Math.min(.5, 900 / (d2 + 400));
+        a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f;
+      }
+      links.forEach((l) => { const a = nodes[l[0]], b = nodes[l[1]]; const dx = b.x - a.x, dy = b.y - a.y; a.vx += dx * .004; a.vy += dy * .004; b.vx -= dx * .004; b.vy -= dy * .004; });
+      nodes.forEach((n) => { n.vx -= n.x * .002; n.vy -= n.y * .002; n.x += n.vx * .5; n.y += n.vy * .5; n.vx *= .6; n.vy *= .6; });
+    }
+    let mx0 = Infinity, mx1 = -Infinity, my0 = Infinity, my1 = -Infinity;
+    nodes.forEach((n) => { mx0 = Math.min(mx0, n.x); mx1 = Math.max(mx1, n.x); my0 = Math.min(my0, n.y); my1 = Math.max(my1, n.y); });
+    const fit = Math.min(680 / Math.max(1, mx1 - mx0), 480 / Math.max(1, my1 - my0));
+    nodes.forEach((n) => { n.x = (n.x - (mx0 + mx1) / 2) * fit; n.y = (n.y - (my0 + my1) / 2) * fit; });
+    const nb = nodes.map(() => []); links.forEach((l) => { nb[l[0]].push(l[1]); nb[l[1]].push(l[0]); });
+    const acc = () => { const h = String(self.props.accent ?? '#C8F04A').replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)].join(','); };
+    let hov = -1, lastHov = -2, fade = nodes.map(() => 1);
+    const draw = (now) => {
+      const cv = self._cv; if (!cv) { self._raf = requestAnimationFrame(draw); return; }
+      const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+      if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+      const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, r.width, r.height);
+      const t = reduce ? 0 : now / 1000, ox = r.width / 2, oy = r.height / 2, s = Math.min(r.width / 760, r.height / 560);
+      const P = nodes.map((n) => [ox + (n.x + Math.sin(t * .4 + n.ph) * 3) * s, oy + (n.y + Math.cos(t * .35 + n.ph) * 3) * s]);
+      const mx = self._mx ?? -1e4, my = self._my ?? -1e4; hov = -1; let best = 18 * 18;
+      P.forEach((p, i) => { const d = (p[0] - mx) ** 2 + (p[1] - my) ** 2; if (d < best) { best = d; hov = i; } });
+      if (hov !== lastHov) { lastHov = hov; const cap = hov >= 0 ? (TY.find((x) => x[0] === nodes[hov].type)[1] + ' · ' + nb[hov].length + ' enlaces') : 'Color por tipo · tamaño por número de enlaces'; if (cap !== ((self.state || {}).caption)) self.setState({ caption: cap }); }
+      const on = self._on || {}, any = Object.keys(on).some((k) => on[k]), ht = self._hoverType;
+      nodes.forEach((n, i) => {
+        let target = 1;
+        if (ht) target = n.type === ht ? 1 : .15; else if (any) target = on[n.type] ? 1 : .12;
+        if (hov >= 0) target = (i === hov || nb[hov].includes(i)) ? 1 : .15;
+        fade[i] += (target - fade[i]) * (reduce ? 1 : .12);
+      });
+      const A = acc();
+      links.forEach((l) => {
+        const a = P[l[0]], b = P[l[1]]; const hot = hov >= 0 && (l[0] === hov || l[1] === hov);
+        ctx.strokeStyle = hot ? 'rgba(' + A + ',.9)' : 'rgba(255,255,255,' + (.11 * Math.min(fade[l[0]], fade[l[1]])) + ')';
+        ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      });
+      nodes.forEach((n, i) => {
+        const p = P[i], z = 3 + Math.min(7, n.deg * .7);
+        ctx.globalAlpha = fade[i];
+        ctx.fillStyle = i === hov ? 'rgb(' + A + ')' : n.color;
+        ctx.fillRect(p[0] - z / 2, p[1] - z / 2, z, z);
+        if (i === hov) { ctx.strokeStyle = 'rgb(' + A + ')'; ctx.strokeRect(p[0] - z / 2 - 4, p[1] - z / 2 - 4, z + 8, z + 8); }
+      });
+      ctx.globalAlpha = 1;
+      self._raf = requestAnimationFrame(draw);
+    };
+    this._raf = requestAnimationFrame(draw);
+  }
+}
+</script>
+</body>
+</html>

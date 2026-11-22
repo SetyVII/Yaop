@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — enlaces web con filtros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.rail{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 0;border-right:1px solid #1f1f1f}
+.rb{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:transparent;color:#7a7a7a;cursor:pointer;isolation:isolate;transition:color .3s}
+.rb:hover{color:#f2f2f2}
+.rb .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.rb.on{color:#000}.rb.on .ac{transform:scaleY(1)}
+.rb:focus-visible,.seg:focus-visible,.card:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.seg{position:relative;height:34px;padding:0 14px;border:0;background:transparent;color:#9a9a9a;font:400 13px 'Geist',sans-serif;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleY(1)}
+.seg:not(.on):hover{color:#f2f2f2}
+.card{display:flex;flex-direction:column;border:1px solid #1f1f1f;background:#000;text-decoration:none;color:#f2f2f2;transition:border-color .25s,transform .45s cubic-bezier(.2,.8,.1,1);animation:in .45s cubic-bezier(.2,.8,.1,1) both}
+.card:hover{border-color:#4a4a4a;transform:translateY(-2px)}
+.card:hover .cov rect.hl{fill:var(--accent)}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.field{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid #2a2a2a;font-size:13px;color:#e6e6e6}
+.pop{animation:pop .28s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rb .ac,.seg .ac,.card{transition:none;animation:none}.pop{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<nav class="rail" aria-label="Secciones">
+<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true" style="margin-bottom: 16px"><rect x="1" y="1" width="20" height="20" fill="none" stroke="#f2f2f2" stroke-width="1.6"></rect><rect x="6" y="6" width="10" height="10" style="fill: var(--accent)"></rect></svg>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="5">
+<button type="button" class="rb {{r.cls}}" aria-label="{{r.label}}" title="{{r.label}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{r.d}}"></path></svg></button>
+</sc-for>
+</nav>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative">
+<div style="display: flex; align-items: center; gap: 14px; height: 72px; padding: 0 32px; border-bottom: 1px solid #1f1f1f">
+<svg class="ic" style="color: #7AF0D0; width: 22px; height: 22px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.weblink}}"></path></svg>
+<h1 style="margin: 0; font-size: 22px; font-weight: 400; letter-spacing: -0.01em">Enlaces web</h1>
+<span class="mono" style="color: #7a7a7a">{{count}} de 8</span>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 2px">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="4">
+<button type="button" class="rb {{v.cls}}" aria-label="{{v.label}}" title="{{v.label}}" onClick="{{v.pick}}" style="width: 38px; height: 38px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{v.d}}"></path></svg></button>
+</sc-for>
+<span style="width: 1px; height: 22px; background: #262626; margin: 0 8px"></span>
+<button type="button" class="rb {{filterCls}}" aria-label="Filtros" aria-expanded="{{filterExp}}" onClick="{{toggleFilter}}" style="width: 38px; height: 38px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.filter}}"></path></svg></button>
+<button type="button" class="rb" aria-label="Ordenar" style="width: 38px; height: 38px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.sort}}"></path></svg></button>
+<button type="button" class="chip" style="height: 38px; margin-left: 10px; background: var(--accent); border-color: var(--accent); color: #000"><svg class="ic" style="width: 15px; height: 15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>Nuevo</button>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 4px; padding: 14px 32px; border-bottom: 1px solid #1f1f1f">
+<span class="mono" style="color: #7a7a7a; margin-right: 10px">Categoría</span>
+<sc-for list="{{cats}}" as="k" hint-placeholder-count="6">
+<button type="button" class="seg {{k.cls}}" aria-pressed="{{k.pressed}}" onClick="{{k.pick}}"><span class="ac"></span>{{k.label}}</button>
+</sc-for>
+<span class="mono" style="margin-left: auto; color: #7a7a7a">Vista guardada · «Para ver»</span>
+</div>
+
+<sc-if value="{{filterOpen}}" hint-placeholder-val="{{ true }}">
+<div class="pop" role="dialog" aria-label="Filtros" style="position: absolute; right: 120px; top: 64px; z-index: 4; width: 560px; padding: 18px; background: #0a0a0a; border: 1px solid #2a2a2a; box-shadow: 0 24px 48px rgba(0,0,0,.6)">
+<p class="mono" style="margin: 0 0 14px; color: #7a7a7a">Mostrar enlaces web donde</p>
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px"><span class="mono" style="width: 34px; color: #7a7a7a"></span><span class="field"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.select}}"></path></svg>Categoría</span><span class="field" style="color: #9a9a9a">es</span><span class="field"><span class="sq" style="background: {{catColor}}"></span>{{catLabel}}</span></div>
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px"><span class="mono" style="width: 34px; color: #7a7a7a">y</span><span class="field"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.task}}"></path></svg>Revisado</span><span class="field" style="color: #9a9a9a">es</span><span class="field">No</span></div>
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px 0 8px 42px; border-left: 1px dashed #2a2a2a; margin-left: 16px"><span class="mono" style="color: #7a7a7a">o</span><span class="field"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.multi}}"></path></svg>Tema</span><span class="field" style="color: #9a9a9a">contiene</span><span class="field"><span class="sq" style="background: #7AF0D0"></span>sync</span></div>
+<div style="display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #1f1f1f">
+<button type="button" class="chip"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>Filtro</button>
+<button type="button" class="chip"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>Grupo</button>
+<button type="button" class="chip" style="margin-left: auto">Guardar como vista</button>
+</div>
+</div>
+</sc-if>
+
+<div style="flex: 1; overflow: hidden; padding: 24px 32px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{links}}" as="l" hint-placeholder-count="8">
+<a class="card" href="#">
+<svg class="cov" width="100%" height="128" viewBox="0 0 300 128" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display: block; border-bottom: 1px solid #1f1f1f; background: #070707"><g fill="none" stroke="#2e2e2e"><path d="{{l.cover}}"></path></g><rect class="hl" x="{{l.hx}}" y="44" width="40" height="40" fill="#2a2a2a" style="transition: fill .35s"></rect></svg>
+<span style="display: flex; flex-direction: column; gap: 10px; padding: 14px">
+<span style="font-size: 14px; line-height: 1.4; min-height: 40px">{{l.title}}</span>
+<span class="mono" style="color: #7a7a7a">{{l.domain}}</span>
+<span style="display: flex; flex-wrap: wrap; gap: 6px"><span class="chip" style="height: 22px; font-size: 12px"><span class="sq" style="background: {{l.catColor}}"></span>{{l.cat}}</span><span class="chip" style="height: 22px; font-size: 12px; color: #9a9a9a">{{l.topic}}</span></span>
+</span>
+</a>
+</sc-for>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z', calendar: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5',
+      search: c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21', grid: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
+      graph: c(6, 6, 2) + ' ' + c(18, 8, 2) + ' ' + c(10, 18, 2) + ' M8 6.3l8 1.4 M6.7 8l2.6 8 M16.6 9.6l-5.2 6.8',
+      weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2',
+      list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01', table: 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14',
+      kanban: 'M4 4h4v16H4z M10 4h4v10h-4z M16 4h4v13h-4z', filter: 'M4 5h16 M7 12h10 M10 19h4',
+      sort: 'M7 4v16 M3 16l4 4 4-4 M17 20V4 M13 8l4-4 4 4', plus: 'M12 5v14 M5 12h14', select: 'M4 6h16v12H4z M9 11l3 3 3-3',
+      task: 'M4 4h16v16H4z M8 12l3 3 5-6', multi: 'M4 7h10 M4 12h10 M4 17h10 M17 7l1.5 1.5L21 6'
+    };
+    const st = this.state || {};
+    const cat = st.cat ?? 'all';
+    const view = st.view ?? 0;
+    const open = st.open ?? true;
+    const CAT = { article: ['Artículo', '#6EAAFF'], video: ['Vídeo', '#FF786E'], podcast: ['Podcast', '#C2B2FF'], ref: ['Referencia', '#FFD666'], tool: ['Herramienta', '#7FE0A6'] };
+    const covers = [
+      'M20 24h160 M20 40h220 M20 56h120 M20 92h260 M20 104h200',
+      'M0 64h300 M150 0v128 M75 32h150v64H75z',
+      'M30 100V60 M60 100V40 M90 100V70 M120 100V30 M150 100V50 M180 100V80 M210 100V45 M240 100V65',
+      'M20 20h260v88H20z M20 44h260 M100 44v64 M180 44v64',
+      'M40 100l60-60 60 40 60-50 40 30'
+    ];
+    const raw = [
+      ['Local-first software', 'inkandswitch.com', 'article', 'sync', 0, 40],
+      ['Engineers do get promoted for writing simple code', 'seangoedecke.com', 'article', 'código', 0, 200],
+      ['CRDTs explicados con ejemplos', 'youtube.com', 'video', 'sync', 1, 130],
+      ['The Changelog: bases de datos locales', 'changelog.com', 'podcast', 'software', 2, 230],
+      ['Write-Ahead Logging', 'sqlite.org', 'ref', 'bases de datos', 3, 60],
+      ['Qt Quick Scene Graph', 'doc.qt.io', 'ref', 'qt', 3, 180],
+      ['Compose performance', 'developer.android.com', 'ref', 'android', 4, 120],
+      ['nextflux', 'github.com', 'tool', 'rss', 4, 220]
+    ];
+    const links = raw.filter((r) => cat === 'all' || r[2] === cat).map((r) => ({ title: r[0], domain: r[1], cat: CAT[r[2]][0], catColor: CAT[r[2]][1], topic: r[3], cover: covers[r[4]], hx: r[5] }));
+    const cats = [['all', 'Todo']].concat(Object.keys(CAT).map((k) => [k, CAT[k][0]])).map((k) => ({ label: k[1], cls: k[0] === cat ? 'on' : '', pressed: k[0] === cat ? 'true' : 'false', pick: () => this.setState({ cat: k[0] }) }));
+    const views = [['grid', 'Galería'], ['list', 'Lista'], ['table', 'Tabla'], ['kanban', 'Kanban']].map((v, i) => ({ d: v[0] === 'grid' ? 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z' : I[v[0]], label: v[1], cls: i === view ? 'on' : '', pick: () => this.setState({ view: i }) }));
+    const rail = [['journal', 'Hoy'], ['calendar', 'Calendario'], ['search', 'Buscar'], ['grid', 'Objetos'], ['graph', 'Grafo']].map((r) => ({ d: I[r[0]], label: r[1], cls: r[0] === 'grid' ? 'on' : '' }));
+    return {
+      accent: this.props.accent ?? '#C8F04A', rail, ic: I, links, cats, views, count: links.length,
+      catLabel: cat === 'all' ? 'cualquiera' : CAT[cat][0], catColor: cat === 'all' ? '#5a5a5a' : CAT[cat][1],
+      filterOpen: open, filterCls: open ? 'on' : '', filterExp: open ? 'true' : 'false', toggleFilter: () => this.setState({ open: !open })
+    };
+  }
+}
+</script>
+</body>
+</html>

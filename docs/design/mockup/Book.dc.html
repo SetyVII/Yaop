@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — libro con panel lateral</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.rail{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 0;border-right:1px solid #1f1f1f}
+.rb{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:transparent;color:#7a7a7a;cursor:pointer;isolation:isolate;transition:color .3s}
+.rb:hover{color:#f2f2f2}
+.rb .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.rb.on{color:#000}.rb.on .ac{transform:scaleY(1)}
+.rb:focus-visible,.tab:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.prop{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-bottom:1px solid #1a1a1a;font-size:14px}
+.prop .k{display:flex;align-items:center;gap:9px;color:#7a7a7a}
+.side{flex:0 0 380px;overflow:hidden;border-left:1px solid #1f1f1f;transition:flex-basis .55s cubic-bezier(.2,.8,.1,1)}
+.side.off{flex-basis:0;border-left-color:transparent}
+.side>div{width:380px}
+.tab{height:48px;border:0;background:transparent;color:#7a7a7a;font:400 13px 'Geist',sans-serif;cursor:pointer;transition:color .25s}
+.tab.on,.tab:hover{color:#f2f2f2}
+.tab{position:relative}
+.tab::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.tab.on::after{transform:scaleX(1)}
+.bl{display:block;padding:16px 0;border-bottom:1px solid #1a1a1a;text-decoration:none;color:#d6d6d6;transition:padding .35s cubic-bezier(.2,.8,.1,1)}
+.bl:hover{padding-left:6px;color:#fff}
+.bl mark{background:transparent;color:#f2f2f2;border-bottom:1px solid var(--accent)}
+.fade{animation:fade .35s cubic-bezier(.2,.8,.1,1) both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rb .ac,.side,.bar{transition:none}.fade{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<nav class="rail" aria-label="Secciones">
+<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true" style="margin-bottom: 16px"><rect x="1" y="1" width="20" height="20" fill="none" stroke="#f2f2f2" stroke-width="1.6"></rect><rect x="6" y="6" width="10" height="10" style="fill: var(--accent)"></rect></svg>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="5">
+<button type="button" class="rb {{r.cls}}" aria-label="{{r.label}}" title="{{r.label}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{r.d}}"></path></svg></button>
+</sc-for>
+</nav>
+
+<section aria-label="Propiedades del libro" style="flex: 0 0 300px; border-right: 1px solid #1f1f1f; padding: 32px 28px; overflow: hidden">
+<div style="height: 300px; border: 1px solid #262626; background: #060606; display: flex; align-items: center; justify-content: center">
+<svg width="170" height="240" viewBox="0 0 170 240" fill="none" stroke="#4a4a4a" stroke-width="1" aria-hidden="true"><rect x="1" y="1" width="168" height="238"></rect><path d="M20 40h130 M20 52h90"></path><rect x="45" y="100" width="80" height="80" style="fill: var(--accent); stroke: #000"></rect><path d="M20 210h70"></path></svg>
+</div>
+<p class="mono" style="margin: 10px 0 18px; color: #7a7a7a">Portada · local, 480 px</p>
+<div class="prop"><span class="k"><svg class="ic" style="width: 15px; height: 15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.person}}"></path></svg>Autor</span><span><span class="chip"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Sönke Ahrens</span></span></div>
+<div class="prop"><span class="k"><svg class="ic" style="width: 15px; height: 15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.select}}"></path></svg>Género</span><span><span class="chip"><span class="sq" style="background: #6EAAFF"></span>Ensayo</span></span></div>
+<div class="prop"><span class="k"><svg class="ic" style="width: 15px; height: 15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.select}}"></path></svg>Estado</span><span><span class="chip"><span class="sq" style="background: #FFD666"></span>Leyendo</span></span></div>
+<div class="prop"><span class="k"><svg class="ic" style="width: 15px; height: 15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.number}}"></path></svg>Calificación</span>
+<span style="display: flex; gap: 4px" aria-label="4 de 5"><span style="width: 18px; height: 6px; background: var(--accent)"></span><span style="width: 18px; height: 6px; background: var(--accent)"></span><span style="width: 18px; height: 6px; background: var(--accent)"></span><span style="width: 18px; height: 6px; background: var(--accent)"></span><span style="width: 18px; height: 6px; background: #2a2a2a"></span></span></div>
+</section>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 20px 0 40px; border-bottom: 1px solid #1f1f1f">
+<span class="mono" style="color: #7a7a7a">Libros / Leyendo</span>
+<span class="mono" style="margin-left: auto; color: #7a7a7a">2 / 7</span>
+<button type="button" class="rb {{sideCls}}" aria-label="Mostrar u ocultar panel lateral" aria-pressed="{{sidePressed}}" onClick="{{toggleSide}}" style="width: 40px; height: 40px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.side}}"></path></svg></button>
+</div>
+<div style="flex: 1; overflow: hidden; padding: 56px 56px 0 64px">
+<div style="max-width: 620px">
+<div style="display: flex; gap: 8px; margin-bottom: 18px"><span class="chip"><span class="sq" style="background: #9B8CFF"></span>Libro</span><span class="chip" style="color: #8b8b8b">Lecturas 2026</span></div>
+<h1 style="margin: 0; font-size: 40px; line-height: 1.12; font-weight: 400; letter-spacing: -0.03em">Cómo tomar notas inteligentes</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 36px"><span class="chip"><span class="sq" style="background: #DCEC4E"></span>pkm</span><span class="chip"><span class="sq" style="background: #DCEC4E"></span>escritura</span></div>
+<p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7; color: #e6e6e6">La idea central: una nota solo vale si se conecta con otras. Escribir es la consecuencia de leer con un objetivo.</p>
+<p style="margin: 0 0 16px; padding: 4px 0 4px 20px; border-left: 1px solid #3a3a3a; font-size: 16px; line-height: 1.7; color: #bdbdbd">Las notas permanentes se escriben con tus palabras, como si fueran para otra persona.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.7; color: #e6e6e6">Relacionado con <span class="chip" style="height: 24px; vertical-align: 1px"><span class="sq" style="background: #BFE3FF"></span>Método Zettelkasten</span>.</p>
+</div>
+</div>
+</main>
+
+<aside class="side {{sideOff}}" aria-label="Panel lateral">
+<div>
+<div role="tablist" style="position: relative; display: flex; gap: 22px; padding: 0 24px; border-bottom: 1px solid #1f1f1f; height: 56px; align-items: flex-end">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" class="tab {{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}</button>
+</sc-for></div>
+<div style="padding: 20px 24px">
+<sc-if value="{{isLinks}}" hint-placeholder-val="{{ true }}">
+<div class="fade">
+<p class="mono" style="margin: 0 0 4px; color: #7a7a7a">3 objetos enlazan aquí</p>
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: #E8EEFF"></span>Sábado, 14 de noviembre<span class="mono" style="margin-left: auto; color: #7a7a7a">Diario</span></span><span style="display: block; margin-top: 8px; font-size: 13px; line-height: 1.55; color: #8b8b8b">…empecé <mark>Cómo tomar notas inteligentes</mark> por el capítulo de la caja de notas…</span></a>
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: #BFE3FF"></span>Método Zettelkasten<span class="mono" style="margin-left: auto; color: #7a7a7a">Nota</span></span><span style="display: block; margin-top: 8px; font-size: 13px; line-height: 1.55; color: #8b8b8b">Fuente principal: <mark>Cómo tomar notas inteligentes</mark>, cap. 2.</span></a>
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López<span class="mono" style="margin-left: auto; color: #7a7a7a">Persona</span></span><span style="display: block; margin-top: 8px; font-size: 13px; line-height: 1.55; color: #8b8b8b">Me recomendó <mark>Cómo tomar notas inteligentes</mark>.</span></a>
+<p class="mono" style="margin: 28px 0 4px; color: #7a7a7a">Menciones sin enlazar · 1</p>
+<div class="bl" style="color: #8b8b8b; font-size: 13px">«notas inteligentes» en <span style="color: #d6d6d6">Semana 47</span> <button type="button" class="chip" style="height: 22px; margin-left: 6px; font-size: 12px">Enlazar</button></div>
+</div>
+</sc-if>
+<sc-if value="{{isGraph}}" hint-placeholder-val="{{ false }}">
+<div class="fade">
+<svg width="332" height="300" viewBox="0 0 332 300" role="img" aria-label="Grafo local: el libro en el centro y sus 5 vecinos">
+<g stroke="#3a3a3a" stroke-width="1"><path d="M166 150L60 70 M166 150L270 60 M166 150L280 210 M166 150L70 240 M166 150L170 270 M60 70L270 60"></path></g>
+<g style="stroke: var(--accent)" stroke-width="1"><path d="M166 150L60 70 M166 150L270 60"></path></g>
+<rect x="156" y="140" width="20" height="20" style="fill: var(--accent)"></rect>
+<rect x="54" y="64" width="12" height="12" fill="#E8EEFF"></rect><rect x="264" y="54" width="12" height="12" fill="#BFE3FF"></rect><rect x="274" y="204" width="12" height="12" fill="#FFB38A"></rect><rect x="64" y="234" width="12" height="12" fill="#DCEC4E"></rect><rect x="164" y="264" width="12" height="12" fill="#DCEC4E"></rect>
+</svg>
+<p class="mono" style="margin: 12px 0 0; color: #7a7a7a">Profundidad 1 · color por tipo</p>
+</div>
+</sc-if>
+<sc-if value="{{isInfo}}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="font-size: 14px">
+<div class="prop" style="flex-direction: row; justify-content: space-between"><span class="k">Creado</span><span>2 nov 2026, 09:14</span></div>
+<div class="prop" style="flex-direction: row; justify-content: space-between"><span class="k">Editado</span><span>Hoy, 10:42</span></div>
+<div class="prop" style="flex-direction: row; justify-content: space-between"><span class="k">Historial</span><span>4 versiones · 30 días</span></div>
+<div class="prop" style="flex-direction: row; justify-content: space-between"><span class="k">Cifrado</span><span>Clave del vault</span></div>
+</div>
+</sc-if>
+</div>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z', calendar: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5',
+      search: c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21', grid: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
+      graph: c(6, 6, 2) + ' ' + c(18, 8, 2) + ' ' + c(10, 18, 2) + ' M8 6.3l8 1.4 M6.7 8l2.6 8 M16.6 9.6l-5.2 6.8',
+      person: c(12, 8, 4) + ' M4 21c1-4 4-6 8-6s7 2 8 6', select: 'M4 6h16v12H4z M9 11l3 3 3-3',
+      number: 'M9 4L7 20 M17 4l-2 16 M4 9h16 M3 15h16', side: 'M3 4h18v16H3z M15 4v16'
+    };
+    const st = this.state || {};
+    const tab = st.tab ?? 0;
+    const side = st.side ?? true;
+    const labels = ['Enlaces entrantes', 'Grafo', 'Detalles'];
+    const widths = [118, 44, 58];
+    let x = 0; for (let i = 0; i < tab; i++) x += widths[i] + 22;
+    const rail = [['journal', 'Hoy'], ['calendar', 'Calendario'], ['search', 'Buscar'], ['grid', 'Objetos'], ['graph', 'Grafo']].map((r) => ({ d: I[r[0]], label: r[1], cls: r[0] === 'grid' ? 'on' : '' }));
+    return {
+      accent: this.props.accent ?? '#C8F04A', rail, ic: I,
+      tabs: labels.map((l, i) => ({ label: l, cls: i === tab ? 'on' : '', sel: i === tab ? 'true' : 'false', pick: () => this.setState({ tab: i }) })),
+      isLinks: tab === 0, isGraph: tab === 1, isInfo: tab === 2,
+      sideOff: side ? '' : 'off', sideCls: side ? 'on' : '', sidePressed: side ? 'true' : 'false',
+      toggleSide: () => this.setState({ side: !side })
+    };
+  }
+}
+</script>
+</body>
+</html>

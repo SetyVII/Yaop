@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — cómo se hace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.flow{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:46px;padding:0 20px;border:0;border-bottom:1px solid #161616;background:transparent;color:#bdbdbd;font:400 15px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.flow .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.flow.on{color:#000}.flow.on .ac{transform:scaleY(1)}
+.flow .k{margin-left:auto;color:#7a7a7a;transition:color .3s}.flow.on .k{color:#000}
+.flow:not(.on):hover{color:#fff}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;width:100%;padding:16px 0;border:0;border-bottom:1px solid #161616;background:transparent;color:#7a7a7a;font:400 14px/1.5 'Geist',sans-serif;text-align:left;cursor:pointer;transition:color .3s}
+.step .n{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid #2a2a2a;font-family:'Geist Mono',monospace;font-size:12px;transition:background .3s,color .3s,border-color .3s}
+.step.on{color:#f2f2f2}
+.step.on .n{background:var(--accent);border-color:var(--accent);color:#000}
+.step.on .t{color:#fff}
+.step .t{display:block;font-size:16px;color:#bdbdbd;margin-bottom:4px}
+.flow:focus-visible,.step:focus-visible,.ctl:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.ln{font-size:17px;line-height:1.7;color:#e6e6e6;min-height:29px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;color:#e6e6e6;font-size:15px;vertical-align:1px;white-space:nowrap;animation:grow .4s cubic-bezier(.2,.8,.1,1) both}
+@keyframes grow{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.selt{background:rgba(200,240,74,.25);color:#fff}
+.caret{display:inline-block;width:2px;height:21px;background:var(--accent);vertical-align:-4px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.pop{width:340px;margin-top:8px;padding:6px 0;background:#0a0a0a;border:1px solid #2a2a2a;box-shadow:0 24px 48px rgba(0,0,0,.6);animation:pop .3s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.it{position:relative;display:flex;align-items:center;gap:12px;height:34px;padding:0 14px;color:#d6d6d6;font-size:14px;isolation:isolate}
+.it.on{color:#000}
+.it.on::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--accent);animation:wipe .4s cubic-bezier(.2,.8,.1,1) both;transform-origin:left}
+@keyframes wipe{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.it .k{margin-left:auto;color:#7a7a7a}.it.on .k{color:#000}
+.card{margin-top:14px;border:1px solid #262626;animation:pop .35s cubic-bezier(.2,.8,.1,1) both}
+.bar{height:2px;background:#262626;overflow:hidden}
+.bar span{display:block;height:2px;width:40%;background:var(--accent);animation:load 1.2s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes load{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+.ctl{height:34px;padding:0 14px;border:1px solid #2a2a2a;background:transparent;color:#d6d6d6;font:400 13px 'Geist',sans-serif;cursor:pointer}
+.ctl:hover{border-color:#5a5a5a;color:#fff}
+.prog{height:2px;background:#1f1f1f;margin-top:10px}
+.prog span{display:block;height:2px;background:var(--accent);transition:width .5s cubic-bezier(.2,.8,.1,1)}
+@media (prefers-reduced-motion:reduce){.flow .ac,.prog span{transition:none}.chip,.pop,.card,.it.on::before,.caret,.bar span{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<nav aria-label="Flujos" style="flex: 0 0 300px; border-right: 1px solid #1f1f1f; padding-top: 40px">
+<p class="mono" style="margin: 0 20px 6px; color: #7a7a7a">Cómo se hace</p>
+<h1 style="margin: 0 20px 24px; font-size: 26px; font-weight: 400; letter-spacing: -0.02em">8 flujos del editor</h1>
+<sc-for list="{{flows}}" as="f" hint-placeholder-count="8">
+<button type="button" class="flow {{f.cls}}" aria-pressed="{{f.sel}}" onClick="{{f.pick}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{f.d}}"></path></svg>{{f.label}}<span class="k mono">{{f.key}}</span></button>
+</sc-for>
+</nav>
+
+<section aria-label="Pasos" style="flex: 0 0 380px; border-right: 1px solid #1f1f1f; padding: 40px 28px">
+<p class="mono" style="margin: 0 0 8px; color: #7a7a7a">{{flowKey}}</p>
+<h2 style="margin: 0 0 18px; font-size: 22px; font-weight: 400">{{flowLabel}}</h2>
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<button type="button" class="step {{s.cls}}" aria-pressed="{{s.sel}}" onClick="{{s.pick}}"><span class="n">{{s.n}}</span><span><span class="t">{{s.title}}</span>{{s.text}}</span></button>
+</sc-for>
+<div style="display: flex; gap: 8px; margin-top: 20px">
+<button type="button" class="ctl" onClick="{{togglePlay}}">{{playLabel}}</button>
+<button type="button" class="ctl" onClick="{{next}}">Siguiente paso →</button>
+</div>
+<div class="prog"><span style="width: {{progress}}%"></span></div>
+</section>
+
+<main style="flex: 1; min-width: 0; padding: 56px 64px">
+<p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Así se ve · paso {{stepN}} de 3</p>
+<div style="border-top: 1px solid #1f1f1f; padding-top: 28px; min-height: 560px">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="1">
+<div class="ln">{{l.pre}}<sc-if value="{{l.hasSel}}" hint-placeholder-val="{{ false }}"><span class="selt">{{l.sel}}</span></sc-if><sc-if value="{{l.hasChip}}" hint-placeholder-val="{{ false }}"><span class="chip"><span class="sq" style="background: {{l.chipColor}}; border-radius: {{l.chipRadius}}"></span>{{l.chip}}</span></sc-if>{{l.post}}<sc-if value="{{l.caret}}" hint-placeholder-val="{{ false }}"><span class="caret"></span></sc-if></div>
+</sc-for>
+
+<sc-if value="{{hasPop}}" hint-placeholder-val="{{ false }}">
+<div class="pop" role="listbox" aria-label="{{popTitle}}">
+<p class="mono" style="margin: 8px 14px 4px; color: #7a7a7a">{{popTitle}}</p>
+<sc-for list="{{popItems}}" as="it" hint-placeholder-count="4">
+<div class="it {{it.cls}}" role="option" aria-selected="{{it.sel}}"><sc-if value="{{it.hasD}}" hint-placeholder-val="{{ true }}"><svg class="ic" style="color: {{it.color}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{it.d}}"></path></svg></sc-if><sc-if value="{{it.hasSq}}" hint-placeholder-val="{{ false }}"><span class="sq" style="background: {{it.color}}"></span></sc-if><span>{{it.label}}</span><span class="k mono">{{it.hint}}</span></div>
+</sc-for>
+<sc-if value="{{popFoot}}" hint-placeholder-val="{{ false }}"><p class="mono" style="margin: 6px 0 0; padding: 10px 14px 6px; border-top: 1px solid #1f1f1f; color: #8b8b8b">{{popFoot}}</p></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{cDay}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 22px 24px; max-width: 620px"><p class="mono" style="margin: 0 0 8px; color: var(--accent)">Hoy</p><p style="margin: 0 0 14px; font-size: 30px; letter-spacing: -0.02em">Sábado, 21 de noviembre</p><p style="margin: 0; color: #7a7a7a; font-size: 16px">Escribe algo…<span class="caret" style="margin-left: 2px"></span></p></div></sc-if>
+<sc-if value="{{cSections}}" hint-placeholder-val="{{ false }}"><div class="card" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 620px"><div style="padding: 14px 16px"><p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Tareas · 1</p><p style="margin: 0; font-size: 14px">Probar el QR</p></div><div style="padding: 14px 16px; border-left: 1px solid #262626"><p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Referenciado</p><p style="margin: 0; font-size: 14px">Ana López</p></div><div style="padding: 14px 16px; border-left: 1px solid #262626"><p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Creado hoy</p><p style="margin: 0; font-size: 14px">2 objetos</p></div></div></sc-if>
+<sc-if value="{{cCal}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 16px; max-width: 360px"><p style="margin: 0 0 10px; font-size: 14px">Noviembre 2026</p><div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; color: #8b8b8b"><sc-for list="{{calDays}}" as="d" hint-placeholder-count="30"><span style="height: 26px; line-height: 26px; {{d.style}}">{{d.n}}</span></sc-for></div></div></sc-if>
+<sc-if value="{{cObj}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 20px 22px; max-width: 560px"><span class="chip"><span class="sq" style="background: #FFB07A"></span>Reunión</span><div style="margin-top: 14px; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; font-size: 14px"><span style="color: #7a7a7a">Fecha</span><span>Hoy</span><span style="color: #7a7a7a">Asistentes</span><span style="color: #7a7a7a">Vacío</span><span style="color: #7a7a7a">Estado</span><span>Pendiente</span></div></div></sc-if>
+<sc-if value="{{cCreated}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 16px 20px; max-width: 560px"><p class="mono" style="margin: 0 0 8px; color: #7a7a7a">Diario de hoy · Creado hoy</p><div style="display: flex; align-items: center; gap: 10px; height: 38px; border-bottom: 1px solid #1a1a1a; font-size: 14px"><span class="sq" style="background: #FFB07A"></span>Reunión con Marcos<span class="mono" style="margin-left: auto; color: #7a7a7a">Reunión · ahora</span></div><div style="display: flex; align-items: center; gap: 10px; height: 38px; font-size: 14px"><span class="sq" style="background: #7AF0D0"></span>Local-first software<span class="mono" style="margin-left: auto; color: #7a7a7a">Enlace web · 09:12</span></div></div></sc-if>
+<sc-if value="{{cBack}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 18px 20px; max-width: 560px"><p style="margin: 0 0 4px; font-size: 18px">Marcos Ruiz</p><p class="mono" style="margin: 0 0 12px; color: #7a7a7a">Enlaces entrantes · 4 <span style="color: var(--accent)">+1</span></p><p style="margin: 0; font-size: 14px; color: #8b8b8b">Sábado, 21 nov — …hoy hablé con <span style="color: #f2f2f2; border-bottom: 1px solid var(--accent)">Marcos Ruiz</span>…</p></div></sc-if>
+<sc-if value="{{cCode}}" hint-placeholder-val="{{ false }}"><div class="card" style="max-width: 620px; background: #050505"><div style="display: flex; align-items: center; height: 38px; padding: 0 10px 0 14px; border-bottom: 1px solid #1a1a1a"><span class="mono" style="color: #d6d6d6">{{codeLang}}</span><span class="mono" style="margin-left: auto; color: #7a7a7a">Copiar</span></div><pre style="margin: 0; padding: 14px 16px; min-height: 70px; font-family: 'Geist Mono', monospace; font-size: 13px; line-height: 1.7; color: #d6d6d6">{{codeText}}</pre></div></sc-if>
+<sc-if value="{{cDrop}}" hint-placeholder-val="{{ false }}"><div class="card" style="height: 200px; max-width: 620px; border-style: dashed; display: flex; align-items: center; justify-content: center; color: #8b8b8b; font-size: 15px">Suelta para crear una imagen</div></sc-if>
+<sc-if value="{{cImage}}" hint-placeholder-val="{{ false }}"><div class="card" style="max-width: 420px"><svg width="100%" height="220" viewBox="0 0 420 220" aria-hidden="true" style="display: block; background: #0d0d0d"><rect x="50" y="40" width="320" height="140" fill="none" stroke="#333"></rect><rect x="170" y="70" width="80" height="80" style="fill: var(--accent)"></rect></svg><sc-if value="{{imgLoading}}" hint-placeholder-val="{{ true }}"><div class="bar"><span></span></div></sc-if><p class="mono" style="margin: 0; padding: 10px 12px; color: #8b8b8b">{{imgLabel}}</p></div></sc-if>
+<sc-if value="{{cBookmark}}" hint-placeholder-val="{{ false }}"><div class="card" style="display: grid; grid-template-columns: minmax(0, 1fr) 160px; max-width: 620px"><div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px"><sc-if value="{{bmLoading}}" hint-placeholder-val="{{ true }}"><span style="display: block; width: 60%; height: 12px; background: #1c1c1c"></span><span style="display: block; width: 90%; height: 10px; background: #161616"></span><span class="mono" style="color: #7a7a7a">Leyendo la página…</span></sc-if><sc-if value="{{bmDone}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px">Local-first software</span><span style="font-size: 13px; color: #8b8b8b">Puedes tener colaboración y a la vez conservar tus datos.</span><span class="mono" style="color: #7a7a7a">inkandswitch.com · Sin revisar</span></sc-if></div><div style="border-left: 1px solid #262626; background: #070707"><sc-if value="{{bmDone}}" hint-placeholder-val="{{ false }}"><svg width="160" height="110" viewBox="0 0 160 110" aria-hidden="true"><path d="M20 70l60-30 60 30-60 30z" fill="none" stroke="#3a3a3a"></path><path d="M62 62l18-9 18 9-18 9z" style="fill: var(--accent)"></path></svg></sc-if></div></div></sc-if>
+<sc-if value="{{cViewer}}" hint-placeholder-val="{{ false }}"><div class="card" style="display: grid; grid-template-columns: minmax(0, 1fr) 200px; max-width: 620px; background: #050505"><svg width="100%" height="200" viewBox="0 0 420 200" aria-hidden="true"><rect x="60" y="30" width="300" height="140" fill="none" stroke="#333"></rect><rect x="170" y="60" width="80" height="80" style="fill: var(--accent)"></rect></svg><div style="border-left: 1px solid #262626; padding: 14px"><p class="mono" style="margin: 0 0 8px; color: #FF8FB3">Imagen</p><p style="margin: 0 0 8px; font-size: 14px">prueba.png</p><p class="mono" style="margin: 0; color: #7a7a7a">Enlaces entrantes · 1</p></div></div></sc-if>
+<sc-if value="{{cTags}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 18px 20px; max-width: 560px"><p style="margin: 0 0 10px; font-size: 20px">Retro de noviembre</p><div style="display: flex; gap: 8px; flex-wrap: wrap"><span class="chip"><span class="sq" style="background: #DCEC4E"></span>pkm</span><span class="chip"><span class="sq" style="background: #FFD666"></span>planificación</span><span class="chip" style="border-style: dashed; color: #8b8b8b">+ Etiqueta</span></div><p class="mono" style="margin: 12px 0 0; color: #7a7a7a">Bajo el título: etiqueta todo el objeto</p></div></sc-if>
+<sc-if value="{{cFormat}}" hint-placeholder-val="{{ false }}"><div class="card" style="display: inline-flex; margin-top: 10px"><span style="padding: 8px 12px; font-weight: 600">B</span><span style="padding: 8px 12px; font-style: italic">I</span><span style="padding: 8px 12px; text-decoration: underline">U</span><span style="padding: 8px 12px; font-family: 'Geist Mono', monospace; font-size: 12px">&lt;/&gt;</span><span style="padding: 8px 12px">@</span><span style="padding: 8px 12px; background: var(--accent); color: #000">+ Objeto</span></div></sc-if>
+
+<p style="margin: 28px 0 0; max-width: 560px; font-size: 14px; line-height: 1.6; color: #8b8b8b">{{note}}</p>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() { this._tick = setInterval(() => { const st = this.state || {}; if (st.play === false) return; this.setState({ step: ((st.step ?? 0) + 1) % 3 }); }, 3200); }
+  componentWillUnmount() { clearInterval(this._tick); }
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z', plus: 'M12 5v14 M5 12h14', at: c(12, 12, 4) + ' M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1',
+      code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5', image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5),
+      weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2', tag: 'M3 12V3h9l9 9-9 9z M7.5 7.5h.01',
+      objref: 'M4 4h7v7H4z M13 13h7v7h-7z M11 7.5h5v5.5', note: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h5', person: c(12, 8, 4) + ' M4 21c1-4 4-6 8-6s7 2 8 6',
+      book: 'M5 4h11a3 3 0 013 3v14H8a3 3 0 01-3-3z M5 18a3 3 0 013-3h11', task: 'M4 4h16v16H4z M8 12l3 3 5-6', people: c(9, 8, 3.5) + ' M2 20c.8-3.5 3.5-5 7-5s6.2 1.5 7 5',
+      project: 'M3 7h7l2 2h9v11H3z', text: 'M5 6V4h14v2 M12 4v16 M9 20h6', math: 'M18 5H6l7 7-7 7h12'
+    };
+    const L = (pre, o) => Object.assign({ pre, post: '', caret: false, hasSel: false, sel: '', hasChip: false, chip: '', chipColor: '#fff', chipRadius: '0' }, o || {});
+    const P = (title, items, foot) => ({ title, foot: foot || '', items: items.map((x) => ({ label: x[0], d: x[1] ? I[x[1]] : '', hasD: !!x[1], hasSq: !x[1], color: x[2] || '#d6d6d6', hint: x[3] || '', cls: x[4] ? 'on' : '', sel: x[4] ? 'true' : 'false' })) });
+    const F = [
+      ['journal', 'Nota diaria', 'Ctrl D', [
+        ['Abre Hoy', 'Pulsa Hoy o Ctrl D. Se abre el día, aunque todavía no exista.', { card: 'cDay', note: 'Propuesta: la nota del día se guarda al escribir la primera letra, así no se acumulan días vacíos. En Capacities hay que pulsar «+ Nota diaria».' }],
+        ['Escribe', 'Lo que escribes es la nota del día. Debajo salen sus secciones.', { lines: [L('Café con Ana sobre la sincronización.', { caret: true })], card: 'cSections', note: 'Las secciones no son bloques: tareas del día, lo referenciado y lo creado hoy se calculan solas.' }],
+        ['Otro día', 'Ctrl ← y Ctrl → cambian de día. El calendario marca los días con algo.', { card: 'cCal', note: 'Un día con un punto tiene nota o actividad. Pulsar un día vacío abre ese día igual que Hoy.' }]]],
+      ['plus', 'Objeto nuevo', 'Ctrl N', [
+        ['Elige el tipo', 'Ctrl N o el botón Nuevo. Escribe para filtrar los tipos.', { pop: P('Nuevo · elige el tipo', [['Nota', 'note', '#BFE3FF', 'Enter', true], ['Reunión', 'people', '#FFB07A'], ['Persona', 'person', '#FFB38A'], ['Libro', 'book', '#9B8CFF'], ['Tarea', 'task', '#BFE3FF']], 'También: «Crear «texto»» como nota rápida'), note: 'Igual que en Capacities, el menú filtra al escribir y ofrece crear con lo escrito como título.' }],
+        ['Pon el título', 'El objeto nace con la plantilla de su tipo.', { lines: [L('Reunión con Marcos', { caret: true })], card: 'cObj', note: 'Las propiedades vienen de la plantilla del tipo Reunión (pantalla Tipos).' }],
+        ['Queda en el diario', 'Todo lo creado hoy aparece en el diario de hoy.', { card: 'cCreated', note: 'No se inserta como bloque en el diario: vive en su tipo y se muestra en «Creado hoy».' }]]],
+      ['at', 'Objeto en línea', '@', [
+        ['Escribe @ y busca', 'Primero tipos, luego objetos que coinciden, y al final «crear».', { lines: [L('Hoy hablé con @mar', { caret: true })], pop: P('Coinciden con «mar»', [['Marcos Ruiz', 'person', '#FFB38A', 'Persona', true], ['Marketing 2026', 'project', '#FFD166', 'Proyecto'], ['Crear «mar» en…', 'plus', '#d6d6d6', 'Tab tipo']], 'Los 3 últimos usados salen primero'), note: 'Probado en Capacities: @ busca objetos existentes y ofrece «Nuevo ‘mar’» con un selector de tipo.' }],
+        ['Enter lo inserta', 'Queda un chip con el color del tipo, dentro del texto.', { lines: [L('Hoy hablé con ', { hasChip: true, chip: 'Marcos Ruiz', chipColor: '#FFB38A', chipRadius: '50%', post: ' sobre el taller.', caret: true })], note: 'La mención guarda el id: si renombras a Marcos, el chip cambia en todas partes.' }],
+        ['Aparece en Marcos', 'El objeto mencionado gana un enlace entrante con contexto.', { card: 'cBack', note: 'Para insertar el objeto como bloque (tarjeta o completo) usa / y «Objeto», o cambia la vista del chip.' }]]],
+      ['code', 'Bloque de código', '/ código', [
+        ['Escribe /cód', 'El menú / mezcla bloques y tipos de objeto.', { lines: [L('/cód', { caret: true })], pop: P('Bloques', [['Código', 'code', '#d6d6d6', 'Enter', true], ['Fórmula', 'math', '#d6d6d6']], 'Objetos: «Nuevo fragmento de código»'), note: 'Igual que en Capacities: al filtrar salen bloques y también «crear objeto» de tus tipos.' }],
+        ['Elige el lenguaje', 'Se abre el bloque con el lenguaje del último usado.', { card: 'cCode', codeLang: 'kotlin ▾', codeText: '', pop: P('Lenguaje', [['Kotlin', '', '#C2B2FF', '', true], ['C++', '', '#6EAAFF'], ['Go', '', '#7AF0D0'], ['SQL', '', '#FFD666']]), note: 'Capacities abre en JavaScript y hay que cambiarlo; recordar el último es más rápido.' }],
+        ['Escribe y sal', 'Esc sale del bloque; ↓ al final crea un párrafo debajo.', { card: 'cCode', codeLang: 'kotlin', codeText: 'fun merge(a: Block, b: Block) =\n    if (a.hlc >= b.hlc) a else b', note: 'Copiar está en la cabecera del bloque. El texto va en una sola pieza (code.language).' }]]],
+      ['image', 'Imagen', 'Ctrl V', [
+        ['Pega o arrastra', 'Ctrl V con una imagen copiada, o suéltala en el editor.', { card: 'cDrop', note: 'Al arrastrar sobre el borde izquierdo o derecho de un bloque, se crea una columna.' }],
+        ['Se crea el objeto', 'Cada imagen es un objeto Imagen; el bloque lo muestra.', { card: 'cImage', imgLoading: true, imgLabel: 'Imagen creada · cifrando y guardando', note: 'Probado en Capacities: pegar una imagen crea el bloque y su objeto a la vez.' }],
+        ['Ábrela', 'Clic abre el visor con sus notas. Arrastra el borde para el ancho.', { card: 'cViewer', note: 'Ctrl Enter edita el pie de foto (keyboard.md).' }]]],
+      ['weblink', 'Enlace web', 'Ctrl V', [
+        ['Pega la URL', 'Elige cómo se queda.', { lines: [L('https://www.inkandswitch.com/local-first/', { caret: true })], pop: P('Pegar como', [['Enlace en el texto', 'text'], ['Chip', 'objref'], ['Tarjeta', 'weblink', '#7AF0D0', 'Enter', true], ['Tarjeta ancha', 'weblink', '#7AF0D0']], 'Salvo «enlace en el texto», se crea el objeto Enlace web'), note: 'Probado en Capacities: pegar abre este menú con en línea, tarjeta pequeña, tarjeta ancha e incrustar.' }],
+        ['Se lee la página', 'La tarjeta aparece al momento y se rellena después.', { card: 'cBookmark', bmLoading: true, note: 'OpenGraph en segundo plano; la portada se copia en local (480 px).' }],
+        ['Lista para revisar', 'Queda en Enlaces web como «Sin revisar».', { card: 'cBookmark', bmDone: true, note: 'Capacities incrusta la web con permiso previo; Yaop no carga contenido externo dentro de la nota.' }]]],
+      ['tag', 'Etiqueta', '#', [
+        ['Escribe #', 'Busca entre tus etiquetas.', { lines: [L('Siguiente paso #pla', { caret: true })], pop: P('Etiquetas', [['planificación', '', '#FFD666', '7', true], ['plantillas', '', '#C2B2FF', '3'], ['Crear «pla»', 'plus']]), note: 'Si no eliges nada, #pla se queda como texto (decisión de Yaop).' }],
+        ['Elige una', 'Etiqueta ese bloque.', { lines: [L('Siguiente paso ', { hasChip: true, chip: 'planificación', chipColor: '#FFD666' })], note: 'Una etiqueta en un bloque etiqueta solo ese bloque.' }],
+        ['O bajo el título', '«+ Etiqueta» etiqueta todo el objeto.', { card: 'cTags', note: 'Las dos se ven en la página de la etiqueta, con el bloque como contexto.' }]]],
+      ['objref', 'Texto a objeto', 'selección', [
+        ['Selecciona texto', 'Sale la barra de formato.', { lines: [L('Leer ', { hasSel: true, sel: 'Local-first software', post: ' esta semana.' })], card: 'cFormat', note: 'Probado en Capacities: el «+» de la barra crea un objeto con el texto seleccionado.' }],
+        ['Elige el tipo', 'El texto pasa a ser el título.', { lines: [L('Leer ', { hasSel: true, sel: 'Local-first software', post: ' esta semana.' })], pop: P('Crear objeto', [['Enlace web', 'weblink', '#7AF0D0'], ['Libro', 'book', '#9B8CFF', 'Enter', true], ['Nota', 'note', '#BFE3FF']]), note: 'El mismo menú de tipos que Ctrl N.' }],
+        ['Queda enlazado', 'El texto se convierte en una mención al objeto nuevo.', { lines: [L('Leer ', { hasChip: true, chip: 'Local-first software', chipColor: '#9B8CFF', post: ' esta semana.' })], note: 'El objeto aparece en Creado hoy y en su tipo.' }]]]
+    ];
+    const st = this.state || {};
+    const fi = st.flow ?? 0, si = st.step ?? 0;
+    const f = F[fi], s = f[3][si][2];
+    const calDays = []; for (let n = 1; n <= 30; n++) calDays.push({ n, style: n === 21 ? 'background: var(--accent); color: #000' : ([3, 10, 14, 17, 20].includes(n) ? 'color: #f2f2f2; box-shadow: inset 0 -2px 0 #5a5a5a' : '') });
+    const cards = ['cDay', 'cSections', 'cCal', 'cObj', 'cCreated', 'cBack', 'cCode', 'cDrop', 'cImage', 'cBookmark', 'cViewer', 'cTags', 'cFormat'];
+    const out = {
+      accent: this.props.accent ?? '#C8F04A',
+      flows: F.map((x, i) => ({ label: x[1], key: x[2], d: I[x[0]], cls: i === fi ? 'on' : '', sel: i === fi ? 'true' : 'false', pick: () => this.setState({ flow: i, step: 0 }) })),
+      flowLabel: f[1], flowKey: f[2], stepN: si + 1, progress: Math.round((si + 1) / 3 * 100),
+      steps: f[3].map((x, i) => ({ n: i + 1, title: x[0], text: x[1], cls: i === si ? 'on' : '', sel: i === si ? 'true' : 'false', pick: () => this.setState({ step: i, play: false }) })),
+      lines: s.lines || [], hasPop: !!s.pop, popTitle: s.pop ? s.pop.title : '', popItems: s.pop ? s.pop.items : [], popFoot: s.pop ? s.pop.foot : '',
+      note: s.note || '', calDays, codeLang: s.codeLang || '', codeText: s.codeText || '',
+      imgLoading: !!s.imgLoading, imgLabel: s.imgLabel || '', bmLoading: !!s.bmLoading, bmDone: !!s.bmDone,
+      playLabel: st.play === false ? 'Reproducir' : 'Pausar', togglePlay: () => this.setState({ play: st.play === false }),
+      next: () => this.setState({ step: (si + 1) % 3, play: false })
+    };
+    cards.forEach((k) => { out[k] = s.card === k; });
+    return out;
+  }
+}
+</script>
+</body>
+</html>

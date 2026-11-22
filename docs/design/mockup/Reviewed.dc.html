@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — revisar enlaces</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.row{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:center;width:100%;padding:12px 16px;border:0;border-bottom:1px solid #161616;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;animation:in .4s cubic-bezier(.2,.8,.1,1) both;transition:background .2s}
+.row:hover{background:#090909}
+.row.sel{background:#0d0d0d;box-shadow:inset 2px 0 0 var(--accent)}
+@keyframes in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.bx{position:relative;width:18px;height:18px;border:1px solid #5a5a5a;background:transparent;cursor:pointer;padding:0}
+.bx::after{content:'';position:absolute;inset:4px;background:var(--accent);transform:scale(0);transition:transform .3s cubic-bezier(.2,.8,.1,1)}
+.bx.on{border-color:var(--accent)}.bx.on::after{transform:scale(1)}
+.prop{display:grid;grid-template-columns:160px minmax(0,1fr);align-items:center;gap:12px;min-height:46px;border-bottom:1px solid #1a1a1a;font-size:14px}
+.prop .k{display:flex;align-items:center;gap:9px;color:#7a7a7a}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s;animation:grow .35s cubic-bezier(.2,.8,.1,1) both}
+.chip:hover{border-color:#5a5a5a}
+@keyframes grow{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.chip .x{color:#7a7a7a;margin-left:2px}
+.pop{position:absolute;z-index:3;width:280px;padding:6px 0;background:#0a0a0a;border:1px solid #2a2a2a;box-shadow:0 24px 48px rgba(0,0,0,.6);animation:pop .28s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.opt{position:relative;display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 14px;border:0;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.opt .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.8,.1,1)}
+.opt:hover{color:#000}.opt:hover .ac{transform:scaleX(1)}
+.opt .k{margin-left:auto;color:#7a7a7a}.opt:hover .k{color:#000}
+.row:focus-visible,.bx:focus-visible,.chip:focus-visible,.opt:focus-visible{outline:1px solid #f2f2f2;outline-offset:1px}
+@media (prefers-reduced-motion:reduce){.row,.chip,.pop{animation:none}.bx::after,.opt .ac{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<aside aria-label="Bandeja de enlaces" style="flex: 0 0 440px; border-right: 1px solid #1f1f1f; padding-top: 36px; overflow: hidden">
+<div style="padding: 0 16px 16px; display: flex; align-items: baseline; justify-content: space-between"><h1 style="margin: 0; font-size: 22px; font-weight: 400">Por revisar</h1><span class="mono" style="color: #7a7a7a">{{pendingN}} · vista guardada</span></div>
+<sc-for list="{{pending}}" as="r" hint-placeholder-count="4">
+<div class="row {{r.cls}}"><button type="button" class="bx" aria-label="Marcar revisado: {{r.title}}" onClick="{{r.toggle}}"></button><button type="button" class="pickb" onClick="{{r.pick}}" style="display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%">{{r.title}}</span><span class="mono" style="color: #7a7a7a">{{r.domain}} · {{r.kind}}</span></button></div>
+</sc-for>
+<sc-if value="{{noPending}}" hint-placeholder-val="{{ false }}"><p style="margin: 16px; color: #8b8b8b; font-size: 14px">Todo revisado.</p></sc-if>
+<p class="mono" style="margin: 26px 16px 6px; color: #7a7a7a">Revisados · {{doneN}}</p>
+<sc-for list="{{done}}" as="r" hint-placeholder-count="2">
+<div class="row {{r.cls}}" style="color: #7a7a7a"><button type="button" class="bx on" aria-label="Desmarcar revisado: {{r.title}}" onClick="{{r.toggle}}"></button><button type="button" onClick="{{r.pick}}" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.title}}</button></div>
+</sc-for>
+</aside>
+
+<main style="flex: 1; min-width: 0; padding: 40px 64px; position: relative">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 28px; align-items: start">
+<div>
+<div style="display: flex; gap: 8px; margin-bottom: 16px"><span class="chip"><span class="sq" style="background: #7AF0D0"></span>Enlace web</span></div>
+<h2 style="margin: 0; font-size: 34px; line-height: 1.12; font-weight: 400; letter-spacing: -0.025em">{{cur.title}}</h2>
+<p style="margin: 14px 0 0; font-size: 15px; line-height: 1.6; color: #a3a3a3">{{cur.desc}}</p>
+</div>
+<svg width="220" height="140" viewBox="0 0 220 140" role="img" aria-label="Portada guardada en local" style="border: 1px solid #262626; background: #070707"><path d="M30 95l80-40 80 40-80 40z" fill="none" stroke="#3a3a3a"></path><path d="M86 84l24-12 24 12-24 12z" style="fill: var(--accent)"></path></svg>
+</div>
+
+<div style="margin-top: 26px; position: relative">
+<div class="prop"><span class="k">Revisado</span><span style="display: flex; align-items: center; gap: 12px"><button type="button" class="bx {{curDoneCls}}" aria-label="Revisado" aria-pressed="{{curDonePressed}}" onClick="{{toggleCur}}"></button><span style="color: #bdbdbd">{{curDoneText}}</span></span></div>
+<div class="prop"><span class="k">Enlace</span><a href="#" style="color: #bdbdbd; text-decoration: underline; text-decoration-color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{cur.url}}</a></div>
+<div class="prop"><span class="k">Categoría</span><span><button type="button" class="chip" onClick="{{openKind}}" aria-expanded="{{kindExp}}"><span class="sq" style="background: {{kindColor}}"></span>{{kindLabel}} <span style="color: #7a7a7a">▾</span></button></span></div>
+<div class="prop"><span class="k">Tema</span><span style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><sc-for list="{{topics}}" as="t" hint-placeholder-count="2"><button type="button" class="chip" onClick="{{t.remove}}" aria-label="Quitar tema {{t.name}}"><span class="sq" style="background: {{t.color}}"></span>{{t.name}}<span class="x">×</span></button></sc-for><button type="button" class="chip" onClick="{{openTopics}}" style="border-style: dashed; color: #8b8b8b">+ Tema</button></span></div>
+<div class="prop"><span class="k">Llegó</span><span>{{cur.when}} · compartido desde Android</span></div>
+
+<sc-if value="{{kindOpen}}" hint-placeholder-val="{{ false }}">
+<div class="pop" role="listbox" aria-label="Categoría" style="left: 172px; top: 140px; max-height: 380px; overflow-y: auto">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="5"><button type="button" role="option" class="opt" onClick="{{k.pick}}"><span class="ac"></span><span class="sq" style="background: {{k.color}}"></span>{{k.label}}<span class="k mono">{{k.mark}}</span></button></sc-for>
+<button type="button" class="opt" style="border-top: 1px solid #1f1f1f"><span class="ac"></span>+ Crear opción</button>
+</div>
+</sc-if>
+<sc-if value="{{topicsOpen}}" hint-placeholder-val="{{ false }}">
+<div class="pop" role="listbox" aria-label="Tema" style="left: 172px; top: 186px; max-height: 380px; overflow-y: auto">
+<sc-for list="{{topicOpts}}" as="k" hint-placeholder-count="5"><button type="button" role="option" class="opt" onClick="{{k.pick}}"><span class="ac"></span><span class="sq" style="background: {{k.color}}"></span>{{k.name}}<span class="k mono">{{k.mark}}</span></button></sc-for>
+</div>
+</sc-if>
+</div>
+<p style="margin: 28px 0 0; font-size: 15px; line-height: 1.7; color: #d6d6d6">Mis notas sobre el enlace van aquí, en bloques, como en cualquier objeto.</p>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const KIND = {"Artículo": ["Artículo", '#6EAAFF'], "Entrada de blog": ["Entrada de blog", '#C2B2FF'], "Noticias": ["Noticias", '#FF786E'], "Documentación": ["Documentación", '#7FE0A6'], "Tutorial": ["Tutorial", '#FFD666'], "Guía": ["Guía", '#FFB07A'], "Video": ["Video", '#7AF0D0'], "Podcast": ["Podcast", '#FF8FB3'], "Audio": ["Audio", '#BFE3FF'], "Herramienta": ["Herramienta", '#FFFFFF'], "App": ["App", '#6EAAFF'], "Servicio": ["Servicio", '#C2B2FF'], "Publicación social": ["Publicación social", '#FF786E'], "Hilo de foro": ["Hilo de foro", '#7FE0A6'], "Preguntas y respuestas": ["Preguntas y respuestas", '#FFD666'], "Producto": ["Producto", '#FFB07A'], "Tienda": ["Tienda", '#7AF0D0'], "Marketplace": ["Marketplace", '#FF8FB3'], "Receta": ["Receta", '#BFE3FF'], "Evento": ["Evento", '#FFFFFF'], "Curso": ["Curso", '#6EAAFF'], "Webinar": ["Webinar", '#C2B2FF'], "Portafolio": ["Portafolio", '#FF786E'], "Perfil": ["Perfil", '#7FE0A6'], "Acerca de": ["Acerca de", '#FFD666'], "Repositorio": ["Repositorio", '#FFB07A'], "Código": ["Código", '#7AF0D0'], "Galería de imágenes": ["Galería de imágenes", '#FF8FB3'], "Infografía": ["Infografía", '#BFE3FF'], "Otro": ["Otro", '#FFFFFF']};
+    const TOP = {"Tecnología": '#6EAAFF', "Programación": '#C2B2FF', "IA/ML": '#FF786E', "Negocios": '#7FE0A6', "Finanzas": '#FFD666', "Marketing": '#FFB07A', "Ciencia": '#7AF0D0', "Investigación": '#FF8FB3', "Académico": '#BFE3FF', "Salud": '#FFFFFF', "Fitness": '#6EAAFF', "Bienestar": '#C2B2FF', "Entretenimiento": '#FF786E', "Videojuegos": '#7FE0A6', "Medios": '#FFD666', "Educación": '#FFB07A', "Aprendizaje": '#7AF0D0', "Noticias": '#FF8FB3', "Política": '#BFE3FF', "Actualidad": '#FFFFFF', "Estilo de vida": '#6EAAFF', "Viajes": '#C2B2FF', "Comida": '#FF786E', "Diseño": '#7FE0A6', "Arte": '#FFD666', "Creativo": '#FFB07A', "Productividad": '#7AF0D0', "Herramientas": '#FF8FB3', "Otro": '#BFE3FF'};
+    const st = this.state || {};
+    const items = st.items || [
+      { id: 1, title: 'Local-first software', domain: 'inkandswitch.com', kind: 'Artículo', topics: ['Tecnología', 'Programación'], done: false, when: 'Hoy 09:12', url: 'https://www.inkandswitch.com/local-first/', desc: 'Puedes tener colaboración y a la vez conservar la propiedad de tus datos.' },
+      { id: 2, title: 'CRDTs explicados con ejemplos', domain: 'youtube.com', kind: 'Video', topics: ['Programación', 'Aprendizaje'], done: false, when: 'Ayer', url: 'https://youtube.com/watch?v=…', desc: 'Charla de 40 minutos con ejemplos de listas y texto.' },
+      { id: 3, title: 'Write-Ahead Logging', domain: 'sqlite.org', kind: 'Documentación', topics: ['Programación'], done: false, when: '18 nov', url: 'https://sqlite.org/wal.html', desc: 'Cómo funciona el modo WAL de SQLite.' },
+      { id: 4, title: 'Qt Quick Scene Graph', domain: 'doc.qt.io', kind: 'Documentación', topics: ['Programación', 'Diseño'], done: false, when: '15 nov', url: 'https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html', desc: 'El motor de dibujo de Qt Quick.' },
+      { id: 5, title: 'Engineers do get promoted for writing simple code', domain: 'seangoedecke.com', kind: 'Entrada de blog', topics: ['Productividad'], done: true, when: '10 nov', url: 'https://www.seangoedecke.com/simple-work-gets-rewarded/', desc: 'Sobre el valor del código simple.' }
+    ];
+    const sel = st.sel ?? 1;
+    const cur = items.find((i) => i.id === sel) || items[0];
+    const upd = (id, f) => items.map((i) => i.id === id ? Object.assign({}, i, f) : i);
+    const mk = (i) => ({ title: i.title, domain: i.domain, kind: KIND[i.kind][0], cls: i.id === sel ? 'sel' : '', pick: () => this.setState({ sel: i.id, kindOpen: false, topicsOpen: false }), toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ items: upd(i.id, { done: !i.done }) }); } });
+    const pending = items.filter((i) => !i.done), done = items.filter((i) => i.done);
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      pending: pending.map(mk), done: done.map(mk), pendingN: pending.length, doneN: done.length, noPending: pending.length === 0,
+      cur, curDoneCls: cur.done ? 'on' : '', curDonePressed: cur.done ? 'true' : 'false', curDoneText: cur.done ? 'Revisado' : 'Sin revisar',
+      toggleCur: () => this.setState({ items: upd(cur.id, { done: !cur.done }) }),
+      kindLabel: KIND[cur.kind][0], kindColor: KIND[cur.kind][1], kindOpen: !!st.kindOpen, kindExp: st.kindOpen ? 'true' : 'false',
+      openKind: () => this.setState({ kindOpen: !st.kindOpen, topicsOpen: false }),
+      kinds: Object.keys(KIND).map((k) => ({ label: KIND[k][0], color: KIND[k][1], mark: k === cur.kind ? '✓' : '', pick: () => this.setState({ items: upd(cur.id, { kind: k }), kindOpen: false }) })),
+      topics: cur.topics.map((t) => ({ name: t, color: TOP[t], remove: () => this.setState({ items: upd(cur.id, { topics: cur.topics.filter((x) => x !== t) }) }) })),
+      topicsOpen: !!st.topicsOpen, openTopics: () => this.setState({ topicsOpen: !st.topicsOpen, kindOpen: false }),
+      topicOpts: Object.keys(TOP).map((t) => ({ name: t, color: TOP[t], mark: cur.topics.includes(t) ? '✓' : '', pick: () => this.setState({ items: upd(cur.id, { topics: cur.topics.includes(t) ? cur.topics.filter((x) => x !== t) : cur.topics.concat([t]) }) }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

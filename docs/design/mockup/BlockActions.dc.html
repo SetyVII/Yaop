@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — acciones de bloque</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.blk{position:relative;display:block;width:100%;padding:6px 10px;margin:2px 0;border:1px solid transparent;background:transparent;color:#e6e6e6;font:400 16px/1.6 'Geist',sans-serif;text-align:left;cursor:pointer;transition:border-color .2s,background .3s;animation:in .35s cubic-bezier(.2,.8,.1,1) both}
+@keyframes in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.blk:hover{border-color:#262626}
+.blk.sel{border-color:var(--accent)}
+.blk.drag{opacity:.35}
+.blk.over::after{content:'';position:absolute;left:0;right:0;top:-4px;height:2px;background:var(--accent)}
+.blk.overEnd::after{content:'';position:absolute;left:0;right:0;bottom:-4px;height:2px;background:var(--accent)}
+.blk{touch-action:none}
+.blk.drag{cursor:grabbing}
+.blk .h{position:absolute;left:-30px;top:9px;color:#7a7a7a;opacity:0;transition:opacity .15s}
+.blk:hover .h,.blk.sel .h{opacity:1}
+.blk:focus-visible{outline:1px solid #f2f2f2;outline-offset:2px}
+.t-h1{font-size:28px;line-height:1.25;letter-spacing:-.02em}
+.t-h2{font-size:21px;line-height:1.3;font-weight:500}
+.t-quote{padding-left:24px!important;color:#d6d6d6}
+.t-quote::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:1px;background:#4a4a4a}
+.t-bullet{padding-left:32px!important}
+.t-bullet::before{content:'';position:absolute;left:14px;top:17px;width:5px;height:5px;background:#8b8b8b}
+.t-todo{padding-left:38px!important}
+.t-todo::before{content:'';position:absolute;left:10px;top:11px;width:15px;height:15px;border:1px solid #5a5a5a}
+.t-callout{padding:12px 16px!important;background:rgba(255,255,255,.05)}
+.t-code{font-family:'Geist Mono',monospace;font-size:13px;background:#060606;border-color:#1f1f1f}
+.act{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 14px;border:0;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.act .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.act:hover{color:#000}.act:hover .ac{transform:scaleX(1)}
+.act .k{margin-left:auto;color:#7a7a7a;transition:color .3s}
+.act:hover .k{color:#000}
+.act.danger{color:#FF786E}
+.act:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.ty{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid #1f1f1f;background:transparent;color:#bdbdbd;font:400 13px 'Geist',sans-serif;cursor:pointer;transition:border-color .2s,color .2s}
+.ty:hover{border-color:#5a5a5a;color:#fff}
+.ty.on{background:var(--accent);border-color:var(--accent);color:#000}
+.sw{width:28px;height:28px;padding:3px;border:1px solid transparent;background:transparent;cursor:pointer}
+.sw span{display:block;width:100%;height:100%}
+.sw.on{border-color:#f2f2f2}
+.toast{animation:in .3s cubic-bezier(.2,.8,.1,1) both}
+.fb button{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;background:transparent;color:#d6d6d6;font:500 14px 'Geist',sans-serif;cursor:pointer;transition:background .2s,color .2s}
+.fb button:hover{background:var(--accent);color:#000}
+@media (prefers-reduced-motion:reduce){.blk,.toast{animation:none}.act .ac{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<main style="flex: 1; min-width: 0; padding: 48px 72px 0 120px; position: relative">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">Pulsa un bloque para seleccionarlo · Esc entra en modo bloque</p>
+<h1 style="margin: 0 0 26px; font-size: 34px; font-weight: 400; letter-spacing: -0.03em">Retro de noviembre</h1>
+<div style="max-width: 640px">
+<sc-for list="{{blocks}}" as="k" hint-placeholder-count="6">
+<button type="button" class="blk {{k.cls}}" style="{{k.style}}" aria-pressed="{{k.sel}}" onClick="{{k.pick}}" onPointerDown="{{k.down}}" data-bid="{{k.id}}"><span class="h" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 6h.01 M15 6h.01 M9 12h.01 M15 12h.01 M9 18h.01 M15 18h.01"></path></svg></span>{{k.text}}</button>
+</sc-for>
+<p class="mono" style="margin: 14px 0 0; color: #7a7a7a">Arrastra un bloque: la línea de acento marca dónde cae</p>
+</div>
+
+<div style="position: absolute; left: 120px; bottom: 48px">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">Al seleccionar texto</p>
+<div class="fb" role="toolbar" aria-label="Formato" style="display: inline-flex; border: 1px solid #2a2a2a; background: #0a0a0a">
+<button type="button" aria-label="Negrita"><b>B</b></button><button type="button" aria-label="Cursiva"><i>I</i></button><button type="button" aria-label="Subrayado"><u>U</u></button><button type="button" aria-label="Tachado"><s>S</s></button>
+<button type="button" aria-label="Código" style="font-family: 'Geist Mono', monospace; font-size: 12px">&lt;/&gt;</button>
+<button type="button" aria-label="Resaltar"><span style="width: 14px; height: 14px; background: #FFD666"></span></button>
+<button type="button" aria-label="Enlace"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2"></path></svg></button>
+<button type="button" aria-label="Mencionar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M8 12a4 4 0 108 0a4 4 0 10-8 0 M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1"></path></svg></button>
+<button type="button" aria-label="Color de texto" style="color: #FF8FB3">A</button>
+</div>
+<p style="margin: 12px 0 0; font-size: 15px; color: #bdbdbd">Lo que <span style="background: rgba(200,240,74,.22); color: #fff">funcionó bien</span> fue el emparejamiento.</p>
+</div>
+</main>
+
+<aside aria-label="Acciones del bloque" style="flex: 0 0 420px; border-left: 1px solid #1f1f1f; padding: 36px 0 0; overflow: hidden">
+<div style="padding: 0 24px 14px; display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 15px">Acciones del bloque</span><span class="mono" style="color: #7a7a7a">Ctrl . o ⋮⋮</span></div>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div>
+<p class="mono" style="margin: 8px 24px 8px; color: #7a7a7a">Convertir en · /</p>
+<div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 24px">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="8"><button type="button" class="ty {{t.cls}}" onClick="{{t.pick}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{t.d}}"></path></svg>{{t.label}}</button></sc-for>
+</div>
+<p class="mono" style="margin: 18px 24px 8px; color: #7a7a7a">Color del bloque</p>
+<div style="display: flex; gap: 2px; padding: 0 24px">
+<sc-for list="{{colors}}" as="s" hint-placeholder-count="11"><button type="button" class="sw {{s.cls}}" aria-label="{{s.label}}" onClick="{{s.pick}}"><span style="{{s.style}}"></span></button></sc-for>
+</div>
+<div style="margin-top: 18px; border-top: 1px solid #1f1f1f; padding-top: 6px">
+<button type="button" class="act" onClick="{{dup}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M8 8h12v12H8z M4 16V4h12"></path></svg>Duplicar<span class="k mono">Ctrl D</span></button>
+<button type="button" class="act" onClick="{{copy}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M8 4h12v16H8z M4 8v12"></path></svg>Copiar<span class="k mono">Ctrl C</span></button>
+<button type="button" class="act" onClick="{{copyRef}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2"></path></svg>Copiar referencia al bloque<span class="k mono"></span></button>
+<button type="button" class="act" onClick="{{up}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M12 20V4 M5 11l7-7 7 7"></path></svg>Subir<span class="k mono">Ctrl Shift ↑</span></button>
+<button type="button" class="act" onClick="{{down}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M12 4v16 M5 13l7 7 7-7"></path></svg>Bajar<span class="k mono">Ctrl Shift ↓</span></button>
+<button type="button" class="act" onClick="{{indent}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M4 6h16 M10 12h10 M10 18h10 M4 10l3 2-3 2"></path></svg>{{indentLabel}}<span class="k mono">Tab · Shift Tab</span></button>
+<button type="button" class="act"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M5 12h14 M13 6l6 6-6 6"></path></svg>Mover a otro objeto…<span class="k mono"></span></button>
+<button type="button" class="act"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M4 4h7v7H4z M13 13h7v7h-7z M11 7.5h5v5.5"></path></svg>Convertir en objeto nuevo…<span class="k mono"></span></button>
+<button type="button" class="act danger" onClick="{{del}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14"></path></svg>Eliminar<span class="k mono">Supr</span></button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{noSel}}" hint-placeholder-val="{{ false }}"><p style="margin: 20px 24px; color: #8b8b8b; font-size: 14px">Selecciona un bloque.</p></sc-if>
+<sc-if value="{{toast}}" hint-placeholder-val="{{ false }}"><div class="toast mono" style="margin: 16px 24px; padding: 12px 14px; border: 1px solid var(--accent); color: #f2f2f2">{{toast}}</div></sc-if>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    let nid = st.nid ?? 10;
+    const blocks = st.blocks || [
+      { id: 1, type: 'h2', text: 'Lo que funcionó', color: '', ind: 0 },
+      { id: 2, type: 'paragraph', text: 'Emparejar con un token propio por dispositivo.', color: '', ind: 0 },
+      { id: 3, type: 'bullet', text: 'El QR del servidor para el primero', color: '', ind: 0 },
+      { id: 4, type: 'paragraph', text: 'Hay que documentar el caso de borrado.', color: 'yellow', ind: 0 },
+      { id: 5, type: 'todo', text: 'Escribir el fixture de anclas', color: '', ind: 0 },
+      { id: 6, type: 'quote', text: 'Correcto antes que rápido.', color: '', ind: 0 }
+    ];
+    const sel = st.sel ?? 4;
+    const PAL = { yellow: '#FFD666', orange: '#FFB07A', red: '#FF786E', pink: '#FF8FB3', purple: '#C2B2FF', blue: '#6EAAFF', ice: '#BFE3FF', teal: '#7AF0D0', green: '#7FE0A6', gray: '#FFFFFF' };
+    const NAMES = { yellow: 'Amarillo', orange: 'Naranja', red: 'Rojo', pink: 'Rosa', purple: 'Morado', blue: 'Azul', ice: 'Hielo', teal: 'Turquesa', green: 'Verde', gray: 'Gris' };
+    const tint = (hex, a) => 'rgba(' + parseInt(hex.slice(1, 3), 16) + ',' + parseInt(hex.slice(3, 5), 16) + ',' + parseInt(hex.slice(5, 7), 16) + ',' + a + ')';
+    const set = (o, msg) => { this.setState(Object.assign({}, o, { toast: msg || null })); clearTimeout(this._tt); if (msg) this._tt = setTimeout(() => this.setState({ toast: null }), 1600); };
+    const i = blocks.findIndex((b) => b.id === sel);
+    const cur = blocks[i];
+    const upd = (f) => blocks.map((b) => b.id === sel ? Object.assign({}, b, f) : b);
+    const TY = [['paragraph', 'Texto', 'M5 6V4h14v2 M12 4v16 M9 20h6'], ['h1', 'Título 1', 'M5 5v14 M13 5v14 M5 12h8 M17 12l3-2v9'], ['h2', 'Título 2', 'M5 5v14 M13 5v14 M5 12h8 M16 11a2 2 0 014 0c0 2-4 4-4 8h4'], ['bullet', 'Lista', 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01'], ['todo', 'Tarea', 'M4 4h16v16H4z M8 12l3 3 5-6'], ['quote', 'Cita', 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7'], ['callout', 'Aviso', 'M4 4h16v12H9l-5 4z'], ['code', 'Código', 'M8 7l-5 5 5 5 M16 7l5 5-5 5']];
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      blocks: blocks.map((b) => {
+        const hex = PAL[b.color];
+        let style = 'margin-left: ' + (b.ind * 28) + 'px;';
+        if (hex) style += ' background: ' + tint(hex, b.type === 'callout' ? .14 : .1) + ';';
+        const dragging = st.dragId === b.id, over = st.overId === b.id && st.dragId !== b.id;
+        return {
+          text: b.text, cls: 't-' + b.type + (b.id === sel ? ' sel' : '') + (dragging ? ' drag' : '') + (over ? (st.overEnd ? ' overEnd' : ' over') : ''),
+          sel: b.id === sel ? 'true' : 'false', style, pick: () => set({ sel: b.id }),
+          id: b.id,
+          down: (e) => {
+            const y0 = e.clientY, doc = e.currentTarget.ownerDocument, win = doc.defaultView;
+            let moving = false, overId = null, overEnd = false;
+            const move = (ev) => {
+              if (!moving && Math.abs(ev.clientY - y0) < 6) return;
+              if (!moving) { moving = true; this.setState({ dragId: b.id, sel: b.id }); }
+              const el = doc.elementFromPoint(ev.clientX, ev.clientY);
+              const t = el && el.closest ? el.closest('[data-bid]') : null;
+              if (t) { const r = t.getBoundingClientRect(); overId = Number(t.getAttribute('data-bid')); overEnd = ev.clientY > r.top + r.height / 2; this.setState({ overId, overEnd }); }
+            };
+            const up = () => {
+              win.removeEventListener('pointermove', move); win.removeEventListener('pointerup', up);
+              if (!moving) return;
+              this._justDragged = true; setTimeout(() => { this._justDragged = false; }, 50);
+              const cur2 = (this.state && this.state.blocks) || blocks;
+              const from = cur2.findIndex((x) => x.id === b.id);
+              if (overId == null || overId === b.id || from < 0) { this.setState({ dragId: null, overId: null }); return; }
+              const nb = cur2.slice(); const moved = nb.splice(from, 1)[0]; let to = nb.findIndex((x) => x.id === overId); if (overEnd) to += 1; nb.splice(to, 0, moved);
+              this.setState({ blocks: nb, dragId: null, overId: null }); set({}, 'Bloque movido · Ctrl Z deshace');
+            };
+            win.addEventListener('pointermove', move); win.addEventListener('pointerup', up);
+          }
+        };
+      }),
+      hasSel: !!cur, noSel: !cur,
+      types: TY.map((t) => ({ label: t[1], d: t[2], cls: cur && cur.type === t[0] ? 'on' : '', pick: () => set({ blocks: upd({ type: t[0] }) }) })),
+      colors: [['', 'Sin color']].concat(Object.keys(PAL).map((k) => [k, NAMES[k]])).map((c) => ({ label: c[1], cls: cur && cur.color === c[0] ? 'on' : '', style: c[0] ? 'background: ' + PAL[c[0]] : 'border: 1px solid #5a5a5a; background: linear-gradient(135deg, transparent 46%, #5a5a5a 46%, #5a5a5a 54%, transparent 54%)', pick: () => set({ blocks: upd({ color: c[0] }) }) })),
+      dup: () => { if (!cur) return; const copy = Object.assign({}, cur, { id: nid }); const nb = blocks.slice(); nb.splice(i + 1, 0, copy); set({ blocks: nb, sel: nid, nid: nid + 1 }, 'Bloque duplicado'); },
+      copy: () => {
+        if (!cur) return;
+        const txt = cur.text;
+        const done = () => set({}, 'Copiado al portapapeles: «' + (txt.length > 28 ? txt.slice(0, 28) + '…' : txt) + '»');
+        const legacy = () => {
+          let ok = false;
+          try { const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); document.body.removeChild(ta); } catch (x) { ok = false; }
+          if (ok) done(); else set({}, 'Este marco no deja usar el portapapeles; en la app, Ctrl C copia el bloque');
+        };
+        try { navigator.clipboard.writeText(txt).then(done, legacy); } catch (x) { legacy(); }
+      },
+      copyRef: () => set({}, 'Referencia copiada · pégala en otro objeto'),
+      up: () => { if (i > 0) { const nb = blocks.slice(); nb.splice(i - 1, 0, nb.splice(i, 1)[0]); set({ blocks: nb }); } },
+      down: () => { if (i >= 0 && i < blocks.length - 1) { const nb = blocks.slice(); nb.splice(i + 1, 0, nb.splice(i, 1)[0]); set({ blocks: nb }); } },
+      indentLabel: cur && cur.ind ? 'Quitar sangría' : 'Sangrar',
+      indent: () => { if (cur) set({ blocks: upd({ ind: cur.ind ? 0 : 1 }) }); },
+      del: () => { if (!cur) return; const nb = blocks.filter((b) => b.id !== sel); set({ blocks: nb, sel: nb[Math.max(0, i - 1)] ? nb[Math.max(0, i - 1)].id : null }, 'Bloque eliminado · Ctrl Z deshace'); },
+      toast: st.toast || ''
+    };
+  }
+}
+</script>
+</body>
+</html>

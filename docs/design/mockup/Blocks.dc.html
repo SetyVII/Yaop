@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — diario y bloques</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.rail{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 0;border-right:1px solid #1f1f1f}
+.rb{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:transparent;color:#7a7a7a;cursor:pointer;isolation:isolate;transition:color .3s}
+.rb:hover{color:#f2f2f2}
+.rb .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.rb.on{color:#000}.rb.on .ac{transform:scaleY(1)}
+.rb:focus-visible,.hit:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.hit{position:relative;display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.hit .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.hit.on{color:#000}.hit.on .ac{transform:scaleX(1)}
+.hit .k{margin-left:auto;color: #7a7a7a;transition:color .3s}
+.hit.on .k{color:#000}
+.blk{position:relative;padding:4px 0;font-size:16px;line-height:1.65;color:#e6e6e6}
+.gut{position:absolute;left:-58px;top:6px;display:flex;gap:2px;color: #7a7a7a;opacity:0;transition:opacity .15s}
+.blk:hover .gut,.blk.show .gut{opacity:1}
+.gut span{display:flex;width:26px;height:26px;align-items:center;justify-content:center}
+.gut span:hover{color:#f2f2f2}
+.caret{display:inline-block;width:2px;height:20px;background:var(--accent);vertical-align:-4px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.pop{animation:pop .28s cubic-bezier(.2,.8,.1,1) both;transform-origin:top left}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:36px;border:0;background:transparent;color:#bdbdbd;font:400 13px 'Geist',sans-serif;cursor:pointer;isolation:isolate}
+.day.pad{color:#3a3a3a}
+.day.on{color:#000}
+.day.on::before{content:'';position:absolute;inset:2px;z-index:-1;background:var(--accent)}
+.day i{position:absolute;bottom:4px;width:3px;height:3px;background:#8b8b8b}
+.day.on i{background:#000}
+.row{display:flex;align-items:center;gap:12px;height:40px;border-bottom:1px solid #1a1a1a;font-size:14px;color:#d6d6d6}
+@media (prefers-reduced-motion:reduce){.rb .ac,.hit .ac{transition:none}.caret,.pop{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<nav class="rail" aria-label="Secciones">
+<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true" style="margin-bottom: 16px"><rect x="1" y="1" width="20" height="20" fill="none" stroke="#f2f2f2" stroke-width="1.6"></rect><rect x="6" y="6" width="10" height="10" style="fill: var(--accent)"></rect></svg>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="5">
+<button type="button" class="rb {{r.cls}}" aria-label="{{r.label}}" title="{{r.label}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{r.d}}"></path></svg></button>
+</sc-for>
+</nav>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div class="mono" style="display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 40px; border-bottom: 1px solid #1f1f1f; color: #7a7a7a">
+<span>Diario</span><span>/</span><span>Noviembre 2026</span>
+<span style="margin-left: auto">/ inserta un bloque · @ menciona · # etiqueta</span>
+</div>
+<div style="flex: 1; overflow: hidden; padding: 56px 0 0 140px">
+<div style="position: relative; max-width: 680px">
+<p class="mono" style="margin: 0 0 12px; color: var(--accent)">Hoy</p>
+<h1 style="margin: 0; font-size: 44px; line-height: 1.1; font-weight: 400; letter-spacing: -0.03em">Sábado, 21 de noviembre</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 36px">
+<span class="chip"><span class="sq" style="background: #E8EEFF"></span>Diario</span>
+<span class="mono" style="color: #7a7a7a; margin: 0 6px">Semana 47</span>
+<span class="chip"><span class="sq" style="background: #DCEC4E"></span>pairing</span>
+<button type="button" class="chip" style="color: #7a7a7a; border-style: dashed"><svg class="ic" style="width: 14px; height: 14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{icPlus}}"></path></svg>Etiqueta</button>
+</div>
+
+<div class="blk"><span class="gut" aria-hidden="true"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="{{icPlus}}"></path></svg></span><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="{{icDrag}}"></path></svg></span></span>Café con <span class="chip" style="height: 24px; vertical-align: 1px"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López</span> sobre cómo sincronizar sin que el servidor lea nada.</div>
+<div class="blk show"><span class="gut" aria-hidden="true"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="{{icPlus}}"></path></svg></span><span style="color: #f2f2f2"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="{{icDrag}}"></path></svg></span></span>Ideas para el modo enfoque:</div>
+<div class="blk" style="padding-left: 22px"><span style="position: absolute; left: 4px; top: 16px; width: 5px; height: 5px; background: #8b8b8b"></span>ocultar la barra lateral</div>
+<div class="blk" style="padding-left: 22px"><span style="position: absolute; left: 4px; top: 16px; width: 5px; height: 5px; background: #8b8b8b"></span>dejar solo el bloque activo con luz</div>
+<div class="blk" style="padding-left: 50px; color: #a3a3a3"><span style="position: absolute; left: 32px; top: 16px; width: 5px; height: 5px; border: 1px solid #8b8b8b"></span>el resto al 40 %</div>
+<div class="blk" style="color: #f2f2f2">/<span class="caret"></span></div>
+
+<div class="pop" role="listbox" aria-label="Insertar bloque" style="position: absolute; left: 0; top: 470px; z-index: 3; width: 340px; background: #0a0a0a; border: 1px solid #2a2a2a; box-shadow: 0 24px 48px rgba(0,0,0,.6)">
+<div class="mono" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-bottom: 1px solid #1f1f1f; color: #7a7a7a">Insertar · ↑↓ y Enter<span style="margin-left: auto">Esc</span></div>
+<div style="max-height: 330px; overflow: hidden; padding: 6px 0">
+<sc-for list="{{menu}}" as="g" hint-placeholder-count="3">
+<p class="mono" style="margin: 10px 14px 4px; color: #7a7a7a">{{g.title}}</p>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+<button type="button" role="option" class="hit {{it.cls}}" aria-selected="{{it.sel}}" onMouseEnter="{{it.pick}}" onFocus="{{it.pick}}" style="height: 34px; padding: 0 14px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{it.d}}"></path></svg><span>{{it.label}}</span><span class="k mono">{{it.key}}</span></button>
+</sc-for>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top: 56px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+<div>
+<p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Referenciado hoy · 2</p>
+<div class="row"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López<span class="mono" style="margin-left: auto; color: #7a7a7a">Persona</span></div>
+<div class="row"><span class="sq" style="background: #FFD166"></span>Proyecto Yaop<span class="mono" style="margin-left: auto; color: #7a7a7a">Proyecto</span></div>
+</div>
+<div>
+<p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Creado hoy · 2</p>
+<div class="row"><span class="sq" style="background: #7AF0D0"></span>Local-first software<span class="mono" style="margin-left: auto; color: #7a7a7a">Enlace web</span></div>
+<div class="row"><span class="sq" style="background: #FF8FB3"></span>Pizarra del sprint<span class="mono" style="margin-left: auto; color: #7a7a7a">Imagen</span></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<aside style="flex: 0 0 340px; border-left: 1px solid #1f1f1f; padding: 72px 28px 0">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
+<span style="font-size: 15px">Noviembre 2026</span>
+<span style="display: flex; gap: 4px; color: #8b8b8b">
+<button type="button" class="rb" aria-label="Mes anterior" style="width: 32px; height: 32px"><svg class="ic" style="transform: scaleX(-1)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{icChev}}"></path></svg></button>
+<button type="button" class="rb" aria-label="Mes siguiente" style="width: 32px; height: 32px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{icChev}}"></path></svg></button>
+</span>
+</div>
+<div class="mono" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; color: #7a7a7a; margin-bottom: 6px">
+<span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="35">
+<button type="button" class="day {{d.cls}}" aria-label="{{d.aria}}">{{d.n}}<sc-if value="{{d.mark}}" hint-placeholder-val="{{ false }}"><i></i></sc-if></button>
+</sc-for>
+</div>
+<p class="mono" style="margin: 36px 0 8px; color: #7a7a7a">Tareas de hoy · 2</p>
+<div class="row"><span style="width: 14px; height: 14px; border: 1px solid #5a5a5a"></span>Probar el QR del servidor</div>
+<div class="row"><span style="width: 14px; height: 14px; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center"><span style="width: 6px; height: 6px; background: var(--accent)"></span></span><span style="color: #7a7a7a; text-decoration: line-through">Escribir el fixture de anclas</span></div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z', calendar: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5',
+      search: c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21', grid: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
+      graph: c(6, 6, 2) + ' ' + c(18, 8, 2) + ' ' + c(10, 18, 2) + ' M8 6.3l8 1.4 M6.7 8l2.6 8 M16.6 9.6l-5.2 6.8',
+      text: 'M5 6V4h14v2 M12 4v16 M9 20h6', heading: 'M5 5v14 M13 5v14 M5 12h8 M17 12l3-2v9',
+      list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01', numlist: 'M10 6h10 M10 12h10 M10 18h10 M4 5l1.5-1v5 M3.5 14h3l-3 4h3',
+      task: 'M4 4h16v16H4z M8 12l3 3 5-6', toggle: 'M8 5l8 7-8 7z', quote: 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7',
+      callout: 'M4 4h16v12H9l-5 4z', code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5', math: 'M18 5H6l7 7-7 7h12', table: 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14',
+      divider: 'M3 12h18', image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5),
+      weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2',
+      at: c(12, 12, 4) + ' M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1', filter: 'M4 5h16 M7 12h10 M10 19h4',
+      plus: 'M12 5v14 M5 12h14', drag: 'M9 6h.01 M15 6h.01 M9 12h.01 M15 12h.01 M9 18h.01 M15 18h.01', chevron: 'M9 6l6 6-6 6'
+    };
+    const st = this.state || {};
+    const sel = st.sel ?? 'heading';
+    const groups = [
+      ['Texto', [['text', 'Texto', 'Ctrl Alt 0'], ['heading', 'Título', 'Ctrl Alt 1'], ['list', 'Lista', 'Ctrl Alt 4'], ['numlist', 'Lista numerada', 'Ctrl Alt 5'], ['task', 'Tarea', 'Ctrl Alt 6'], ['toggle', 'Desplegable', '']]],
+      ['Bloques', [['quote', 'Cita', ''], ['callout', 'Aviso', ''], ['code', 'Código', ''], ['math', 'Fórmula', ''], ['table', 'Tabla', ''], ['divider', 'Separador', '']]],
+      ['Objetos', [['image', 'Imagen', ''], ['weblink', 'Enlace web', ''], ['at', 'Mención', '@'], ['filter', 'Consulta', '']]]
+    ];
+    const menu = groups.map((g) => ({ title: g[0], items: g[1].map((it) => ({ d: I[it[0]], label: it[1], key: it[2], cls: it[0] === sel ? 'on' : '', sel: it[0] === sel ? 'true' : 'false', pick: () => this.setState({ sel: it[0] }) })) }));
+    const marks = { 3: 1, 4: 1, 6: 1, 10: 1, 11: 1, 12: 1, 14: 1, 17: 1, 18: 1, 19: 1, 20: 1, 21: 1 };
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const n = i - 5;
+      if (n < 1 || n > 30) days.push({ n: n < 1 ? 31 + n : n - 30, cls: 'pad', mark: false, aria: '' });
+      else days.push({ n, cls: n === 21 ? 'on' : '', mark: !!marks[n], aria: n + ' de noviembre' });
+    }
+    const rail = [['journal', 'Hoy'], ['calendar', 'Calendario'], ['search', 'Buscar'], ['grid', 'Objetos'], ['graph', 'Grafo']].map((r) => ({ d: I[r[0]], label: r[1], cls: r[0] === 'journal' ? 'on' : '' }));
+    return { accent: this.props.accent ?? '#C8F04A', rail, menu, days, icPlus: I.plus, icDrag: I.drag, icChev: I.chevron };
+  }
+}
+</script>
+</body>
+</html>

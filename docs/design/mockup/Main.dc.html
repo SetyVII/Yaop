@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — web</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#ffffff}
+.y *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;letter-spacing:.02em;text-transform:uppercase;font-size:12px}
+.wrap{max-width:1312px;margin:0 auto;padding:0 32px}
+.nav a{color:#8b8b8b;text-decoration:none;transition:color .2s}
+.nav a:hover{color:#f2f2f2}
+.btn{position:relative;display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 20px;font:500 15px 'Geist',sans-serif;text-decoration:none;overflow:hidden;isolation:isolate;border:1px solid var(--accent)}
+.btn .wipe{position:absolute;inset:0;z-index:-1;transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.1,1)}
+.btn:hover .wipe,.btn:focus-visible .wipe{transform:scaleX(1)}
+.btn-solid{background:var(--accent);color:#000}
+.btn-solid .wipe{background:#fff}
+.btn-solid:hover{color:#000}
+.btn-line{border-color:#333;color:#f2f2f2}
+.btn-line .wipe{background:#f2f2f2}
+.btn-line:hover{color:#000}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.rise{display:block;overflow:hidden}
+.rise>span{display:block;animation:rise 1s cubic-bezier(.2,.8,.1,1) both}
+.rise.d2>span{animation-delay:.08s}
+.fade{animation:fade 1.2s .35s cubic-bezier(.2,.8,.1,1) both}
+@keyframes rise{from{transform:translateY(105%)}to{transform:none}}
+@keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.feat{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);border:1px solid #232323}
+.list{display:flex;flex-direction:column}
+.row{position:relative;display:flex;align-items:center;gap:24px;width:100%;min-height:150px;padding:28px 40px;border:0;border-bottom:1px solid #232323;background:transparent;color:#f2f2f2;text-align:left;font:400 19px/1.45 'Geist',sans-serif;cursor:pointer;isolation:isolate;transition:color .35s}
+.row:last-child{border-bottom:0}
+.row .fill{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .55s cubic-bezier(.2,.8,.1,1)}
+.row.on{color:#000}
+.row.on .fill{transform:scaleY(1);transform-origin:top}
+.row:not(.on):hover .fill{transform:scaleY(.04)}
+.row .ic{flex:0 0 auto;color:var(--accent);transition:color .35s}
+.row.on .ic{color:#000}
+.row .n{margin-left:auto;color: #7a7a7a;transition:color .35s}
+.row.on .n{color:#000}
+.row:focus-visible{outline:2px solid #f2f2f2;outline-offset:-4px}
+.stage{position:relative;border-left:1px solid #232323;min-height:600px}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cap{position:absolute;left:24px;right:24px;bottom:20px;display:flex;justify-content:space-between;color: #7a7a7a;pointer-events:none}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #232323;border-bottom:1px solid #232323}
+.facts>div{padding:22px 0;color:#8b8b8b}
+.facts>div+div{border-left:1px solid #232323;padding-left:24px}
+@media (max-width:860px){
+.feat{grid-template-columns:minmax(0,1fr)}
+.stage{order:-1;border-left:0;border-bottom:1px solid #232323;min-height:340px}
+.row{min-height:0;padding:22px 20px;font-size:17px}
+.facts{grid-template-columns:minmax(0,1fr)}
+.facts>div+div{border-left:0;border-top:1px solid #232323;padding-left:0}
+.wrap{padding:0 16px}
+.navlinks{display:none !important}
+}
+@media (prefers-reduced-motion:reduce){
+.rise>span,.fade{animation:none}
+.row .fill,.btn .wipe{transition:none}
+}
+</style>
+</helmet>
+<div class="y" style="--accent: {{accent}}; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; min-height: 100vh">
+
+<header class="wrap nav" style="display: flex; align-items: center; justify-content: space-between; height: 76px; border-bottom: 1px solid #161616">
+<a href="#top" aria-label="Yaop, inicio" style="display: flex; align-items: center; gap: 10px; color: #f2f2f2; text-decoration: none">
+<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"></rect><rect x="6" y="6" width="10" height="10" style="fill: var(--accent)"></rect></svg>
+<span style="font-size: 19px; font-weight: 500; letter-spacing: -0.01em">yaop</span>
+</a>
+<nav class="navlinks mono" style="display: flex; gap: 32px">
+<a href="#como">Cómo funciona</a>
+<a href="#seguridad">Seguridad</a>
+<a href="#descargar">Descargar</a>
+</nav>
+<a class="btn btn-solid" href="#descargar" style="height: 40px; padding: 0 16px; font-size: 14px"><span class="wipe"></span>Descargar</a>
+</header>
+
+<section id="top" class="wrap" style="padding-top: 136px; padding-bottom: 96px">
+<p class="mono fade" style="margin: 0 0 32px; color: #8b8b8b">PKM local · cifrado de extremo a extremo</p>
+<h1 style="margin: 0; font-size: clamp(44px, 7vw, 96px); line-height: 1; font-weight: 400; letter-spacing: -0.035em; max-width: 14ch">
+<span class="rise"><span>Un PKM que no</span></span>
+<span class="rise d2"><span>necesita la nube.</span></span>
+</h1>
+<p class="fade" style="margin: 36px 0 0; max-width: 560px; font-size: 19px; line-height: 1.5; color: #a3a3a3">Objetos, diario y consultas en Android y Linux, nativos. El servidor es opcional y solo reenvía datos cifrados que no puede leer.</p>
+<div class="fade" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 44px">
+<a class="btn btn-solid" href="#descargar"><span class="wipe"></span>Descargar para Linux <span aria-hidden="true">→</span></a>
+<a class="btn btn-line" href="#descargar"><span class="wipe"></span>Android</a>
+</div>
+</section>
+
+<div class="wrap">
+<div class="facts mono">
+<div>Android · Kotlin + Compose</div>
+<div>Linux · C++20 + Qt Quick</div>
+<div>Servidor · Go, opcional</div>
+</div>
+</div>
+
+<section id="como" class="wrap" style="padding-top: 140px; padding-bottom: 140px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 56px">
+<h2 style="margin: 0; font-size: clamp(34px, 4.4vw, 56px); line-height: 1.04; font-weight: 400; letter-spacing: -0.03em">Local primero.<br><span style="color: #7a7a7a">Cifrado siempre.</span></h2>
+<p class="mono" style="margin: 0; color: #7a7a7a">Pasa el ratón por cada fila</p>
+</div>
+<div id="seguridad" class="feat">
+<div class="list" role="group" aria-label="Cómo funciona Yaop">
+<button type="button" class="row {{c0}}" aria-pressed="{{p0}}" onMouseEnter="{{s0}}" onFocus="{{s0}}" onClick="{{s0}}"><span class="fill"></span>
+<svg class="ic" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="M4 9l10-5 10 5-10 5z"></path><path d="M4 14l10 5 10-5"></path><path d="M4 19l10 5 10-5"></path></svg>
+<span>Funciona sin servidor: tu base de datos cifrada vive en cada dispositivo</span><span class="n mono">01</span></button>
+<button type="button" class="row {{c1}}" aria-pressed="{{p1}}" onMouseEnter="{{s1}}" onFocus="{{s1}}" onClick="{{s1}}"><span class="fill"></span>
+<svg class="ic" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><rect x="5" y="12" width="18" height="12"></rect><path d="M9 12V8a5 5 0 0110 0v4"></path><path d="M14 17v3"></path></svg>
+<span>Cifrado de extremo a extremo: el servidor guarda sobres que no puede abrir</span><span class="n mono">02</span></button>
+<button type="button" class="row {{c2}}" aria-pressed="{{p2}}" onMouseEnter="{{s2}}" onFocus="{{s2}}" onClick="{{s2}}"><span class="fill"></span>
+<svg class="ic" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="18" y="8" width="7" height="7"></rect><rect x="8" y="18" width="7" height="7"></rect><path d="M10 7l8 4M12 18l9-3M7 10l3 8"></path></svg>
+<span>Todo es un objeto: notas, personas, enlaces e imágenes, con el mismo editor</span><span class="n mono">03</span></button>
+<button type="button" class="row {{c3}}" aria-pressed="{{p3}}" onMouseEnter="{{s3}}" onFocus="{{s3}}" onClick="{{s3}}"><span class="fill"></span>
+<svg class="ic" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><rect x="4" y="6" width="20" height="18"></rect><path d="M4 11h20M9 3v5M19 3v5"></path><rect x="15" y="15" width="5" height="5" fill="currentColor" stroke="none"></rect></svg>
+<span>El diario es la puerta: lo que entra queda anotado el día en que llegó</span><span class="n mono">04</span></button>
+</div>
+<div class="stage">
+<canvas ref="{{setCanvas}}" role="img" aria-label="{{sceneLabel}}"></canvas>
+<div class="cap mono"><span>{{idx}} / 04</span><span>{{sceneName}}</span></div>
+</div>
+</div>
+</section>
+
+<section id="descargar" class="wrap" style="padding-bottom: 120px">
+<div style="border-top: 1px solid #232323; padding-top: 72px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 32px">
+<h2 style="margin: 0; font-size: clamp(34px, 4.4vw, 56px); line-height: 1.04; font-weight: 400; letter-spacing: -0.03em; max-width: 16ch">Empieza por el diario de hoy.</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a class="btn btn-solid" href="#top"><span class="wipe"></span>Descargar para Linux <span aria-hidden="true">→</span></a>
+<a class="btn btn-line" href="#top"><span class="wipe"></span>Android</a>
+</div>
+</div>
+</section>
+
+<footer class="wrap mono" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-top: 28px; padding-bottom: 40px; border-top: 1px solid #161616; color: #7a7a7a">
+<span>yaop</span>
+<span>Tus datos solo se leen con tu clave</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":2700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = (this.state && this.state.active) || 0;
+    this._active = a;
+    const set = (i) => () => { if (((this.state && this.state.active) || 0) !== i) this.setState({ active: i }); };
+    const names = ['local', 'e2ee', 'objetos', 'diario'];
+    const labels = [
+      'Dos dispositivos con su propia base de datos; el servidor aparece apagado.',
+      'Paquetes que viajan entre dispositivos y se vuelven opacos dentro del servidor.',
+      'Objetos enlazados entre sí; uno se ilumina con sus enlaces.',
+      'Un calendario donde el día de hoy recibe lo que entra.'
+    ];
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      c0: a === 0 ? 'on' : '', c1: a === 1 ? 'on' : '', c2: a === 2 ? 'on' : '', c3: a === 3 ? 'on' : '',
+      p0: a === 0 ? 'true' : 'false', p1: a === 1 ? 'true' : 'false', p2: a === 2 ? 'true' : 'false', p3: a === 3 ? 'true' : 'false',
+      s0: set(0), s1: set(1), s2: set(2), s3: set(3),
+      idx: '0' + (a + 1), sceneName: names[a], sceneLabel: labels[a],
+      setCanvas: (el) => { this._cv = el; }
+    };
+  }
+
+  componentDidMount() { this._run(); }
+  componentWillUnmount() { cancelAnimationFrame(this._raf); if (this._ro) this._ro.disconnect(); }
+
+  _run() {
+    const self = this;
+    const N = 36;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const boxes = [];
+    for (let i = 0; i < N; i++) boxes.push({ x: 0, y: 0, z: 0, w: .01, h: .01, d: .01, f: 0, a: 0 });
+    const cam = { yaw: .7, pitch: .55, zoom: 1 };
+    let linkA = 0;
+    let lastState = -1, changeT = 0, prev = performance.now() / 1000;
+    let W = 0, H = 0, dpr = 1;
+
+    const B = (x, y, z, w, h, d, f, a, live) => ({ x, y, z, w, h, d, f: f || 0, a: a == null ? 1 : a, live: !!live });
+    const nodes = [[-2.4,-1.2,.5],[-1.2,-1.9,.35],[0,-1.1,.7],[1.3,-1.8,.4],[2.5,-.9,.55],[-2,.3,.3],[-.7,.2,.6],[.7,.5,.45],[2,.8,.35],[-1.3,1.6,.5],[.1,1.8,.3],[1.5,2,.6]];
+    const nlinks = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,2],[6,7],[7,3],[7,8],[8,4],[5,9],[9,10],[10,7],[10,11],[11,8],[6,10],[2,7]];
+
+    function target(s, t) {
+      const out = new Array(N).fill(null);
+      let c, links = [];
+      if (s === 0) {
+        for (let i = 0; i < 6; i++) {
+          const bob = reduce ? 0 : .035 * Math.sin(t * 1.3 - i * .55);
+          out[i] = B(-1.7, i * .24 + bob, .2, .7, .15, 1.2, 1, 1, true);
+          out[6 + i] = B(1.5, i * .24 + bob, -.1, 1.7, .15, 1.15, 1, 1, true);
+        }
+        out[12] = B(0, 1.4, -2, .9, .9, .9, 0, .3);
+        c = { yaw: .72, pitch: .5, zoom: 1 };
+      } else if (s === 1) {
+        out[0] = B(-.62, 0, 0, .52, 1.9, 1, 0, 1);
+        out[1] = B(0, 0, 0, .52, 1.9, 1, 0, 1);
+        out[2] = B(.62, 0, 0, .52, 1.9, 1, 0, 1);
+        out[3] = B(-3.5, 0, 0, .5, 1.05, .9, 0, .9);
+        out[4] = B(3.5, 0, 0, 1.2, .1, .85, 0, .9);
+        for (let i = 0; i < 10; i++) {
+          const u = reduce ? i / 10 : (t * .3 + i / 10) % 1;
+          const x = -3.1 + u * 6.2;
+          const edge = Math.min(1, Math.min(u, 1 - u) * 10);
+          const sealed = Math.abs(x) < 1.05;
+          out[5 + i] = B(x, .85, 0, .26, .26, .26, sealed ? 0 : 1, edge, true);
+        }
+        c = { yaw: .32, pitch: .38, zoom: .82 };
+      } else if (s === 2) {
+        const act = reduce ? 6 : Math.floor(t / 1.8) % nodes.length;
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i], on = i === act;
+          out[i] = B(n[0], on ? .18 : 0, n[1], .44, n[2], .44, on ? 1 : 0, 1, true);
+        }
+        links = nlinks.map((l) => [l[0], l[1], l[0] === act || l[1] === act]);
+        c = { yaw: .95, pitch: .78, zoom: .95 };
+      } else {
+        const today = 19;
+        for (let i = 0; i < 28; i++) {
+          const col = i % 7, row = Math.floor(i / 7);
+          const on = i === today;
+          out[i] = B((col - 3) * .64, 0, (row - 1.5) * .64, .54, on ? .5 : .05, .54, on ? 1 : 0, on ? 1 : (row * 7 + col < today ? .9 : .45), true);
+        }
+        const tx = (today % 7 - 3) * .64, tz = (Math.floor(today / 7) - 1.5) * .64;
+        for (let j = 0; j < 3; j++) {
+          const u = reduce ? .3 + j * .2 : (t * .45 + j / 3) % 1;
+          const y = 2.7 - u * 2.2;
+          out[28 + j] = B(tx, y, tz, .18, .18, .18, 1, Math.min(1, (1 - u) * 6, u * 6), true);
+        }
+        c = { yaw: .5, pitch: .72, zoom: 1.05 };
+      }
+      return { out, cam: c, links };
+    }
+
+    let currentLinks = [];
+    function step(now) {
+      const t = now / 1000;
+      const dt = Math.min(.05, t - prev); prev = t;
+      const s = self._active || 0;
+      if (s !== lastState) { lastState = s; changeT = t; }
+      const since = t - changeT;
+      const tg = target(s, t);
+      const base = reduce ? 1 : 1 - Math.exp(-dt * 6.5);
+      for (let i = 0; i < N; i++) {
+        const b = boxes[i];
+        let g = tg.out[i];
+        if (!g) g = { x: b.x, y: b.y, z: b.z, w: b.w, h: 0, d: b.d, f: b.f, a: 0, live: false };
+        else if (b.a < .02) { b.x = g.x; b.y = g.y; b.z = g.z; b.w = g.w; b.d = g.d; b.h = 0; b.f = g.f; }
+        const delay = (i % 12) * .03;
+        let k = since < delay ? 0 : base;
+        if (g.live && since > 1.2) k = 1;
+        b.x += (g.x - b.x) * k; b.y += (g.y - b.y) * k; b.z += (g.z - b.z) * k;
+        b.w += (g.w - b.w) * k; b.h += (g.h - b.h) * k; b.d += (g.d - b.d) * k;
+        b.f += (g.f - b.f) * (g.live && since > 1.2 ? Math.min(1, dt * 14) : k);
+        b.a += (g.a - b.a) * k;
+      }
+      cam.yaw += (tg.cam.yaw - cam.yaw) * base * .7;
+      cam.pitch += (tg.cam.pitch - cam.pitch) * base * .7;
+      cam.zoom += (tg.cam.zoom - cam.zoom) * base * .7;
+      if (tg.links.length) currentLinks = tg.links;
+      linkA += ((tg.links.length && since > .35 ? 1 : 0) - linkA) * base;
+      draw(t);
+      self._raf = requestAnimationFrame(step);
+    }
+
+    function rgb(hex) {
+      const h = String(self.props.accent ?? '#C8F04A').replace('#', '');
+      const v = h.length === 3 ? h.split('').map((x) => x + x).join('') : h;
+      return [parseInt(v.slice(0, 2), 16) || 200, parseInt(v.slice(2, 4), 16) || 240, parseInt(v.slice(4, 6), 16) || 74];
+    }
+
+    function draw() {
+      const cv = self._cv; if (!cv) return;
+      const ctx = cv.getContext('2d');
+      const r = cv.getBoundingClientRect();
+      const nd = window.devicePixelRatio || 1;
+      if (r.width !== W || r.height !== H || nd !== dpr) {
+        W = r.width; H = r.height; dpr = nd;
+        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const acc = rgb();
+      const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+      const S = Math.min(W, H * 1.4) * .13 * cam.zoom, D = 16, ox = W / 2, oy = H * .58;
+      const P = (x, y, z) => {
+        const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+        const y2 = y * cp + z1 * sp, z2 = z1 * cp - y * sp;
+        const k = S * D / (D + z2);
+        return [ox + x1 * k, oy - y2 * k, z2];
+      };
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath();
+      for (let gx = -4.5; gx <= 4.51; gx += .75) { const a = P(gx, 0, -3), b = P(gx, 0, 3); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+      for (let gz = -3; gz <= 3.01; gz += .75) { const a = P(-4.5, 0, gz), b = P(4.5, 0, gz); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+      ctx.stroke();
+
+      if (linkA > .01) {
+        for (const l of currentLinks) {
+          const A = boxes[l[0]], Bx = boxes[l[1]];
+          const p = P(A.x, A.y + A.h, A.z), q = P(Bx.x, Bx.y + Bx.h, Bx.z);
+          ctx.strokeStyle = l[2] ? 'rgba(' + acc + ',' + (.95 * linkA) + ')' : 'rgba(255,255,255,' + (.22 * linkA) + ')';
+          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+        }
+      }
+
+      const order = boxes.map((b, i) => [i, P(b.x, b.y + b.h / 2, b.z)[2]]).sort((m, n) => n[1] - m[1]);
+      for (const o of order) {
+        const b = boxes[o[0]];
+        if (b.a < .02 || b.h < .002) continue;
+        const x0 = b.x - b.w / 2, x1 = b.x + b.w / 2, y0 = b.y, y1 = b.y + b.h, z0 = b.z - b.d / 2, z1 = b.z + b.d / 2;
+        const v = [P(x0,y0,z0),P(x1,y0,z0),P(x1,y0,z1),P(x0,y0,z1),P(x0,y1,z0),P(x1,y1,z0),P(x1,y1,z1),P(x0,y1,z1)];
+        const fa = b.f * b.a;
+        if (fa > .01) {
+          const faces = [[[4,5,6,7],1],[[0,1,5,4],.82],[[3,2,6,7],.82],[[0,3,7,4],.64],[[1,2,6,5],.64]];
+          faces.map((f) => [f, (v[f[0][0]][2] + v[f[0][1]][2] + v[f[0][2]][2] + v[f[0][3]][2]) / 4])
+            .sort((m, n) => n[1] - m[1])
+            .forEach((e) => {
+              const f = e[0], sh = f[1];
+              ctx.fillStyle = 'rgba(' + Math.round(acc[0] * sh) + ',' + Math.round(acc[1] * sh) + ',' + Math.round(acc[2] * sh) + ',' + fa + ')';
+              ctx.beginPath();
+              f[0].forEach((idx, j) => { const p = v[idx]; if (j) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+              ctx.closePath(); ctx.fill();
+              ctx.strokeStyle = 'rgba(0,0,0,' + (.45 * fa) + ')'; ctx.stroke();
+            });
+        }
+        const wa = (1 - b.f) * b.a;
+        if (wa > .01) {
+          ctx.strokeStyle = 'rgba(190,190,190,' + (.6 * wa) + ')';
+          ctx.beginPath();
+          [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach((e) => {
+            const p = v[e[0]], q = v[e[1]]; ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]);
+          });
+          ctx.stroke();
+        }
+      }
+    }
+
+    this._raf = requestAnimationFrame(step);
+  }
+}
+</script>
+</body>
+</html>

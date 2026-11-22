@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — buscar y crear</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.pal{width:680px;background:#0a0a0a;border:1px solid #2a2a2a;box-shadow:0 40px 80px rgba(0,0,0,.7);animation:pop .35s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-10px) scale(.99)}to{opacity:1;transform:none}}
+.in{flex:1;min-width:0;height:60px;border:0;background:transparent;outline:none;color:#f2f2f2;font:400 20px 'Geist',sans-serif}
+.in::placeholder{color:#7a7a7a}
+.seg{position:relative;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border:1px solid #262626;background:transparent;color:#bdbdbd;font:400 13px 'Geist',sans-serif;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:-1px;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleY(1)}
+.it{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:44px;padding:0 18px;border:0;background:transparent;color:#d6d6d6;font:400 15px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s;animation:in .3s cubic-bezier(.2,.8,.1,1) both}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.it .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.8,.1,1)}
+.it.on{color:#000}.it.on .ac{transform:scaleX(1)}
+.it .k{margin-left:auto;color:#7a7a7a}.it.on .k{color:#000}
+.it mark{background:transparent;color:inherit;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.it.on mark{text-decoration-color:#000}
+.seg:focus-visible,.it:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.kbd{display:inline-flex;align-items:center;height:22px;padding:0 6px;border:1px solid #2a2a2a;font-family:'Geist Mono',monospace;font-size:11px;color:#bdbdbd}
+@media (prefers-reduced-motion:reduce){.pal,.it{animation:none}.seg .ac,.it .ac{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; flex-direction: column; align-items: center; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; padding-top: 72px; background-image: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6))">
+<div role="tablist" style="display: flex; gap: 6px; margin-bottom: 22px">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" role="tab" class="seg {{m.cls}}" aria-selected="{{m.sel}}" onClick="{{m.pick}}"><span class="ac"></span><span class="kbd" style="border-color: currentColor; color: inherit">{{m.key}}</span>{{m.label}}</button></sc-for>
+</div>
+
+<div class="pal" role="dialog" aria-label="{{dialogLabel}}">
+<div style="display: flex; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 1px solid #1f1f1f">
+<sc-if value="{{isCreate}}" hint-placeholder-val="{{ false }}"><button type="button" class="seg on" onClick="{{cycleType}}" aria-label="Cambiar tipo, ahora {{ctLabel}}"><span class="ac"></span><span class="sq" style="background: {{ctColor}}; outline: 1px solid #000"></span>{{ctLabel}}</button></sc-if>
+<sc-if value="{{isSearch}}" hint-placeholder-val="{{ true }}"><svg class="ic" style="width: 20px; height: 20px; color: #7a7a7a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M4 10.5a6.5 6.5 0 1013 0a6.5 6.5 0 10-13 0 M15.5 15.5L21 21"></path></svg></sc-if>
+<label style="flex: 1; min-width: 0; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{dialogLabel}}</span><input class="in" value="{{q}}" onChange="{{onQ}}" placeholder="{{ph}}"></label>
+<span class="kbd">Esc</span>
+</div>
+<sc-if value="{{isSearch}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 6px; padding: 12px 18px; border-bottom: 1px solid #1f1f1f">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button type="button" class="seg {{f.cls}}" aria-pressed="{{f.sel}}" onClick="{{f.pick}}" style="height: 28px"><span class="ac"></span><span class="sq" style="background: {{f.color}}"></span>{{f.label}}</button></sc-for>
+</div>
+<div style="padding: 6px 0; min-height: 300px">
+<sc-for list="{{results}}" as="r" hint-placeholder-count="6">
+<button type="button" class="it {{r.cls}}" onMouseEnter="{{r.hover}}"><span class="ac"></span><span class="sq" style="background: {{r.color}}"></span><span>{{r.a}}<mark>{{r.m}}</mark>{{r.z}}</span><span class="k mono">{{r.type}}</span></button>
+</sc-for>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}"><p style="margin: 18px; color: #8b8b8b; font-size: 14px">Nada con «{{q}}». Enter lo crea como nota.</p></sc-if>
+</div>
+<div class="mono" style="display: flex; gap: 18px; padding: 12px 18px; border-top: 1px solid #1f1f1f; color: #7a7a7a"><span>↑↓ moverse</span><span>Enter abrir</span><span>Shift Enter en el panel</span><span style="margin-left: auto">Busca en local · sin IA</span></div>
+</sc-if>
+<sc-if value="{{isCreate}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 18px; min-height: 300px">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">Tab cambia el tipo · los 3 últimos primero</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px">
+<sc-for list="{{ctypes}}" as="t" hint-placeholder-count="7"><button type="button" class="seg {{t.cls}}" onClick="{{t.pick}}"><span class="ac"></span><span class="sq" style="background: {{t.color}}"></span>{{t.label}}</button></sc-for>
+</div>
+<div style="border: 1px solid #1f1f1f; padding: 18px 20px">
+<span class="mono" style="color: {{ctColor}}">{{ctLabel}} · vista previa</span>
+<p style="margin: 8px 0 12px; font-size: 22px; letter-spacing: -0.015em; color: {{titleColor}}">{{titleShown}}</p>
+<sc-for list="{{ctProps}}" as="p" hint-placeholder-count="2"><div style="display: grid; grid-template-columns: 120px 1fr; height: 32px; align-items: center; font-size: 13px; border-top: 1px solid #161616"><span style="color: #7a7a7a">{{p.k}}</span><span style="color: #bdbdbd">{{p.v}}</span></div></sc-for>
+</div>
+</div>
+<div class="mono" style="display: flex; gap: 18px; padding: 12px 18px; border-top: 1px solid #1f1f1f; color: #7a7a7a"><span>Enter crear y abrir</span><span>Ctrl Enter crear y seguir</span><span style="margin-left: auto">Queda en «Creado hoy»</span></div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const mode = st.mode ?? 'search';
+    const q = st.q ?? 'not';
+    const f = st.f ?? 'all';
+    const hov = st.hov ?? 0;
+    const TY = { note: ['Notas', 'Nota', '#BFE3FF'], person: ['Personas', 'Persona', '#FFB38A'], book: ['Libros', 'Libro', '#9B8CFF'], web: ['Enlaces', 'Enlace web', '#7AF0D0'], journal: ['Diario', 'Diario', '#E8EEFF'] };
+    const DATA = [['Cómo tomar notas inteligentes', 'book'], ['Notas de la reunión de sprint', 'note'], ['Método Zettelkasten', 'note'], ['Sábado, 21 de noviembre', 'journal'], ['Ana López', 'person'], ['Marcos Ruiz', 'person'], ['Local-first software', 'web'], ['Notion vs Yaop', 'note'], ['Write-Ahead Logging', 'web'], ['Tiny Experiments', 'book'], ['Ideas sueltas', 'note']];
+    const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const nq = norm(q.trim());
+    const res = DATA.filter((d) => (f === 'all' || d[1] === f) && (!nq || norm(d[0]).includes(nq))).slice(0, 7).map((d, i) => {
+      const at = nq ? norm(d[0]).indexOf(nq) : -1;
+      return { a: at >= 0 ? d[0].slice(0, at) : d[0], m: at >= 0 ? d[0].slice(at, at + nq.length) : '', z: at >= 0 ? d[0].slice(at + nq.length) : '', type: TY[d[1]][1], color: TY[d[1]][2], cls: i === hov ? 'on' : '', hover: () => this.setState({ hov: i }) };
+    });
+    const CT = [['note', 'Nota', '#BFE3FF', [['Etiquetas', '—']]], ['meeting', 'Reunión', '#FFB07A', [['Fecha', 'Hoy'], ['Asistentes', 'Vacío'], ['Estado', 'Pendiente']]], ['task', 'Tarea', '#BFE3FF', [['Estado', 'Sin empezar'], ['Vence', 'Vacío']]], ['person', 'Persona', '#FFB38A', [['Relación', 'Vacío'], ['Correo', 'Vacío']]], ['book', 'Libro', '#9B8CFF', [['Autor', 'Vacío'], ['Estado', 'Pendiente']]], ['web', 'Enlace web', '#7AF0D0', [['Enlace', 'pega una URL'], ['Revisado', 'No']]], ['idea', 'Idea', '#FF8FB3', [['Etiquetas', '—']]]];
+    const ct = st.ct ?? 1;
+    const cur = CT[ct];
+    const title = st.title ?? 'Repaso con Marcos';
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      modes: [['search', 'Buscar', 'Ctrl K'], ['create', 'Crear', 'Ctrl N']].map((m) => ({ label: m[1], key: m[2], cls: m[0] === mode ? 'on' : '', sel: m[0] === mode ? 'true' : 'false', pick: () => this.setState({ mode: m[0] }) })),
+      isSearch: mode === 'search', isCreate: mode === 'create', dialogLabel: mode === 'search' ? 'Buscar' : 'Crear objeto',
+      q: mode === 'search' ? q : title, ph: mode === 'search' ? 'Busca en todo…' : 'Título del objeto nuevo',
+      onQ: (e) => { const v = e.target.value; if (mode === 'search') this.setState({ q: v, hov: 0 }); else this.setState({ title: v }); },
+      filters: [['all', 'Todo', '#5a5a5a']].concat(Object.keys(TY).map((k) => [k, TY[k][0], TY[k][2]])).map((x) => ({ label: x[1], color: x[2], cls: x[0] === f ? 'on' : '', sel: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0], hov: 0 }) })),
+      results: res, noResults: res.length === 0,
+      ctypes: CT.map((t, i) => ({ label: t[1], color: t[2], cls: i === ct ? 'on' : '', pick: () => this.setState({ ct: i }) })),
+      ctLabel: cur[1], ctColor: cur[2], ctProps: cur[3].map((p) => ({ k: p[0], v: p[1] })),
+      cycleType: () => this.setState({ ct: (ct + 1) % CT.length }),
+      titleShown: title || 'Sin título', titleColor: title ? '#f2f2f2' : '#7a7a7a'
+    };
+  }
+}
+</script>
+</body>
+</html>

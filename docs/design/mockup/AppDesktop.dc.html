@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — escritorio, diario</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.d,.d *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.nv{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:40px;padding:0 14px;border:0;background:transparent;color:#b5b5b5;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.nv .bg{position:absolute;inset:0;z-index:-1;background:#ffffff;opacity:0;transition:opacity .2s}
+.nv:hover .bg{opacity:.05}
+.nv .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.nv.on{color:#000}
+.nv.on .ac{transform:scaleX(1)}
+.nv:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.blk{position:relative;padding:3px 0}
+.blk .h{position:absolute;left:-30px;top:7px;opacity:0;transition:opacity .15s;color: #7a7a7a}
+.blk:hover .h{opacity:1}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border:1px solid #2e2e2e;color:#e6e6e6;font-size:14px;vertical-align:1px;transition:border-color .2s}
+.chip:hover{border-color:var(--accent)}
+.chip i{display:inline-block;width:7px;height:7px;background:var(--accent)}
+.todo{display:flex;align-items:center;gap:14px;width:100%;padding:7px 0;border:0;background:transparent;color:#f2f2f2;font:400 16px/1.5 'Geist',sans-serif;text-align:left;cursor:pointer}
+.todo .bx{position:relative;flex:0 0 18px;height:18px;border:1px solid #5a5a5a;transition:border-color .2s}
+.todo .bx::after{content:'';position:absolute;inset:3px;background:var(--accent);transform:scale(0);transition:transform .3s cubic-bezier(.2,.8,.1,1)}
+.todo.done .bx{border-color:var(--accent)}
+.todo.done .bx::after{transform:scale(1)}
+.todo .tx{transition:color .3s}
+.todo.done .tx{color: #7a7a7a;text-decoration:line-through;text-decoration-color:#444}
+.todo:focus-visible{outline:1px solid #f2f2f2;outline-offset:2px}
+.caret{display:inline-block;width:2px;height:20px;background:var(--accent);vertical-align:-4px;margin-left:1px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.link{display:block;padding:12px 0;border-bottom:1px solid #1c1c1c;color:#d6d6d6;text-decoration:none;font-size:14px;transition:color .2s,padding .3s cubic-bezier(.2,.8,.1,1)}
+.link:hover{color:#fff;padding-left:6px}
+.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;padding:10px 0;border-bottom:1px solid #1c1c1c;font-size:14px}
+.kv span:first-child{color:#7a7a7a}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}.nv .ac,.todo .bx::after{transition:none}}
+</style>
+</helmet>
+<div class="d" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<aside style="flex: 0 0 256px; display: flex; flex-direction: column; border-right: 1px solid #1f1f1f; padding: 20px 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 36px">
+<svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="6" y="6" width="10" height="10" style="fill: var(--accent)"></rect></svg>
+<span style="font-size: 16px; font-weight: 500">yaop</span>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; height: 40px; margin: 16px 0 20px; padding: 0 14px; border: 1px solid #262626; color: #7a7a7a">
+<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l4 4"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar</span>
+<input type="search" placeholder="Buscar" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #f2f2f2; font: 400 14px 'Geist', sans-serif">
+<span class="mono" style="color: #7a7a7a">Ctrl K</span>
+</label>
+<nav aria-label="Secciones" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="it" hint-placeholder-count="6">
+<button type="button" class="nv {{it.cls}}" onClick="{{it.pick}}"><span class="bg"></span><span class="ac"></span><span>{{it.label}}</span><span class="mono" style="margin-left: auto; opacity: .55">{{it.key}}</span></button>
+</sc-for>
+</nav>
+<p class="mono" style="margin: 32px 14px 10px; color: #7a7a7a">Fijados</p>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<button type="button" class="nv"><span class="bg"></span><span style="width: 7px; height: 7px; border: 1px solid #8b8b8b"></span><span>Proyecto Yaop</span></button>
+<button type="button" class="nv"><span class="bg"></span><span style="width: 7px; height: 7px; border: 1px solid #8b8b8b"></span><span>Lecturas 2026</span></button>
+<button type="button" class="nv"><span class="bg"></span><span style="width: 7px; height: 7px; border: 1px solid #8b8b8b; border-radius: 50%"></span><span>Ana López</span></button>
+</div>
+<div class="mono" style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 36px; color: #7a7a7a">
+<span style="width: 6px; height: 6px; background: var(--accent)"></span>Sincronizado · 2 dispositivos
+</div>
+</aside>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<div class="mono" style="display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 40px; border-bottom: 1px solid #1f1f1f; color: #7a7a7a">
+<span>Diario</span><span>/</span><span>2026</span><span>/</span><span>Noviembre</span>
+<span style="margin-left: auto">Ctrl ← día anterior · Ctrl → siguiente</span>
+</div>
+<div style="flex: 1; overflow: hidden; padding: 64px 0 0 96px">
+<div style="max-width: 680px">
+<p class="mono" style="margin: 0 0 14px; color: var(--accent)">Hoy</p>
+<h1 style="margin: 0; font-size: 44px; line-height: 1.1; font-weight: 400; letter-spacing: -0.03em">Sábado, 21 de noviembre</h1>
+<div class="mono" style="display: flex; gap: 20px; margin: 18px 0 40px; color: #7a7a7a"><span>Diario</span><span>3 entradas</span><span>Editado 10:42</span></div>
+
+<div style="font-size: 16px; line-height: 1.65; color: #e6e6e6">
+<div class="blk"><span class="h" aria-hidden="true"><svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><rect x="1" y="1" width="2" height="2"></rect><rect x="6" y="1" width="2" height="2"></rect><rect x="1" y="6" width="2" height="2"></rect><rect x="6" y="6" width="2" height="2"></rect><rect x="1" y="11" width="2" height="2"></rect><rect x="6" y="11" width="2" height="2"></rect></svg></span>
+Revisión del emparejamiento en <span class="chip"><i></i>Proyecto Yaop</span>: cada dispositivo nuevo recibe su propio token y el primero entra con el QR del servidor.</div>
+
+<h2 style="margin: 32px 0 6px; font-size: 20px; font-weight: 500; letter-spacing: -0.01em">Tareas</h2>
+<sc-for list="{{tasks}}" as="tk" hint-placeholder-count="3">
+<button type="button" class="todo {{tk.cls}}" aria-pressed="{{tk.pressed}}" onClick="{{tk.toggle}}"><span class="bx"></span><span class="tx">{{tk.text}}</span><span class="mono" style="margin-left: auto; color: #7a7a7a">{{tk.due}}</span></button>
+</sc-for>
+
+<div class="blk" style="margin-top: 28px">
+<a href="https://www.inkandswitch.com/local-first/" style="display: grid; grid-template-columns: 200px minmax(0, 1fr); border: 1px solid #262626; text-decoration: none; color: #f2f2f2">
+<span style="display: block; height: 120px; border-right: 1px solid #262626; background: #050505">
+<svg width="200" height="120" viewBox="0 0 200 120" fill="none" stroke="#5a5a5a" stroke-width="1" aria-hidden="true"><path d="M40 70l60-30 60 30-60 30z"></path><path d="M40 70v8l60 30 60-30v-8"></path><path d="M100 100v8"></path><path d="M78 62l22-11 22 11-22 11z" style="fill: var(--accent); stroke: #000"></path></svg>
+</span>
+<span style="display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 22px">
+<span style="font-size: 16px">Local-first software</span>
+<span class="mono" style="color: #7a7a7a">inkandswitch.com · Enlace web</span>
+</span>
+</a>
+</div>
+
+<div class="blk" style="margin-top: 24px">Ideas para el modo enfoque: ocultar la barra lateral y dejar solo el bloque activo<span class="caret"></span></div>
+</div>
+</div>
+</div>
+</main>
+
+<aside style="flex: 0 0 320px; border-left: 1px solid #1f1f1f; padding: 76px 28px 0">
+<p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Enlaces entrantes · 3</p>
+<a class="link" href="#">Proyecto Yaop</a>
+<a class="link" href="#">Semana 47</a>
+<a class="link" href="#">Ana López</a>
+<p class="mono" style="margin: 40px 0 6px; color: #7a7a7a">Propiedades</p>
+<div class="kv"><span>Tipo</span><span>Diario</span></div>
+<div class="kv"><span>Creado</span><span>21 nov, 08:03</span></div>
+<div class="kv"><span>Etiquetas</span><span><span class="chip" style="height: 22px; font-size: 13px"><i></i>pairing</span></span></div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const sel = st.sel ?? 0;
+    const done = st.done || { 0: true };
+    const navs = [['Hoy', 'D'], ['Objetos', 'O'], ['Tipos', 'T'], ['Consultas', 'Q'], ['Colecciones', 'C'], ['Papelera', '']];
+    const tasks = [
+      ['Probar el QR de configuración del servidor', 'Hoy'],
+      ['Escribir el fixture de merge para anclas', 'Lun 23'],
+      ['Leer «Local-first software»', '']
+    ];
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      nav: navs.map((n, i) => ({ label: n[0], key: n[1], cls: i === sel ? 'on' : '', pick: () => this.setState({ sel: i }) })),
+      tasks: tasks.map((t, i) => ({
+        text: t[0], due: t[1], cls: done[i] ? 'done' : '', pressed: done[i] ? 'true' : 'false',
+        toggle: () => this.setState({ done: Object.assign({}, done, { [i]: !done[i] }) })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

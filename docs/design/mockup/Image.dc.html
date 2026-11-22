@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — imagen con notas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.rb{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;background:transparent;color:#9a9a9a;cursor:pointer;isolation:isolate;transition:color .3s}
+.rb:hover{color:#f2f2f2}
+.rb .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.rb.on{color:#000}.rb.on .ac{transform:scaleY(1)}
+.rb:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.prop{display:grid;grid-template-columns:130px minmax(0,1fr);align-items:center;gap:12px;min-height:42px;border-bottom:1px solid #1a1a1a;font-size:14px}
+.prop .k{display:flex;align-items:center;gap:9px;color:#7a7a7a}
+.notes{flex:0 0 460px;overflow:hidden;border-left:1px solid #1f1f1f;transition:flex-basis .55s cubic-bezier(.2,.8,.1,1)}
+.notes.off{flex-basis:0;border-left-color:transparent}
+.notes>div{width:460px}
+.pic{transition:transform .5s cubic-bezier(.2,.8,.1,1)}
+.bl{display:block;padding:14px 0;border-bottom:1px solid #1a1a1a;text-decoration:none;color:#d6d6d6;transition:padding .35s cubic-bezier(.2,.8,.1,1)}
+.bl:hover{padding-left:6px;color:#fff}
+@media (prefers-reduced-motion:reduce){.rb .ac,.notes,.pic{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<section aria-label="Visor" style="flex: 1; min-width: 0; position: relative; display: flex; flex-direction: column; background: #050505">
+<div style="display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 12px 0 24px; border-bottom: 1px solid #161616">
+<button type="button" class="rb" aria-label="Cerrar visor"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.close}}"></path></svg></button>
+<span class="mono" style="color: #7a7a7a; margin-left: 6px">Imágenes · Esc cierra</span>
+<span class="mono" style="margin-left: auto; color: #8b8b8b">3 / 6</span>
+<button type="button" class="rb" aria-label="Anterior"><span class="ac"></span><svg class="ic" style="transform: scaleX(-1)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.chevron}}"></path></svg></button>
+<button type="button" class="rb" aria-label="Siguiente"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.chevron}}"></path></svg></button>
+<button type="button" class="rb {{notesOn}}" aria-label="Mostrar u ocultar notas" aria-pressed="{{notesPressed}}" onClick="{{toggleNotes}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.side}}"></path></svg></button>
+</div>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<div class="pic" style="transform: scale({{scale}})">
+<svg width="620" height="414" viewBox="0 0 620 414" role="img" aria-label="Foto de una pizarra con notas del sprint (marcador de posición)">
+<rect width="620" height="414" fill="#101010"></rect>
+<g fill="none" stroke="#3a3a3a" stroke-width="1"><rect x="40" y="40" width="540" height="334"></rect><path d="M220 40v334 M400 40v334"></path></g>
+<g fill="#1c1c1c"><rect x="64" y="80" width="120" height="70"></rect><rect x="64" y="168" width="120" height="70"></rect><rect x="250" y="80" width="120" height="70"></rect><rect x="430" y="80" width="120" height="70"></rect><rect x="430" y="168" width="120" height="70"></rect></g>
+<rect x="250" y="168" width="120" height="70" style="fill: var(--accent)"></rect>
+<g fill="#5a5a5a"><rect x="64" y="56" width="60" height="6"></rect><rect x="250" y="56" width="70" height="6"></rect><rect x="430" y="56" width="50" height="6"></rect></g>
+</svg>
+</div>
+</div>
+<div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px; background: #0d0d0d; border: 1px solid #262626">
+<button type="button" class="rb" aria-label="Alejar" onClick="{{zoomOut}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.zoomout}}"></path></svg></button>
+<span class="mono" style="width: 56px; text-align: center; color: #d6d6d6">{{pct}}</span>
+<button type="button" class="rb" aria-label="Acercar" onClick="{{zoomIn}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.zoomin}}"></path></svg></button>
+<span style="width: 1px; height: 22px; background: #262626; margin: 0 4px"></span>
+<button type="button" class="rb" aria-label="Ajustar" onClick="{{fit}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.fit}}"></path></svg></button>
+<button type="button" class="rb" aria-label="Abrir original"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{ic.external}}"></path></svg></button>
+</div>
+</section>
+
+<aside class="notes {{notesOff}}" aria-label="Notas de la imagen">
+<div style="padding: 40px 36px; height: 900px; overflow: hidden">
+<div style="display: flex; gap: 8px; margin-bottom: 18px"><span class="chip"><span class="sq" style="background: #FF8FB3"></span>Imagen</span><span class="chip" style="color: #8b8b8b">Proyecto Yaop</span></div>
+<h1 style="margin: 0; font-size: 32px; line-height: 1.15; font-weight: 400; letter-spacing: -0.025em">Pizarra del sprint</h1>
+<div style="display: flex; gap: 8px; margin: 16px 0 26px"><span class="chip"><span class="sq" style="background: #DCEC4E"></span>planificación</span></div>
+<div class="prop"><span class="k">Categoría</span><span><span class="chip"><span class="sq" style="background: #6EAAFF"></span>Captura</span></span></div>
+<div class="prop"><span class="k">Colores</span><span style="display: flex; gap: 6px"><span style="width: 22px; height: 22px; background: #101010; border: 1px solid #333"></span><span style="width: 22px; height: 22px; background: #1c1c1c"></span><span style="width: 22px; height: 22px; background: #3a3a3a"></span><span style="width: 22px; height: 22px; background: #5a5a5a"></span><span style="width: 22px; height: 22px; background: var(--accent)"></span></span></div>
+<div class="prop"><span class="k">Archivo</span><span class="mono" style="color: #bdbdbd">2400 × 1600 · 312 KB</span></div>
+<div class="prop"><span class="k">Llegó</span><span>Compartida desde Android · hoy 09:20</span></div>
+<p style="margin: 24px 0 0; font-size: 15px; line-height: 1.7; color: #d6d6d6">La tarjeta en verde es lo que entra esta semana: emparejamiento con token propio por dispositivo.</p>
+<p class="mono" style="margin: 36px 0 2px; color: #7a7a7a">Enlaces entrantes · 2</p>
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: #E8EEFF"></span>Sábado, 21 de noviembre<span class="mono" style="margin-left: auto; color: #7a7a7a">Creado hoy</span></span></a>
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: #FFD166"></span>Proyecto Yaop<span class="mono" style="margin-left: auto; color: #7a7a7a">Bloque imagen</span></span><span style="display: block; margin-top: 6px; font-size: 13px; color: #8b8b8b">…así quedó la planificación tras la reunión…</span></a>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      close: 'M6 6l12 12 M18 6L6 18', chevron: 'M9 6l6 6-6 6', side: 'M3 4h18v16H3z M15 4v16',
+      zoomin: c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21 M8 10.5h5 M10.5 8v5', zoomout: c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21 M8 10.5h5',
+      fit: 'M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5', external: 'M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6'
+    };
+    const st = this.state || {};
+    const z = st.z ?? 1;
+    const notes = st.notes ?? true;
+    const clamp = (v) => Math.max(0.5, Math.min(2, Math.round(v * 100) / 100));
+    return {
+      accent: this.props.accent ?? '#C8F04A', ic: I,
+      scale: z, pct: Math.round(z * 100) + '%',
+      zoomIn: () => this.setState({ z: clamp(z + 0.25) }), zoomOut: () => this.setState({ z: clamp(z - 0.25) }), fit: () => this.setState({ z: 1 }),
+      notesOff: notes ? '' : 'off', notesOn: notes ? 'on' : '', notesPressed: notes ? 'true' : 'false',
+      toggleNotes: () => this.setState({ notes: !notes })
+    };
+  }
+}
+</script>
+</body>
+</html>

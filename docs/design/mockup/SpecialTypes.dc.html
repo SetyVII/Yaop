@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — tipos especiales y sus opciones</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.ty{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:44px;padding:0 20px;border:0;border-bottom:1px solid #161616;background:transparent;color:#bdbdbd;font:400 15px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.ty .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.ty.on{color:#000}.ty.on .ac{transform:scaleY(1)}
+.ty .k{margin-left:auto;color:#7a7a7a}.ty.on .k{color:#000}
+.ty:not(.on):hover{color:#fff}
+.pr{display:grid;grid-template-columns:200px 150px minmax(0,1fr);gap:16px;align-items:start;padding:12px 0;border-bottom:1px solid #161616;font-size:14px}
+.pr .n{display:flex;align-items:center;gap:9px;color:#e6e6e6}
+.kind{color:#8b8b8b}
+.ops{display:flex;flex-wrap:wrap;gap:6px}
+.op{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #262626;background:transparent;color:#d6d6d6;font:400 13px 'Geist',sans-serif;cursor:pointer;animation:in .35s cubic-bezier(.2,.8,.1,1) both;transition:border-color .2s,background .25s,color .25s}
+.op:hover{border-color:#5a5a5a}
+.op.on{background:var(--accent);border-color:var(--accent);color:#000}
+.op.on .sq{outline:1px solid #000}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ty:focus-visible,.op:focus-visible{outline:1px solid #f2f2f2;outline-offset:1px}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border:1px solid #2a2a2a;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#9a9a9a}
+.tag.prop{border-color:var(--accent);color:#f2f2f2}
+@media (prefers-reduced-motion:reduce){.ty .ac{transition:none}.op{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+<nav aria-label="Tipos especiales" style="flex: 0 0 300px; border-right: 1px solid #1f1f1f; padding-top: 40px">
+<p class="mono" style="margin: 0 20px 6px; color: #7a7a7a">Tipos con propiedades propias</p>
+<h1 style="margin: 0 20px 24px; font-size: 24px; font-weight: 400; letter-spacing: -0.02em">Sus categorías y temas</h1>
+<sc-for list="{{types}}" as="t" hint-placeholder-count="8">
+<button type="button" class="ty {{t.cls}}" aria-pressed="{{t.sel}}" onClick="{{t.pick}}"><span class="ac"></span><span class="sq" style="background: {{t.color}}"></span>{{t.label}}<span class="k mono">{{t.n}}</span></button>
+</sc-for>
+<p style="margin: 22px 20px 0; font-size: 12px; line-height: 1.6; color: #8b8b8b">Listas sacadas de Capacities el 22 nov 2026 abriendo cada desplegable. En Yaop vienen de serie y se pueden editar.</p>
+</nav>
+<main style="flex: 1; min-width: 0; padding: 40px 56px; overflow: hidden">
+<div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px"><h2 style="margin: 0; font-size: 30px; font-weight: 400; letter-spacing: -0.02em">{{label}}</h2><span class="tag">{{origin}}</span></div>
+<p style="margin: 0 0 18px; max-width: 760px; font-size: 14px; line-height: 1.6; color: #a3a3a3">{{desc}}</p>
+<div class="pr mono" style="color: #7a7a7a; font-size: 11px; padding-top: 0"><span>Propiedad</span><span>Clase</span><span>Opciones · pulsa para elegir</span></div>
+<sc-for list="{{props}}" as="p" hint-placeholder-count="6">
+<div class="pr"><span class="n">{{p.name}}<sc-if value="{{p.proposal}}" hint-placeholder-val="{{ false }}"><span class="tag prop">Propuesta</span></sc-if></span><span class="kind mono">{{p.kind}}</span>
+<span class="ops"><sc-for list="{{p.opts}}" as="o" hint-placeholder-count="0"><button type="button" class="op {{o.cls}}" aria-pressed="{{o.sel}}" onClick="{{o.pick}}" style="animation-delay: {{o.delay}}ms"><span class="sq" style="background: {{o.color}}"></span>{{o.label}}</button></sc-for><sc-if value="{{p.noOpts}}" hint-placeholder-val="{{ true }}"><span style="color: #7a7a7a">{{p.note}}</span></sc-if></span></div>
+</sc-for>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const PAL = ['#6EAAFF', '#C2B2FF', '#FF786E', '#7FE0A6', '#FFD666', '#FFB07A', '#7AF0D0', '#FF8FB3', '#BFE3FF', '#FFFFFF'];
+    const S = (name, kind, opts, extra) => Object.assign({ name, kind, opts: opts || [], note: '' }, extra || {});
+    const T = [
+      ['web', 'Enlace web', '#7AF0D0', 'Tipo básico', 'Propiedades fijas del tipo. Categoría dice qué es la página; Tema, de qué trata. Las dos se rellenan al pegar la URL y se pueden cambiar.', [
+        S('Categoría', 'Selección', ['Artículo', 'Entrada de blog', 'Noticias', 'Documentación', 'Tutorial', 'Guía', 'Video', 'Podcast', 'Audio', 'Herramienta', 'App', 'Servicio', 'Publicación social', 'Hilo de foro', 'Preguntas y respuestas', 'Producto', 'Tienda', 'Marketplace', 'Receta', 'Evento', 'Curso', 'Webinar', 'Portafolio', 'Perfil', 'Acerca de', 'Repositorio', 'Código', 'Galería de imágenes', 'Infografía', 'Otro']),
+        S('Tema', 'Selección múltiple', ['Tecnología', 'Programación', 'IA/ML', 'Negocios', 'Finanzas', 'Marketing', 'Ciencia', 'Investigación', 'Académico', 'Salud', 'Fitness', 'Bienestar', 'Entretenimiento', 'Videojuegos', 'Medios', 'Educación', 'Aprendizaje', 'Noticias', 'Política', 'Actualidad', 'Estilo de vida', 'Viajes', 'Comida', 'Diseño', 'Arte', 'Creativo', 'Productividad', 'Herramientas', 'Otro']),
+        S('Revisado', 'Casilla', [], { note: 'Sí / No — la bandeja «Por revisar» filtra por esto' }),
+        S('Vista previa', 'Imagen', [], { note: 'Portada copiada en local, 480 px' }),
+        S('URL · Dominio · Descripción', 'URL · Texto', [], { note: 'De OpenGraph, al pegar' })]],
+      ['image', 'Imagen', '#FF8FB3', 'Tipo básico', 'Cada imagen subida es un objeto. Categoría dice qué muestra; Colores, sus colores dominantes.', [
+        S('Categoría', 'Selección', ['Documento', 'Nota manuscrita', 'Recibo', 'Página de libro', 'Portada', 'Tarjeta de presentación', 'Captura de pantalla', 'Mockup de UI', 'Código', 'Diagrama', 'Infografía', 'Mapa', 'Pizarra', 'Foto (Personas)', 'Foto (Animal)', 'Foto (Naturaleza)', 'Foto (Objeto)', 'Foto (Comida)', 'Foto (Arquitectura)', 'Foto (Evento)', 'Ilustración', 'Pintura', 'Meme', 'Logo/Icono', 'Médico', 'Científico', 'Otro']),
+        S('Colores', 'Selección múltiple', ['Negro', 'Azul', 'Cian', 'Verde', 'Verde azulado', 'Turquesa', 'Índigo', 'Gris', 'Morado', 'Marrón', 'Beige claro', 'Violeta', 'Beige', 'Fucsia', 'Dorado', 'Magenta', 'Naranja', 'Rosa', 'Rojo', 'Blanco', 'Amarillo']),
+        S('Archivo', 'Datos', [], { note: 'Tipo MIME · tamaño · ancho · alto · fuente' })]],
+      ['book', 'Libro', '#9B8CFF', 'Tipo base', 'En tu Capacities el tipo Libro tiene Autor, Calificación, Recomendado por y Medio. No tiene género: en Yaop el género está decidido (product §4.3) y propongo esta lista.', [
+        S('Medio', 'Selección', ['Libro', 'Audiolibro', 'E-Book']),
+        S('Género', 'Selección múltiple', ['Novela', 'Ciencia ficción', 'Fantasía', 'Misterio', 'Thriller', 'Terror', 'Romance', 'Histórica', 'Aventura', 'Clásicos', 'Poesía', 'Teatro', 'Cómic', 'Manga', 'Autoayuda', 'Desarrollo personal', 'Productividad', 'Psicología', 'Filosofía', 'Ensayo', 'Divulgación', 'Ciencia', 'Historia', 'Biografía', 'Memorias', 'Negocios', 'Economía', 'Tecnología', 'Programación', 'Diseño', 'Arte', 'Viajes', 'Cocina', 'Salud', 'Infantil', 'Juvenil'], { proposal: true }),
+        S('Estado', 'Selección', ['Pendiente', 'Leyendo', 'Leído', 'Abandonado'], { proposal: true }),
+        S('Autor · Recomendado por', 'Referencia a Persona', [], { note: 'En Capacities son texto; en Yaop, objetos Persona' }),
+        S('Calificación', 'Número', [], { note: '1 a 5' })]],
+      ['media', 'Medio', '#7AF0D0', 'Tipo de plantilla', 'Para lo que consumes que no es un libro. Lo tienes en Capacities como tipo propio.', [
+        S('Tipo', 'Selección', ['Libro', 'Artículo', 'Video', 'Podcast', 'Película', 'Serie de TV', 'Clase', 'Música', 'Presentación', 'Curso']),
+        S('Calificación', 'Selección', ['1 estrella', '2 estrellas', '3 estrellas', '4 estrellas', '5 estrellas', '6 estrellas']),
+        S('Resumen · Fecha de fin', 'Texto · Fecha', [], { note: 'Fecha y hora' })]],
+      ['person', 'Persona', '#FFB38A', 'Tipo base', 'Categoría clasifica a la persona; en tu Capacities incluye «Friend» en inglés.', [
+        S('Categoría', 'Selección', ['Amigo', 'Familia', 'Autor', 'Filósofo', 'Político', 'Científico', 'Artista', 'Emprendedor', 'Académico', 'Periodista']),
+        S('Contacto', 'Texto', [], { note: 'Correo y teléfono clicables (hoja de ruta)' }),
+        S('Foto', 'Imagen', [], { note: 'Avatar de la cabecera' })]],
+      ['journal', 'Nota diaria', '#E8EEFF', 'Tipo básico', 'Solo tiene una propiedad propia: Revisado, para marcar que repasaste el día.', [
+        S('Revisado', 'Casilla', [], { note: 'Sí / No' }),
+        S('Plantilla', 'Bloques', [], { note: 'Plantilla del día editable' })]],
+      ['tag', 'Etiqueta', '#DCEC4E', 'Tipo básico', 'Las etiquetas tienen alias, color e icono. Siempre en minúsculas.', [
+        S('Color', 'Paleta', ['amarillo', 'naranja', 'rojo', 'rosa', 'morado', 'azul', 'hielo', 'turquesa', 'verde', 'gris']),
+        S('Alias', 'Texto', [], { note: 'Otros nombres que encuentran la etiqueta' })]],
+      ['page', 'Página', '#BFE3FF', 'Tipo básico', 'La nota genérica. Capacities la crea cuando escribes un título que no es de ningún tipo.', [
+        S('Alias · Descripción · Portada · Icono', 'Texto · Imagen', [], { note: 'Sin opciones de selección' })]]
+    ];
+    const st = this.state || {};
+    const ti = st.t ?? 0;
+    const picked = st.picked || {};
+    const t = T[ti];
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      types: T.map((x, i) => ({ label: x[1], color: x[2], n: x[5].reduce((a, p) => a + p.opts.length, 0) || '—', cls: i === ti ? 'on' : '', sel: i === ti ? 'true' : 'false', pick: () => this.setState({ t: i }) })),
+      label: t[1], origin: t[3], desc: t[4],
+      props: t[5].map((p, pi) => {
+        const multi = /múltiple/.test(p.kind) || p.name === 'Género';
+        const key = t[0] + ':' + pi;
+        const cur = picked[key] || [];
+        return {
+          name: p.name, kind: p.kind, note: p.note, noOpts: p.opts.length === 0, proposal: !!p.proposal,
+          opts: p.opts.map((o, oi) => {
+            const on = cur.includes(o);
+            return { label: o, color: PAL[oi % PAL.length], delay: Math.min(oi * 12, 300), cls: on ? 'on' : '', sel: on ? 'true' : 'false',
+              pick: () => { const nx = multi ? (on ? cur.filter((x) => x !== o) : cur.concat([o])) : (on ? [] : [o]); this.setState({ picked: Object.assign({}, picked, { [key]: nx }) }); } };
+          })
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

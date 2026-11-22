@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — sin plan de pago</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.tr{display:grid;grid-template-columns:minmax(0,1.3fr) 200px minmax(0,1.2fr);align-items:center;gap:24px;min-height:52px;border-bottom:1px solid #1a1a1a;font-size:15px;transition:background .2s}
+.tr:hover{background:#080808}
+.tag{display:inline-flex;align-items:center;gap:8px;height:24px;padding:0 9px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase;border:1px solid #2a2a2a;color:#9a9a9a}
+.tag.yes{background:var(--accent);border-color:var(--accent);color:#000}
+.tag.dec{border-color:var(--accent);color:#f2f2f2}
+.tag.pro{color:#bdbdbd}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; padding: 64px 96px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 44px">
+<div>
+<p class="mono" style="margin: 0 0 18px; color: #7a7a7a">Sin plan de pago</p>
+<h1 style="margin: 0; font-size: 52px; line-height: 1.02; font-weight: 400; letter-spacing: -0.035em; max-width: 15ch">Todo lo tuyo, sin desbloquear nada.</h1>
+</div>
+<p style="margin: 0; max-width: 420px; font-size: 16px; line-height: 1.6; color: #a3a3a3">Lo que otras apps cobran aparte, aquí es parte del programa. Las etiquetas dicen en qué punto está cada cosa.</p>
+</div>
+<div class="tr mono" style="min-height: 36px; color: #7a7a7a; font-size: 11px"><span>Función</span><span>En Capacities</span><span>En Yaop</span></div>
+<div class="tr"><span>Tareas con estado y fecha</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag yes">Existe</span><span style="color: #8b8b8b; font-size: 14px">en el diario del día</span></span></div>
+<div class="tr"><span>Consultas y vistas guardadas</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag yes">Existe</span><span style="color: #8b8b8b; font-size: 14px">tabla, galería y lista</span></span></div>
+<div class="tr"><span>Búsqueda por tipo y etiqueta</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag yes">Existe</span><span style="color: #8b8b8b; font-size: 14px">texto completo y consultas, sin IA</span></span></div>
+<div class="tr"><span>Historial de versiones</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag dec">Decidido</span><span style="color: #8b8b8b; font-size: 14px">una versión por sesión, 30 días</span></span></div>
+<div class="tr"><span>Pizarras</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag">Hoja de ruta</span><span style="color: #8b8b8b; font-size: 14px">hoy es un prototipo visual</span></span></div>
+<div class="tr"><span>Calendario externo</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag">Hoja de ruta</span><span style="color: #8b8b8b; font-size: 14px">CalDAV, prioridad alta</span></span></div>
+<div class="tr"><span>API pública</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag">Hoja de ruta</span></span></div>
+<div class="tr"><span>Medios sin tope mensual</span><span><span class="tag pro">5 GB y luego 100 MB/mes</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag yes">Existe</span><span style="color: #8b8b8b; font-size: 14px">el límite es tu disco</span></span></div>
+<div class="tr"><span>Cifrado de extremo a extremo</span><span><span class="tag">No</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag yes">Siempre</span><span style="color: #8b8b8b; font-size: 14px">ni tu servidor lo lee</span></span></div>
+<div class="tr"><span>Asistente de IA</span><span><span class="tag pro">Pro</span></span><span style="display: flex; align-items: center; gap: 12px"><span class="tag">No, por ahora</span><span style="color: #8b8b8b; font-size: 14px">buscar sin IA es un principio</span></span></div>
+<p class="mono" style="margin: 26px 0 0; color: #7a7a7a">Planes de Capacities según capacities.io/pricing, consultado el 21 nov 2026</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { accent: this.props.accent ?? '#C8F04A' }; }
+}
+</script>
+</body>
+</html>

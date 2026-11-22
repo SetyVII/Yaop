@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — iconos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.cell{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;height:104px;padding:14px;border-right:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;color:#d6d6d6;isolation:isolate;transition:color .3s}
+.cell::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .45s cubic-bezier(.2,.8,.1,1)}
+.cell:hover{color:#000}
+.cell:hover::before{transform:scaleY(1)}
+.cell:hover .lbl{color:#000}
+.cell:hover .sq{outline:1px solid #000}
+.lbl{color:#7a7a7a;transition:color .3s}
+.sq{display:inline-block;width:7px;height:7px}
+@media (prefers-reduced-motion:reduce){.cell::before{transition:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden; padding: 56px 72px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px">
+<div>
+<p class="mono" style="margin: 0 0 12px; color: #7a7a7a">Iconos</p>
+<h1 style="margin: 0; font-size: 40px; font-weight: 400; letter-spacing: -0.03em">Trazo fino, esquinas rectas.</h1>
+</div>
+<p class="mono" style="margin: 0; color: #7a7a7a; text-align: right; line-height: 1.8">Rejilla 24 · trazo 1,5 · extremos cuadrados<br>sin relleno · el color va en el cuadrado del tipo</p>
+</div>
+<p class="mono" style="margin: 0 0 8px; color: #7a7a7a">Tipos base · 16</p>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); border-top: 1px solid #1a1a1a; border-left: 1px solid #1a1a1a">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="16">
+<div class="cell"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{t.d}}"></path></svg><span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span class="sq" style="background: {{t.color}}"></span>{{t.label}}</span></div>
+</sc-for>
+</div>
+<p class="mono" style="margin: 28px 0 8px; color: #7a7a7a">Interfaz · 24</p>
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); border-top: 1px solid #1a1a1a; border-left: 1px solid #1a1a1a">
+<sc-for list="{{ui}}" as="t" hint-placeholder-count="24">
+<div class="cell" style="height: 92px; padding: 12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{t.d}}"></path></svg><span class="lbl" style="font-size: 12px">{{t.label}}</span></div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const types = [
+      ['Diario', '#E8EEFF', 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z'], ['Nota', '#BFE3FF', 'M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h5'],
+      ['Tarea', '#BFE3FF', 'M4 4h16v16H4z M8 12l3 3 5-6'], ['Proyecto', '#FFD166', 'M3 7h7l2 2h9v11H3z'],
+      ['Persona', '#FFB38A', c(12, 8, 4) + ' M4 21c1-4 4-6 8-6s7 2 8 6'], ['Libro', '#9B8CFF', 'M5 4h11a3 3 0 013 3v14H8a3 3 0 01-3-3z M5 18a3 3 0 013-3h11'],
+      ['Enlace web', '#7AF0D0', 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2'], ['Imagen', '#FF8FB3', 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5)],
+      ['Vídeo', '#BFE3FF', 'M3 6h13v12H3z M16 10l5-3v10l-5-3'], ['Audio', '#BFE3FF', 'M4 10v4 M8 7v10 M12 4v16 M16 8v8 M20 11v2'],
+      ['PDF', '#BFE3FF', 'M6 3h9l4 4v14H6z M15 3v4h4 M9 13h6 M9 17h4'], ['Archivo', '#BFE3FF', 'M6 3h9l4 4v14H6z M15 3v4h4'],
+      ['Etiqueta', '#DCEC4E', 'M3 12V3h9l9 9-9 9z M7.5 7.5h.01'], ['Pizarra', '#BFE3FF', 'M3 4h18v13H3z M8 21l4-4 4 4 M7 9h4 M7 12h7'],
+      ['Tabla', '#BFE3FF', 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14'], ['Hábito', '#86E8A8', 'M12 21a7 7 0 007-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 007 7z']
+    ].map((t) => ({ label: t[0], color: t[1], d: t[2] }));
+    const ui = [
+      ['Buscar', c(10.5, 10.5, 6.5) + ' M15.5 15.5L21 21'], ['Nuevo', 'M12 5v14 M5 12h14'], ['Calendario', 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5'],
+      ['Objetos', 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z'], ['Grafo', c(6, 6, 2) + ' ' + c(18, 8, 2) + ' ' + c(10, 18, 2) + ' M8 6.3l8 1.4 M6.7 8l2.6 8 M16.6 9.6l-5.2 6.8'],
+      ['Panel', 'M3 4h18v16H3z M15 4v16'], ['Filtro', 'M4 5h16 M7 12h10 M10 19h4'], ['Ordenar', 'M7 4v16 M3 16l4 4 4-4 M17 20V4 M13 8l4-4 4 4'],
+      ['Lista', 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01'], ['Kanban', 'M4 4h4v16H4z M10 4h4v10h-4z M16 4h4v13h-4z'],
+      ['Arrastrar', 'M9 6h.01 M15 6h.01 M9 12h.01 M15 12h.01 M9 18h.01 M15 18h.01'], ['Mención', c(12, 12, 4) + ' M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1'],
+      ['Título', 'M5 5v14 M13 5v14 M5 12h8 M17 12l3-2v9'], ['Cita', 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7'], ['Código', 'M8 7l-5 5 5 5 M16 7l5 5-5 5'],
+      ['Fórmula', 'M18 5H6l7 7-7 7h12'], ['Aviso', 'M4 4h16v12H9l-5 4z'], ['Desplegable', 'M8 5l8 7-8 7z'],
+      ['Historial', 'M3 12a9 9 0 103-6.7 M3 4v5h5 M12 7v5l3 2'], ['Candado', 'M5 11h14v10H5z M8 11V7a4 4 0 018 0v4'],
+      ['Sincronizar', 'M4 12a8 8 0 0114-5.3 M18 3v4h-4 M20 12a8 8 0 01-14 5.3 M6 21v-4h4'], ['Abrir fuera', 'M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6'],
+      ['Papelera', 'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14'], ['Cerrar', 'M6 6l12 12 M18 6L6 18']
+    ].map((t) => ({ label: t[0], d: t[1] }));
+    return { accent: this.props.accent ?? '#C8F04A', types, ui };
+  }
+}
+</script>
+</body>
+</html>

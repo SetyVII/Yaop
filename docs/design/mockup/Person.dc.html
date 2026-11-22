@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — persona</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:18px;height:18px;flex:0 0 auto}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;background:transparent;color:#e6e6e6;font:400 13px 'Geist',sans-serif;white-space:nowrap;cursor:pointer;transition:border-color .2s}
+.chip:hover{border-color:#5a5a5a}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.prop{display:grid;grid-template-columns:140px minmax(0,1fr);align-items:center;gap:12px;min-height:42px;border-bottom:1px solid #1a1a1a;font-size:14px}
+.prop .k{display:flex;align-items:center;gap:9px;color:#7a7a7a}
+.seg{position:relative;display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:0;background:transparent;color:#9a9a9a;font:400 13px 'Geist',sans-serif;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleY(1)}
+.seg:not(.on):hover{color:#f2f2f2}
+.seg:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.bl{display:block;padding:16px 0;border-bottom:1px solid #1a1a1a;text-decoration:none;color:#d6d6d6;animation:in .4s cubic-bezier(.2,.8,.1,1) both;transition:padding .35s cubic-bezier(.2,.8,.1,1)}
+.bl:hover{padding-left:6px;color:#fff}
+.bl mark{background:transparent;color:#f2f2f2;border-bottom:1px solid var(--accent)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.seg .ac{transition:none}.bl{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<main style="flex: 0 0 720px; border-right: 1px solid #1f1f1f; padding: 56px 72px">
+<div style="display: flex; align-items: center; gap: 20px; margin-bottom: 22px">
+<span style="width: 72px; height: 72px; border: 1px solid #FFB38A; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #FFB38A; letter-spacing: -0.02em">AL</span>
+<div>
+<span class="chip"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Persona</span>
+<h1 style="margin: 10px 0 0; font-size: 36px; line-height: 1.1; font-weight: 400; letter-spacing: -0.03em">Ana López</h1>
+</div>
+</div>
+<div style="display: flex; gap: 8px; margin-bottom: 28px"><span class="chip"><span class="sq" style="background: #7FE0A6"></span>amigos</span></div>
+<div class="prop"><span class="k">Relación</span><span><span class="chip"><span class="sq" style="background: #7FE0A6"></span>Amiga</span></span></div>
+<div class="prop"><span class="k">Cumpleaños</span><span>14 de marzo</span></div>
+<div class="prop"><span class="k">Correo</span><span style="color: #bdbdbd; text-decoration: underline; text-decoration-color: #444">ana@ejemplo.com</span></div>
+<div class="prop"><span class="k">Trabaja en</span><span class="chip" style="width: fit-content"><span class="sq" style="background: #FFD166"></span>Estudio Norte</span></div>
+<div class="prop"><span class="k">Me recomendó</span><span class="chip" style="width: fit-content"><span class="sq" style="background: #9B8CFF"></span>Cómo tomar notas inteligentes</span></div>
+<p style="margin: 28px 0 0; font-size: 16px; line-height: 1.7; color: #e6e6e6">Nos conocimos en el taller de escritura. Le interesa todo lo que sea local y sin cuentas.</p>
+</main>
+
+<aside style="flex: 1; min-width: 0; padding: 56px 56px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 400">Enlaces entrantes</h2>
+<span class="mono" style="color: #7a7a7a">{{count}} de 6</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 10px; border-bottom: 1px solid #1f1f1f; padding-bottom: 12px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" class="seg {{f.cls}}" aria-pressed="{{f.sel}}" onClick="{{f.pick}}"><span class="ac"></span><span class="sq" style="background: {{f.color}}"></span>{{f.label}}<span class="mono" style="opacity: .6">{{f.n}}</span></button>
+</sc-for>
+</div>
+<sc-for list="{{refs}}" as="r" hint-placeholder-count="4">
+<a class="bl" href="#"><span style="display: flex; align-items: center; gap: 9px; font-size: 14px"><span class="sq" style="background: {{r.color}}"></span>{{r.title}}<span class="mono" style="margin-left: auto; color: #7a7a7a">{{r.when}}</span></span><span style="display: block; margin-top: 8px; font-size: 13px; line-height: 1.55; color: #8b8b8b">{{r.pre}}<mark>Ana López</mark>{{r.post}}</span></a>
+</sc-for>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const f = st.f ?? 'all';
+    const TY = { journal: ['Diario', '#E8EEFF'], meeting: ['Reunión', '#FFB07A'], book: ['Libro', '#9B8CFF'], note: ['Nota', '#BFE3FF'] };
+    const R = [
+      ['journal', 'Sábado, 21 de noviembre', 'Hoy', '…café con ', ' sobre cómo sincronizar sin que el servidor lea nada.'],
+      ['journal', 'Martes, 17 de noviembre', 'Hace 4 días', 'Llamar a ', ' para lo del taller del jueves.'],
+      ['meeting', 'Taller de escritura · nov', '12 nov', 'Asistentes: yo, ', ', Marcos.'],
+      ['book', 'Cómo tomar notas inteligentes', '2 nov', 'Recomendado por ', '.'],
+      ['journal', 'Domingo, 1 de noviembre', '1 nov', 'Comida con ', ' y su hermana.'],
+      ['note', 'Ideas de regalo', 'Oct', 'Para ', ': cuaderno punteado, la edición de bolsillo.']
+    ];
+    const counts = {}; R.forEach((r) => { counts[r[0]] = (counts[r[0]] || 0) + 1; });
+    const refs = R.filter((r) => f === 'all' || r[0] === f).map((r) => ({ title: r[1], when: r[2], pre: r[3], post: r[4], color: TY[r[0]][1] }));
+    const filters = [['all', 'Todo', '#5a5a5a', R.length]].concat(Object.keys(TY).map((k) => [k, TY[k][0], TY[k][1], counts[k]])).map((x) => ({ label: x[1], color: x[2], n: x[3], cls: x[0] === f ? 'on' : '', sel: x[0] === f ? 'true' : 'false', pick: () => this.setState({ f: x[0] }) }));
+    return { accent: this.props.accent ?? '#C8F04A', refs, filters, count: refs.length };
+  }
+}
+</script>
+</body>
+</html>

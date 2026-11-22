@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — colocar tipos y objetos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.b,.b *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:16px;height:16px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 9px;border:1px solid #2a2a2a;color:#e6e6e6;font-size:15px;vertical-align:1px;white-space:nowrap}
+.seg{position:relative;height:34px;padding:0 14px;border:1px solid #262626;background:transparent;color:#bdbdbd;font:400 13px 'Geist Mono',monospace;cursor:pointer;isolation:isolate;transition:color .3s}
+.seg .ac{position:absolute;inset:-1px;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.seg.on{color:#000}.seg.on .ac{transform:scaleY(1)}
+.seg:focus-visible,.it:focus-visible,.mi:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.pop{width:400px;padding:6px 0;background:#0a0a0a;border:1px solid #2a2a2a;box-shadow:0 24px 48px rgba(0,0,0,.6);animation:pop .3s cubic-bezier(.2,.8,.1,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.it,.mi{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 14px;border:0;background:transparent;color:#d6d6d6;font:400 14px 'Geist',sans-serif;text-align:left;cursor:pointer;isolation:isolate;transition:color .3s}
+.it .ac,.mi .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.it.on,.mi:hover{color:#000}.it.on .ac,.mi:hover .ac{transform:scaleX(1)}
+.it .k,.mi .k{margin-left:auto;color:#7a7a7a;transition:color .3s}.it.on .k,.mi:hover .k{color:#000}
+.mi.danger{color:#FF786E}
+.caret{display:inline-block;width:2px;height:21px;background:var(--accent);vertical-align:-4px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.view{animation:pop .35s cubic-bezier(.2,.8,.1,1) both}
+@media (prefers-reduced-motion:reduce){.seg .ac,.it .ac,.mi .ac{transition:none}.pop,.view,.caret{animation:none}}
+</style>
+</helmet>
+<div class="b" style="--accent: {{accent}}; width: 1440px; height: 900px; display: flex; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+
+<section aria-label="Menú @" style="flex: 0 0 640px; border-right: 1px solid #1f1f1f; padding: 48px 56px">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">1 · Mencionar con @</p>
+<h1 style="margin: 0 0 8px; font-size: 30px; font-weight: 400; letter-spacing: -0.02em">Primero el tipo, luego el objeto.</h1>
+<p style="margin: 0 0 22px; font-size: 14px; line-height: 1.6; color: #8b8b8b; max-width: 500px">Al escribir, salen antes los tipos que coinciden. Elegir un tipo estrecha la lista a sus objetos y deja crear uno nuevo de ese tipo.</p>
+<div style="display: flex; gap: 6px; margin-bottom: 26px">
+<sc-for list="{{stages}}" as="s" hint-placeholder-count="4"><button type="button" class="seg {{s.cls}}" aria-pressed="{{s.sel}}" onClick="{{s.pick}}"><span class="ac"></span>{{s.label}}</button></sc-for>
+</div>
+<div style="font-size: 18px; line-height: 1.7; color: #e6e6e6; margin-bottom: 10px">Esta semana leo <span style="color: #f2f2f2">{{query}}</span><span class="caret"></span></div>
+<div class="pop" role="listbox" aria-label="Resultados de la mención">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<p class="mono" style="margin: 8px 14px 4px; color: #7a7a7a">{{g.title}}</p>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+<button type="button" role="option" class="it {{it.cls}}" aria-selected="{{it.sel}}" onMouseEnter="{{it.hover}}"><span class="ac"></span><svg class="ic" style="color: {{it.color}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{it.d}}"></path></svg><span>{{it.label}}</span><span class="k mono">{{it.hint}}</span></button>
+</sc-for>
+</sc-for>
+<p class="mono" style="margin: 6px 0 0; padding: 10px 14px 6px; border-top: 1px solid #1f1f1f; color: #8b8b8b">{{foot}}</p>
+</div>
+<p class="mono" style="margin: 18px 0 0; color: #7a7a7a">Alias: @hoy · @imagen/ · @persona/ · @libros/</p>
+</section>
+
+<section aria-label="Objeto insertado" style="flex: 1; min-width: 0; padding: 48px 56px; position: relative">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">2 · Un objeto dentro de una nota</p>
+<h2 style="margin: 0 0 22px; font-size: 30px; font-weight: 400; letter-spacing: -0.02em">Cuatro formas de verlo.</h2>
+<div style="display: flex; gap: 6px; margin-bottom: 26px">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="4"><button type="button" class="seg {{v.cls}}" aria-pressed="{{v.sel}}" onClick="{{v.pick}}" style="font-family: 'Geist', sans-serif"><span class="ac"></span>{{v.label}}</button></sc-for>
+</div>
+<div style="max-width: 560px; font-size: 16px; line-height: 1.7; color: #e6e6e6">
+<p style="margin: 0 0 12px">Para el club de lectura de diciembre:</p>
+<sc-if value="{{vChip}}" hint-placeholder-val="{{ false }}"><p class="view" style="margin: 0">Empezamos con <span class="chip"><span class="sq" style="background: #9B8CFF"></span>Cómo tomar notas inteligentes</span> y seguimos.</p></sc-if>
+<sc-if value="{{vSmall}}" hint-placeholder-val="{{ true }}"><div class="view" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #262626; max-width: 380px"><span style="width: 30px; height: 40px; border: 1px solid #333; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; background: var(--accent)"></span></span><span style="display: flex; flex-direction: column"><span style="font-size: 14px">Cómo tomar notas inteligentes</span><span class="mono" style="color: #9B8CFF">Libro</span></span></div></sc-if>
+<sc-if value="{{vWide}}" hint-placeholder-val="{{ false }}"><div class="view" style="display: flex; gap: 16px; padding: 14px; border: 1px solid #262626"><span style="width: 62px; height: 86px; border: 1px solid #333; display: flex; align-items: center; justify-content: center"><span style="width: 20px; height: 20px; background: var(--accent)"></span></span><span style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="color: #9B8CFF">Libro</span><span style="font-size: 17px">Cómo tomar notas inteligentes</span><span style="font-size: 13px; color: #8b8b8b">Sönke Ahrens · Leyendo · 4/5</span></span></div></sc-if>
+<sc-if value="{{vFull}}" hint-placeholder-val="{{ false }}"><div class="view" style="padding: 18px 20px; border: 1px solid #262626"><span class="mono" style="color: #9B8CFF">Libro · solo lectura aquí</span><p style="margin: 8px 0 6px; font-size: 20px">Cómo tomar notas inteligentes</p><p style="margin: 0 0 6px; font-size: 14px; color: #bdbdbd">La idea central: una nota solo vale si se conecta con otras.</p><p style="margin: 0; font-size: 14px; color: #bdbdbd">Escribir es la consecuencia de leer con un objetivo.</p></div></sc-if>
+</div>
+<p style="margin: 14px 0 0; max-width: 560px; font-size: 13px; line-height: 1.6; color: #8b8b8b">Completo muestra el contenido pero se edita en su página: en Yaop no hay transclusión editable.</p>
+
+<div style="position: absolute; left: 56px; top: 520px; display: flex; gap: 20px; align-items: flex-start">
+<div class="pop" role="menu" aria-label="Menú del objeto" style="width: 300px">
+<p class="mono" style="margin: 8px 14px 4px; color: #7a7a7a">Menú del objeto · ⋮⋮</p>
+<button type="button" role="menuitem" class="mi"><span class="ac"></span>Abrir<span class="k mono">Enter</span></button>
+<button type="button" role="menuitem" class="mi"><span class="ac"></span>Abrir en el panel lateral<span class="k mono">Shift Enter</span></button>
+<button type="button" role="menuitem" class="mi" onClick="{{openType}}"><span class="ac"></span>Cambiar tipo…<span class="k mono"></span></button>
+<button type="button" role="menuitem" class="mi"><span class="ac"></span>Fijar en la barra lateral<span class="k mono"></span></button>
+<button type="button" role="menuitem" class="mi"><span class="ac"></span>Copiar enlace al objeto<span class="k mono"></span></button>
+<button type="button" role="menuitem" class="mi"><span class="ac"></span>Quitar de esta nota<span class="k mono">Supr</span></button>
+<button type="button" role="menuitem" class="mi danger"><span class="ac"></span>Mover el objeto a la papelera<span class="k mono"></span></button>
+</div>
+<sc-if value="{{typeOpen}}" hint-placeholder-val="{{ true }}">
+<div class="pop" role="dialog" aria-label="Cambiar tipo" style="width: 380px; padding: 16px 18px">
+<p class="mono" style="margin: 0 0 10px; color: #7a7a7a">Cambiar Libro a</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px">
+<sc-for list="{{targets}}" as="t" hint-placeholder-count="4"><button type="button" class="seg {{t.cls}}" onClick="{{t.pick}}" style="font-family: 'Geist', sans-serif"><span class="ac"></span>{{t.label}}</button></sc-for>
+</div>
+<p class="mono" style="margin: 0 0 6px; color: #7a7a7a">Propiedades</p>
+<sc-for list="{{mapping}}" as="m" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 1fr 20px 1fr; gap: 8px; align-items: center; height: 32px; font-size: 13px; border-bottom: 1px solid #1a1a1a"><span style="color: #d6d6d6">{{m.from}}</span><span style="color: #7a7a7a">→</span><span style="color: {{m.color}}">{{m.to}}</span></div>
+</sc-for>
+<p style="margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: #8b8b8b">Lo que no encaja no se borra: se guarda y vuelve si regresas al tipo anterior.</p>
+</div>
+</sc-if>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      book: 'M5 4h11a3 3 0 013 3v14H8a3 3 0 01-3-3z M5 18a3 3 0 013-3h11', weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2',
+      person: c(12, 8, 4) + ' M4 21c1-4 4-6 8-6s7 2 8 6', note: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h5', journal: 'M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M14 14h3v3h-3z',
+      plus: 'M12 5v14 M5 12h14', pdf: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 13h6 M9 17h4', project: 'M3 7h7l2 2h9v11H3z'
+    };
+    const st = this.state || {};
+    const stage = st.stage ?? 1;
+    const hov = st.hov ?? 0;
+    const view = st.view ?? 'small';
+    const target = st.target ?? 'pdf';
+    const S = [
+      ['@', [['Recientes', [['Ana López', 'person', '#FFB38A', 'Persona'], ['Proyecto Yaop', 'project', '#FFD166', 'Proyecto'], ['Sábado, 21 nov', 'journal', '#E8EEFF', 'Diario']]]], 'Escribe para buscar · Esc cierra'],
+      ['@lib', [['Tipos', [['Libros', 'book', '#9B8CFF', 'Tab entra']]], ['Objetos', [['Libreta de ideas', 'note', '#BFE3FF', 'Nota'], ['Librerías de Madrid', 'note', '#BFE3FF', 'Nota']]]], '+ Crear «lib» en… · Tab elige el tipo'],
+      ['@libros/', [['Libros', [['Cómo tomar notas inteligentes', 'book', '#9B8CFF', 'Leyendo'], ['Tiny Experiments', 'book', '#9B8CFF', 'Pendiente'], ['Crear libro nuevo…', 'plus', '#d6d6d6', 'Enter']]]], 'Solo objetos de tipo Libro'],
+      ['@libros/cómo', [['Libros', [['Cómo tomar notas inteligentes', 'book', '#9B8CFF', 'Enter'], ['Crear «cómo» en Libros', 'plus', '#d6d6d6', '']]]], 'Enter inserta el chip']
+    ];
+    let k = 0;
+    const groups = S[stage][1].map((g) => ({ title: g[0], items: g[1].map((it) => { const idx = k++; return { label: it[0], d: I[it[1]], color: it[2], hint: it[3], cls: idx === hov ? 'on' : '', sel: idx === hov ? 'true' : 'false', hover: () => this.setState({ hov: idx }) }; }) }));
+    const TG = { pdf: ['PDF', [['Autor', 'Autor', '#d6d6d6'], ['Calificación', 'se guarda aparte', '#8b8b8b'], ['Portada', 'Miniatura', '#d6d6d6']]], weblink: ['Enlace web', [['Autor', 'se guarda aparte', '#8b8b8b'], ['Calificación', 'se guarda aparte', '#8b8b8b'], ['Portada', 'Portada', '#d6d6d6']]], note: ['Nota', [['Autor', 'se guarda aparte', '#8b8b8b'], ['Calificación', 'se guarda aparte', '#8b8b8b'], ['Portada', 'Portada', '#d6d6d6']]] };
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      stages: S.map((s, i) => ({ label: s[0], cls: i === stage ? 'on' : '', sel: i === stage ? 'true' : 'false', pick: () => this.setState({ stage: i, hov: 0 }) })),
+      query: S[stage][0], groups, foot: S[stage][2],
+      views: [['chip', 'Chip'], ['small', 'Tarjeta'], ['wide', 'Tarjeta ancha'], ['full', 'Completo']].map((v) => ({ label: v[1], cls: v[0] === view ? 'on' : '', sel: v[0] === view ? 'true' : 'false', pick: () => this.setState({ view: v[0] }) })),
+      vChip: view === 'chip', vSmall: view === 'small', vWide: view === 'wide', vFull: view === 'full',
+      typeOpen: st.typeOpen ?? true, openType: () => this.setState({ typeOpen: !(st.typeOpen ?? true) }),
+      targets: Object.keys(TG).map((t) => ({ label: TG[t][0], cls: t === target ? 'on' : '', pick: () => this.setState({ target: t }) })),
+      mapping: TG[target][1].map((m) => ({ from: m[0], to: m[1], color: m[2] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

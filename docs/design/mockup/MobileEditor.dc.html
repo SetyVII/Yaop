@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Yaop — editor en Android</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+a{color:#f2f2f2}a:hover{color:#fff}
+.m,.m *{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.ic{width:20px;height:20px;flex:0 0 auto}
+.sq{display:inline-block;width:7px;height:7px;flex:0 0 7px}
+.tb{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 48px;height:48px;border:0;background:transparent;color:#d6d6d6;cursor:pointer;isolation:isolate;transition:color .3s}
+.tb .ac{position:absolute;inset:0;z-index:-1;background:var(--accent);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.2,.8,.1,1)}
+.tb.on{color:#000}.tb.on .ac{transform:scaleY(1)}
+.tb:focus-visible,.cell:focus-visible{outline:1px solid #f2f2f2;outline-offset:-1px}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:4;background:#0a0a0a;border-top:1px solid #2a2a2a;animation:up .4s cubic-bezier(.2,.8,.1,1) both}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:84px;border:0;border-right:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;background:transparent;color:#d6d6d6;font:400 12px 'Geist',sans-serif;cursor:pointer;transition:background .2s,color .2s}
+.cell:active,.cell:hover{background:var(--accent);color:#000}
+.caret{display:inline-block;width:2px;height:20px;background:var(--accent);vertical-align:-4px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.tb .ac{transition:none}.sheet,.caret{animation:none}}
+</style>
+</helmet>
+<div class="m" style="--accent: {{accent}}; position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; background: #000000; color: #f2f2f2; font-family: 'Geist', system-ui, sans-serif; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 8px; margin-top: 24px; border-bottom: 1px solid #1f1f1f">
+<button type="button" class="tb" aria-label="Atrás"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<span class="mono" style="color: #7a7a7a">Diario · hoy</span>
+<button type="button" class="tb" aria-label="Más opciones" style="margin-left: auto"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M5 12h.01 M12 12h.01 M19 12h.01"></path></svg></button>
+</div>
+<div style="flex: 1; padding: 24px 20px 0; overflow: hidden">
+<p class="mono" style="margin: 0 0 8px; color: var(--accent)">Hoy</p>
+<h1 style="margin: 0 0 18px; font-size: 28px; font-weight: 400; letter-spacing: -0.02em">Sábado, 21 nov</h1>
+<p style="margin: 0 0 10px; font-size: 16px; line-height: 1.6; color: #e6e6e6">Café con <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #2a2a2a; font-size: 14px; vertical-align: 1px"><span class="sq" style="background: #FFB38A; border-radius: 50%"></span>Ana López</span>.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #e6e6e6">{{lastLine}}<span class="caret"></span></p>
+</div>
+<div role="toolbar" aria-label="Barra del editor" style="display: flex; overflow: hidden; border-top: 1px solid #1f1f1f; background: #050505">
+<sc-for list="{{tools}}" as="t" hint-placeholder-count="7">
+<button type="button" class="tb {{t.cls}}" aria-label="{{t.label}}" aria-pressed="{{t.sel}}" onClick="{{t.pick}}"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{t.d}}"></path></svg></button>
+</sc-for>
+</div>
+<div aria-hidden="true" style="height: 260px; background: #0d0d0d; border-top: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: center"><span class="mono" style="color: #5a5a5a">Teclado del sistema</span></div>
+
+<sc-if value="{{sheetOpen}}" hint-placeholder-val="{{ false }}">
+<div class="sheet" role="dialog" aria-label="Insertar">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #1f1f1f"><span style="font-size: 15px">Insertar</span><button type="button" class="tb" aria-label="Cerrar" onClick="{{closeSheet}}" style="flex-basis: 40px; height: 40px"><span class="ac"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12 M18 6L6 18"></path></svg></button></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+<sc-for list="{{blocks}}" as="k" hint-placeholder-count="12"><button type="button" class="cell" onClick="{{k.pick}}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="{{k.d}}"></path></svg>{{k.label}}</button></sc-for>
+</div>
+<p class="mono" style="margin: 0; padding: 14px 18px 22px; color: #7a7a7a">Compartir desde otra app también crea objetos</p>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8F04A","options":["#C8F04A","#7FD4FF","#FF8A3D","#F2F2F2"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => 'M' + (x - r) + ' ' + y + 'a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0';
+    const I = {
+      plus: 'M12 5v14 M5 12h14', at: c(12, 12, 4) + ' M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1', tag: 'M3 12V3h9l9 9-9 9z M7.5 7.5h.01',
+      fmt: 'M5 20L11 4h2l6 16 M8 14h8', task: 'M4 4h16v16H4z M8 12l3 3 5-6', indent: 'M4 6h16 M10 12h10 M10 18h10 M4 10l3 2-3 2',
+      image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 ' + c(15.5, 9.5, 1.5), undo: 'M9 14L4 9l5-5 M4 9h11a5 5 0 010 10h-3',
+      text: 'M5 6V4h14v2 M12 4v16 M9 20h6', heading: 'M5 5v14 M13 5v14 M5 12h8 M17 12l3-2v9', list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01',
+      quote: 'M5 18v-5c0-4 2-6 5-7 M14 18v-5c0-4 2-6 5-7', code: 'M8 7l-5 5 5 5 M16 7l5 5-5 5', table: 'M3 5h18v14H3z M3 10h18 M3 15h18 M9 5v14',
+      mic: 'M9 3h6v11H9z M5 11a7 7 0 0014 0 M12 18v3', weblink: 'M10 14l4-4 M8.5 11.5l-2 2a3.5 3.5 0 005 5l2-2 M15.5 12.5l2-2a3.5 3.5 0 00-5-5l-2 2',
+      pdf: 'M6 3h9l4 4v14H6z M15 3v4h4 M9 13h6 M9 17h4', toggle: 'M8 5l8 7-8 7z', divider: 'M3 12h18', camera: 'M3 7h4l2-3h6l2 3h4v13H3z ' + c(12, 13, 4)
+    };
+    const st = this.state || {};
+    const on = st.on ?? null;
+    const lines = { at: 'Le paso el enlace a @', tag: 'Siguiente paso #', fmt: 'Texto en negrita', task: '☐ Comprar café', indent: '    sangrado', image: 'Imagen añadida ↑', undo: 'Deshecho' };
+    const tools = [['plus', 'Insertar bloque'], ['at', 'Mencionar'], ['tag', 'Etiqueta'], ['fmt', 'Formato'], ['task', 'Tarea'], ['indent', 'Sangrar'], ['image', 'Imagen'], ['undo', 'Deshacer']];
+    const blocks = [['text', 'Texto'], ['heading', 'Título'], ['list', 'Lista'], ['task', 'Tarea'], ['toggle', 'Desplegable'], ['quote', 'Cita'], ['code', 'Código'], ['table', 'Tabla'], ['camera', 'Foto'], ['mic', 'Voz'], ['weblink', 'Enlace'], ['pdf', 'PDF']];
+    return {
+      accent: this.props.accent ?? '#C8F04A',
+      tools: tools.map((t) => ({ d: I[t[0]], label: t[1], cls: t[0] === on ? 'on' : '', sel: t[0] === on ? 'true' : 'false', pick: () => this.setState({ on: t[0] === on ? null : t[0] }) })),
+      lastLine: lines[on] || 'Le paso el enlace de la beta',
+      sheetOpen: on === 'plus', closeSheet: () => this.setState({ on: null }),
+      blocks: blocks.map((b) => ({ d: I[b[0]], label: b[1], pick: () => this.setState({ on: null }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>
