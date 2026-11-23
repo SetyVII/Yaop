@@ -285,6 +285,25 @@ static void testSplitMerge()
     CHECK(inside.kind == blockops::SplitResult::Split, "toggle split");
     CHECK(inside.newNext.type == BlockType::Paragraph && inside.newNext.indentLevel == 1,
           "open toggle child paragraph indent+1");
+
+    // Enter in a paragraph with several mentions (4+ runs): runSlice once copied the runs from a
+    // vector already freed inside runSegments, and the desktop crashed on the corrupt text.
+    auto plain = [](const char *t) { Run r; r.text = QString::fromUtf8(t); return r; };
+    auto mention = [&](const char *t, const char *id) { Run r = plain(t); r.objectId = id; return r; };
+    Block para;
+    para.id = "p1";
+    para.runs = { plain("Hoy hablé con "), mention("marcos", "a"), plain(" y "), mention("bruno", "b"),
+                  plain(" sobre lo de "), mention("Sobremesa", "c"), plain(" por ahora en pausa.") };
+    const QString whole = runsToPlainText(para.runs);
+    for (int caret : { int(whole.size()), 3 }) {
+        const auto s = blockops::splitOnEnterAtOffset(para, caret);
+        CHECK(runsToPlainText(s.updatedCurrent.runs) + runsToPlainText(s.newNext.runs) == whole,
+              "split with mentions keeps the text");
+    }
+    const auto atEnd = blockops::splitOnEnterAtOffset(para, int(whole.size()));
+    CHECK(atEnd.updatedCurrent.runs.size() == 7 && atEnd.updatedCurrent.runs[0].text == "Hoy hablé con "
+              && atEnd.updatedCurrent.runs[5].objectId == "c",
+          "split at end keeps every run and mention");
 }
 
 static void testBackspaceRules()

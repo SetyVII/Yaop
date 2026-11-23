@@ -161,7 +161,8 @@ struct RunSegment {
     bool atomic = false;
     int end() const { return start + length; }
 };
-QVector<RunSegment> runSegments(const QVector<Run> &in);
+// `span` points into `spans` (pass normalized runs): it must outlive the segments.
+QVector<RunSegment> runSegments(const QVector<Run> &spans);
 QVector<Run> parseMarkdownToSpans(const QString &raw);
 
 // ---------------------------------------------------------------------------

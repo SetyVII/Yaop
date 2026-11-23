@@ -422,9 +422,8 @@ QJsonArray runsToJson(const QVector<Run> &runs)
     return arr;
 }
 
-QVector<RunSegment> runSegments(const QVector<Run> &in)
+QVector<RunSegment> runSegments(const QVector<Run> &spans)
 {
-    const QVector<Run> spans = normalizeRuns(in);
     QVector<RunSegment> segs;
     segs.reserve(spans.size());
     int start = 0;
@@ -445,13 +444,9 @@ QVector<Run> runSlice(const QVector<Run> &in, int start, int end)
 {
     if (end <= start)
         return {};
-    const QVector<RunSegment> segs = runSegments(in);
+    const QVector<Run> spans = normalizeRuns(in); // segs point into it: keep it alive
+    const QVector<RunSegment> segs = runSegments(spans);
     QVector<Run> out;
-    for (const RunSegment &seg : segs) {
-        if (seg.end() <= start || seg.start >= end) {
-            // unused
-        }
-    }
     for (const RunSegment &seg : segs) {
         const int segEnd = seg.start + seg.length;
         if (segEnd <= start || seg.start >= end)
