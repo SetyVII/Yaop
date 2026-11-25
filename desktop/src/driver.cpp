@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "audiorecorder.h"
 #include "onboarding.h"
 #include "editormodel.h"
 #include "model.h"
@@ -577,13 +578,22 @@ void journalRecordScenario(QQuickWindow *window, Workspace *ws)
         const int before = model->blockCount();
         QMetaObject::invokeMethod(rec, "start");
         later(1200, [=]() { shot(window, shotPath(QStringLiteral("record-on.png"))); });
+        // a discarded take must not report an error
+        auto failedCount = std::make_shared<int>(0);
+        QObject::connect(qobject_cast<AudioRecorder *>(rec), &AudioRecorder::failed, window, [failedCount](const QString &r) {
+            ++*failedCount;
+            dlog(QStringLiteral("DRIVE record failed reason=%1").arg(r));
+        });
         later(2200, [=]() { QMetaObject::invokeMethod(rec, "stop"); });
-        later(4500, [=]() {
+        later(3200, [=]() { QMetaObject::invokeMethod(rec, "start"); });
+        later(4000, [=]() { QMetaObject::invokeMethod(rec, "cancel"); });
+        later(5500, [=]() {
             const int after = model->blockCount();
+            if (*failedCount > 0) { QCoreApplication::exit(2); return; }
             dlog(QStringLiteral("DRIVE record blocks %1 -> %2 %3").arg(before).arg(after)
                      .arg(model->debugSnapshot().right(200)));
             shot(window, shotPath(QStringLiteral("record-done.png")));
-            QCoreApplication::exit(after > before ? 0 : 1);
+            QCoreApplication::exit(after == before + 1 ? 0 : 1); // the kept take only
         });
     });
 }

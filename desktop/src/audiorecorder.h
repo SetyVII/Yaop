@@ -42,6 +42,7 @@ private:
     QElapsedTimer m_clock;
     QTimer m_tick;
     bool m_keep = false;
+    bool m_cancelled = false;
 };
 
 } // namespace pkm

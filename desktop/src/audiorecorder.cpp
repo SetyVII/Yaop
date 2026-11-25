@@ -31,6 +31,7 @@ void AudioRecorder::start()
     m_path = QDir::tempPath() + QStringLiteral("/yaop-rec-")
         + QString::number(QDateTime::currentMSecsSinceEpoch()) + QStringLiteral(".ogg");
     m_keep = false;
+    m_cancelled = false;
     auto *proc = new QProcess(this);
     m_proc = proc;
     connect(proc, &QProcess::errorOccurred, this, [this, proc](QProcess::ProcessError e) {
@@ -57,8 +58,8 @@ void AudioRecorder::start()
         const bool ok = QFileInfo(path).size() > 0;
         if (m_keep && ok)
             emit recorded(path, secs);
-        else if (m_keep || code != 0)
-            emit failed(QStringLiteral("input"));
+        else if (!m_cancelled && (m_keep || code != 0))
+            emit failed(QStringLiteral("input")); // a discarded take is not an error
         QFile::remove(path);
     });
     // "q" on stdin makes ffmpeg close the file properly (a kill would leave it truncated).
@@ -81,6 +82,7 @@ void AudioRecorder::finish(bool keep)
     if (!m_proc)
         return;
     m_keep = keep;
+    m_cancelled = !keep;
     if (keep) {
         m_proc->write("q");
         m_proc->closeWriteChannel();
