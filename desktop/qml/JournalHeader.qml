@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import YAOP.Core 1.0
 import "."
 
 // Header of an opened daily note: coloured weekday, Today badge, long local date, week number
@@ -10,6 +11,17 @@ ColumnLayout {
 
     property string iso: ""           // yyyy-MM-dd of this note
     signal dayRequested(string iso)   // open the daily note of another day
+    signal audioRecorded(string path, int seconds)
+    signal recordFailed(string reason)
+
+    AudioRecorder {
+        id: recorder
+        objectName: "journalRecorder"
+        onRecorded: (path, seconds) => jh.audioRecorded(path, seconds)
+        onFailed: (reason) => jh.recordFailed(reason)
+    }
+    // another day opened in this editor: a take in progress is dropped, not filed under it
+    onIsoChanged: recorder.cancel()
 
     readonly property date day: iso.length === 10
         ? new Date(Number(iso.substr(0, 4)), Number(iso.substr(5, 2)) - 1, Number(iso.substr(8, 2)))
@@ -60,6 +72,32 @@ ColumnLayout {
             }
         }
         Item { Layout.fillWidth: true }
+
+        // Voice note into this day (Capacities: mic on the daily note)
+        Row {
+            visible: recorder.recording
+            spacing: 6
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 8; height: 8; radius: 4; color: Theme.late
+                SequentialAnimation on opacity {
+                    running: recorder.recording; loops: Animation.Infinite
+                    NumberAnimation { to: 0.25; duration: 600 }
+                    NumberAnimation { to: 1; duration: 600 }
+                }
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Math.floor(recorder.seconds / 60) + ":" + String(recorder.seconds % 60).padStart(2, "0")
+                color: Theme.late; font.family: Theme.mono; font.pixelSize: 12
+            }
+            IconButton { icon: "x"; tip: qsTr("Discard recording"); onClicked: recorder.cancel() }
+        }
+        IconButton {
+            icon: recorder.recording ? "square" : "microphone"
+            tip: recorder.recording ? qsTr("Stop and add to this day") : qsTr("Record a voice note")
+            onClicked: recorder.recording ? recorder.stop() : recorder.start()
+        }
 
         IconButton { icon: "chevron-left"; tip: qsTr("Previous day"); onClicked: jh.dayRequested(jh.shifted(-1)) }
         Rectangle {

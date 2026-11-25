@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "audioplayback.h"
+#include "audiorecorder.h"
 #include "editormodel.h"
 #include "model.h"
 #include "providers.h"
@@ -245,6 +246,7 @@ int main(int argc, char *argv[])
     }
 
     qmlRegisterType<pkm::AudioPlayback>("YAOP.Core", 1, 0, "AudioPlayback");
+    qmlRegisterType<pkm::AudioRecorder>("YAOP.Core", 1, 0, "AudioRecorder");
 
     // Local lock : PIN gate in front of the UI; headless modes never lock.
     pkm::AppLock appLock;

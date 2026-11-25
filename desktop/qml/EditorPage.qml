@@ -1177,6 +1177,16 @@ Item {
                             const id = ws.journalFor(iso)
                             if (id && editPage.appWindow) editPage.appWindow.showObject(id)
                         }
+                        onAudioRecorded: (path, seconds) => {
+                            const id = ws.importFileAsAsset(path)
+                            if (id && session) session.insertAudioBlockAfter(session.blockCount - 1, id, seconds)
+                            else if (editPage.appWindow) editPage.appWindow.showToast(qsTr("Could not save the recording"))
+                        }
+                        onRecordFailed: (reason) => {
+                            if (editPage.appWindow)
+                                editPage.appWindow.showToast(reason === "ffmpeg" ? qsTr("Install ffmpeg to record audio.")
+                                                                                 : qsTr("No microphone input."))
+                        }
                     }
 
                     // Title (wraps across lines for long web link titles)

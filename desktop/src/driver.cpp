@@ -541,6 +541,39 @@ void caretScenario(QQuickWindow *window, Workspace *ws)
 
 // Keyboard-first F0 (docs/keyboard.md): keys go through the window like real input, so global
 // Shortcuts and Keys.onShortcutOverride decide as they do in use (sendWindowKey skips both).
+// Voice note from the daily-note header: 2 s through the real recorder, then an audio block.
+void journalRecordScenario(QQuickWindow *window, Workspace *ws)
+{
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    const QString jid = ws->journalFor(QDate::currentDate().toString(Qt::ISODate));
+    QMetaObject::invokeMethod(window, "showObject", Q_ARG(QVariant, jid));
+    later(1500, [=]() {
+        QObject *rec = nullptr; // the recorder of the header on screen (other editors may exist)
+        for (QObject *r : window->findChildren<QObject *>(QStringLiteral("journalRecorder"))) {
+            auto *header = qobject_cast<QQuickItem *>(r->parent());
+            if (header && header->isVisible())
+                rec = r;
+        }
+        EditorModel *model = sessionOf(window);
+        if (!rec || !model) {
+            dlog(QStringLiteral("DRIVE record FAIL recorder=%1 session=%2").arg(rec ? 1 : 0).arg(model ? 1 : 0));
+            QCoreApplication::exit(1);
+            return;
+        }
+        const int before = model->blockCount();
+        QMetaObject::invokeMethod(rec, "start");
+        later(1200, [=]() { shot(window, shotPath(QStringLiteral("record-on.png"))); });
+        later(2200, [=]() { QMetaObject::invokeMethod(rec, "stop"); });
+        later(4500, [=]() {
+            const int after = model->blockCount();
+            dlog(QStringLiteral("DRIVE record blocks %1 -> %2 %3").arg(before).arg(after)
+                     .arg(model->debugSnapshot().right(200)));
+            shot(window, shotPath(QStringLiteral("record-done.png")));
+            QCoreApplication::exit(after > before ? 0 : 1);
+        });
+    });
+}
+
 void keysScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -832,6 +865,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 dndScenario(window);
             else if (scenario == QLatin1String("keys"))
                 keysScenario(window);
+            else if (scenario == QLatin1String("journal-record"))
+                journalRecordScenario(window, ws);
             else if (scenario == QLatin1String("editor-keys"))
                 editorKeysScenario(window);
             else
