@@ -51,6 +51,13 @@ Item {
     readonly property bool isBookLayout: !!session && session.typeId === "book" && !inSidePane && width >= 960 && Theme.noir
     readonly property bool isPersonObject: !!session && session.typeId === "person"
     readonly property bool isProjectObject: !!session && session.typeId === "project"
+    // Daily note: header with weekday, long date and day navigation instead of the title field
+    readonly property string journalIso: {
+        if (!session || session.typeId !== "journal" || !ws) return ""
+        const d = ws.objectSummary(session.objectId).journalDate || ""
+        return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ""
+    }
+    readonly property bool isJournalObject: journalIso.length > 0
     readonly property bool focusActive: !!(appWindow && appWindow.focusMode) && !inSidePane
     readonly property bool webSplitActive: hasWebUrl && !inSidePane && width >= 680
 
@@ -1159,6 +1166,19 @@ Item {
                         }
                     }
 
+                    JournalHeader {
+                        visible: editPage.isJournalObject
+                        Layout.fillWidth: true
+                        Layout.topMargin: 10
+                        Layout.leftMargin: editPage.colMargin
+                        Layout.rightMargin: editPage.colMargin
+                        iso: editPage.journalIso
+                        onDayRequested: (iso) => {
+                            const id = ws.journalFor(iso)
+                            if (id && editPage.appWindow) editPage.appWindow.showObject(id)
+                        }
+                    }
+
                     // Title (wraps across lines for long web link titles)
                     Item {
                         Layout.fillWidth: true
@@ -1176,6 +1196,7 @@ Item {
                             TextEdit {
                                 id: titleInput
                                 objectName: "titleInput"
+                                visible: !editPage.isJournalObject
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1
                                 Layout.alignment: Qt.AlignVCenter
@@ -1222,6 +1243,8 @@ Item {
                                     font: titleInput.font
                                 }
                             }
+
+                            Item { visible: editPage.isJournalObject; Layout.fillWidth: true }
 
                             // Object actions: compact icons so a long title keeps its width.
                             Row {

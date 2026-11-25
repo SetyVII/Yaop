@@ -262,6 +262,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("keyInput"), &keyInput);
     engine.rootContext()->setContextProperty(QStringLiteral("initialPage"), parser.value(QStringLiteral("page")));
     engine.rootContext()->setContextProperty(QStringLiteral("initialOverlay"), parser.value(QStringLiteral("overlay")));
+    // --open daily-YYYY-MM-DD opens that day's note, creating it like the journal does
+    if (const QString open = parser.value(QStringLiteral("open")); open.startsWith(QLatin1String("daily-")))
+        workspace.journalFor(open.mid(6));
     engine.rootContext()->setContextProperty(QStringLiteral("initialObjectId"), parser.value(QStringLiteral("open")));
 
     auto *texProvider = new pkm::TeXImageProvider();

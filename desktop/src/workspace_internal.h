@@ -88,6 +88,8 @@ inline QVariantMap objectToVariant(const Object &o, const Workspace::ObjectView 
     m.insert("taskDone", v.taskDone);
     m.insert("dueDate", v.dueDate);
     m.insert("createdAt", o.createdAt);
+    if (o.typeId == TypeId::Journal)
+        m.insert("journalDate", o.propertyString(QStringLiteral("date")));
     m.insert("iconEmoji", o.icon().emoji);
     m.insert("summary", !o.summary().isEmpty() ? o.summary() : QString());
     m.insert("assetId", o.propertyString(QStringLiteral("asset_id")));
