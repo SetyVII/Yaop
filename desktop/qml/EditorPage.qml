@@ -160,7 +160,7 @@ Item {
     // in the title, any other one where you left it, else at the end of its first text block.
     function focusDefault() {
         if (!session) return
-        if (session.title.length === 0) { titleInput.forceActiveFocus(); titleInput.end(); return }
+        if (session.title.length === 0 && !isJournalObject) { titleInput.forceActiveFocus(); titleInput.end(); return }
         blocks.focusStart()
     }
 
@@ -1663,7 +1663,11 @@ Item {
                                     onOpenObjectRequested: objectId => editPage.appWindow.openObject(objectId)
                                     onMediaPasteRequested: editPage.insertMediaItems(ws.importClipboardMedia())
                                     onToastRequested: message => { if (editPage.appWindow) editPage.appWindow.showToast(message) }
-                                    onExitTop: { titleInput.forceActiveFocus(); titleInput.end() }
+                                    // a daily note has no title field (its header is the date): stay in the text
+                                    onExitTop: {
+                                        if (editPage.isJournalObject) { blocks.focusStart(); return }
+                                        titleInput.forceActiveFocus(); titleInput.end()
+                                    }
                                 }
 
                                 // Drag files in from the file manager or another app.

@@ -8,6 +8,7 @@ import "."
 
 ColumnLayout {
     id: jh
+    objectName: "journalHeader"
 
     property string iso: ""           // yyyy-MM-dd of this note
     signal dayRequested(string iso)   // open the daily note of another day

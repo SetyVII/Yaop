@@ -51,14 +51,28 @@ void dlog(const QString &line)
         f.write(line.toUtf8() + QByteArrayLiteral("\n"));
 }
 
+// The item with this objectName that is on screen: several editors (tabs, side pane) may exist,
+// and the first one found is often a hidden one.
+QQuickItem *visibleNamed(QQuickWindow *window, const QString &name)
+{
+    QQuickItem *first = nullptr;
+    for (QQuickItem *it : window->findChildren<QQuickItem *>(name)) {
+        if (it->isVisible())
+            return it;
+        if (!first)
+            first = it;
+    }
+    return first;
+}
+
 QQuickItem *editorPageOf(QQuickWindow *window)
 {
-    return window->findChild<QQuickItem *>(QStringLiteral("editorPage"));
+    return visibleNamed(window, QStringLiteral("editorPage"));
 }
 
 QQuickItem *blocksViewOf(QQuickWindow *window)
 {
-    return window->findChild<QQuickItem *>(QStringLiteral("blocks"));
+    return visibleNamed(window, QStringLiteral("blocks"));
 }
 
 EditorModel *sessionOf(QQuickWindow *window)
@@ -438,14 +452,14 @@ void renameUiScenario(QQuickWindow *window, Workspace *ws)
                 later(900, [=]() {
                     const QString targetId = window->property("editorObjectId").toString();
                     dlog(QStringLiteral("DRIVE ui target=%1 note=%2").arg(targetId, noteId));
-                    if (auto *title = window->findChild<QQuickItem *>(QStringLiteral("titleInput"))) {
+                    if (auto *title = visibleNamed(window, QStringLiteral("titleInput"))) {
                         title->forceActiveFocus();
                         QMetaObject::invokeMethod(title, "end");
                     }
                     typeText(window, QStringLiteral("es"));
                     {
                         QObject *f = window->focusObject();
-                        auto *title = window->findChild<QQuickItem *>(QStringLiteral("titleInput"));
+                        auto *title = visibleNamed(window, QStringLiteral("titleInput"));
                         dlog(QStringLiteral("DRIVE ui typed focus=%1 title-field=%2 model-title=%3")
                                  .arg(f ? QString::fromLatin1(f->metaObject()->className()) : QStringLiteral("none"),
                                       title ? title->property("text").toString() : QStringLiteral("?"),
@@ -598,6 +612,54 @@ void journalUnreviewedScenario(QQuickWindow *window, Workspace *ws)
             dlog(QStringLiteral("DRIVE unreviewed count=%1 shown=%2").arg(n).arg(shown));
             shot(window, shotPath(QStringLiteral("unreviewed.png")));
             QCoreApplication::exit(n == 2 && shown == 2 ? 0 : 1);
+        });
+    });
+}
+
+// Writing in a daily note (its title field is hidden): type, ↑ from the first line must keep the
+// caret in the text, and the typed words must be in the note.
+void journalKeysScenario(QQuickWindow *window, Workspace *ws)
+{
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    const QString jid = ws->journalFor(QDate::currentDate().toString(Qt::ISODate));
+    QMetaObject::invokeMethod(window, "showObject", Q_ARG(QVariant, jid));
+    later(1500, [=]() {
+        EditorModel *model = sessionOf(window);
+        if (!model) { QCoreApplication::exit(4); return; }
+        window->requestActivate();
+        model->forceFocus(firstBlockId(window), 0);
+        later(300, [=]() {
+            typeText(window, QStringLiteral("hola diario"));
+            later(300, [=]() {
+                sendWindowKey(window, Qt::Key_Up, QString());
+                later(300, [=]() {
+                    QQuickItem *f = window->activeFocusItem();
+                    const QString name = f ? f->objectName() : QString();
+                    const bool visible = f && f->isVisible();
+                    typeText(window, QStringLiteral("!"));
+                    later(300, [=]() {
+                        const QString snap = model->debugSnapshot();
+                        const bool typed = snap.contains(QLatin1String("hola diario"));
+                        const bool bang = snap.contains(QLatin1Char('!'));
+                        dlog(QStringLiteral("DRIVE jkeys focus=%1 visible=%2 typed=%3 bang=%4 title=%5 snap=%6")
+                                 .arg(name).arg(visible).arg(typed).arg(bang).arg(model->title(), snap.left(200)));
+                        shot(window, shotPath(QStringLiteral("journal-keys.png")));
+                        if (!(visible && typed && bang)) { QCoreApplication::exit(1); return; }
+                        // ‹ : the previous day opens in the same editor
+                        const QString yesterday = QDate::currentDate().addDays(-1).toString(Qt::ISODate);
+                        QQuickItem *header = visibleNamed(window, QStringLiteral("journalHeader"));
+                        QMetaObject::invokeMethod(header, "dayRequested", Q_ARG(QString, yesterday));
+                        later(1200, [=]() {
+                            EditorModel *m = sessionOf(window);
+                            const QString t = m ? m->title() : QString();
+                            const QString iso = header->property("iso").toString();
+                            dlog(QStringLiteral("DRIVE jkeys prev title=%1 header=%2").arg(t, iso));
+                            shot(window, shotPath(QStringLiteral("journal-prev.png")));
+                            QCoreApplication::exit(t.endsWith(yesterday) && iso == yesterday ? 0 : 1);
+                        });
+                    });
+                });
+            });
         });
     });
 }
@@ -895,6 +957,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 keysScenario(window);
             else if (scenario == QLatin1String("journal-unreviewed"))
                 journalUnreviewedScenario(window, ws);
+            else if (scenario == QLatin1String("journal-keys"))
+                journalKeysScenario(window, ws);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
             else if (scenario == QLatin1String("editor-keys"))
