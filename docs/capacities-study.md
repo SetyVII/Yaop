@@ -71,10 +71,44 @@ Today / Upcoming / Done; `todo` blocks exist in text but are plain checkboxes, n
 ## Proposed order (smallest change first)
 
 1. ~~Daily note header~~ — done (7cb8c9d).
-1b. **Record audio** button in the daily-note header, reusing the existing audio block.
-2. **Unreviewed view** on the journal type (filter `reviewed = false`): a built-in view, uses the
-   existing query contract.
+1b. ~~Record audio~~ — done (affc170, 0edaead).
+2. ~~Unreviewed view~~ — done (c60b224).
 3. **Day tabs** (All · Daily note · Created this day) in `JournalPage`, reusing current sections.
 4. **Todo block → Task object** (the Capacities task model). Needs a decision in `docs/product.md`
    §6 and a spec + fixture (`spec/text.md` link from block to task id), then Go, Kotlin, C++.
 5. Reminders: decision first (§6 lists them as ROADMAP "if asked for").
+
+## Review 2026-11-25: bugs found and what is still missing
+
+Tested with every suite (`tools/check.sh`: server, core, desktop, mobile, extension — all pass)
+and the desktop drive scenarios (`--drive <name>`): editor-keys, keys, caret, mention, rename,
+rename-ui, dnd, writing, journal-keys, journal-record, journal-unreviewed — all pass.
+
+Bugs fixed:
+- Daily note: ↑ from the first line moved the caret to the hidden title and the next keys renamed
+  the note (25635f1).
+- ‹ › created an empty daily note for every day browsed; now a day without a note opens in the
+  calendar with "Start the daily note" (42104ed).
+- "Unreviewed only" filter never matched (compared the text "false", a checkbox reads "✓"/"")
+  (c60b224).
+- Discarding a recording could show "No microphone input" (0edaead).
+- The date of a daily note showed as a loose property (8a52e4a).
+- Drive scenarios rename, rename-ui, dnd failed because they drove a hidden editor (25635f1).
+
+Writing checked by `--drive writing`: Enter splits, Backspace joins, `- ` bullet, Enter continues
+the list, Enter on an empty item leaves it, `[] ` todo, accents/ñ/¿?.
+
+Still missing:
+- **Undo/redo inside the text** (Ctrl+Z does nothing in blocks) — ROADMAP.md "Document-level
+  undo/redo". The biggest gap when writing.
+- **Todo block → Task object** (Capacities tasks) — needs the §6 decision and a spec first.
+- **"The day starts at…"** (product §20, DECIDED) is not in the desktop: "today" is the calendar
+  date everywhere (journal header, calendar, home).
+- **Desktop translations**: desktop strings are English only ("Today", "Week 48"); dates already
+  follow the system language.
+- Day tabs (All · Daily note · Created this day) in the daily note — not done.
+- Reminders — ROADMAP.
+- The header, voice note and Unreviewed tab are desktop only; Android has none of them yet.
+- The Unreviewed count scans every object of the type on each save while the page is open; fine
+  for daily notes, to watch for types with thousands of objects.
+- Capacities' `@` and `/` menus were not compared (the test browser cannot open them).
