@@ -1251,6 +1251,15 @@ void Workspace::toggleOption(const QString &objectId, const QString &key, const 
     setObjectProperty(objectId, key, ids.join(QLatin1Char(',')), QStringLiteral("multi_select"));
 }
 
+bool Workspace::propertyChecked(const QString &objectId, const QString &key) const
+{
+    const auto it = m_objects.constFind(objectId);
+    if (it == m_objects.constEnd())
+        return false;
+    const QJsonValue v = it->properties.value(key);
+    return v.isBool() ? v.toBool() : v.toString().compare(QLatin1String("true"), Qt::CaseInsensitive) == 0;
+}
+
 QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
 {
     QVariantList out;

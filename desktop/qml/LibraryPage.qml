@@ -36,6 +36,13 @@ Item {
     readonly property bool typeScoped: filterType !== "all" && filterType !== "trash"
     readonly property var typeViewList: { dataRev; return ws && typeScoped ? ws.typeViews(filterType) : [] }
     readonly property int templateCount: { dataRev; return ws && typeScoped ? ws.templatesFor(filterType).length : 0 }
+    // Built-in "Unreviewed" tab (Capacities "Sin revisar") on types with a Reviewed checkbox:
+    // anything not ticked counts, including notes nobody ever touched.
+    readonly property bool hasReviewed: { dataRev; return !!ws && typeScoped && ws.typeProperties(filterType).some(p => p.key === "reviewed") }
+    function unreviewedItems() {
+        return ws.objectsByType(filterType, 0).filter(it => !ws.propertyChecked(it.id, "reviewed"))
+    }
+    readonly property int unreviewedCount: { dataRev; return hasReviewed ? unreviewedItems().length : 0 }
     // A new template of this type, opened to edit (product §4.3).
     function newTemplate() {
         if (!ws || !typeScoped) return
@@ -55,7 +62,7 @@ Item {
     function selectView(id) {
         currentViewId = id
         if (typeScoped) setPref("lastViews", filterType, id)
-        if (id === "@templates") {
+        if (id === "@templates" || id === "@unreviewed") {
             viewMode = "list"
         } else if (id.length > 0) {
             const v = typeViewList.find(x => x.id === id)
@@ -67,7 +74,7 @@ Item {
     }
     function pickViewMode(kind) {
         viewMode = kind
-        if (currentViewId === "@templates") return
+        if (currentViewId === "@templates" || currentViewId === "@unreviewed") return
         if (currentViewId.length > 0) ws.setSetActiveView(currentViewId, kind)
         else if (typeScoped) setPref("allViewModes", filterType, kind)
     }
@@ -215,6 +222,8 @@ Item {
             }
         } else if (currentViewId === "@templates") {
             base = ws.templatesFor(filterType).map(t => ws.objectSummary(t.id))
+        } else if (currentViewId === "@unreviewed") {
+            base = unreviewedItems()
         } else if (currentViewId.length > 0) {
             const r = ws.runSet(currentViewId)
             base = r.items || ws.objectsByType(filterType, 0)
@@ -249,7 +258,7 @@ Item {
             })
         }
         if (filterUnreviewedOnly) {
-            out = out.filter(it => String(ws.fieldText(it.id, "reviewed") || "").toLowerCase() === "false")
+            out = out.filter(it => !ws.propertyChecked(it.id, "reviewed"))
         }
         if (filterTag.trim().length > 0) {
             const want = filterTag.trim().toLowerCase()
@@ -265,7 +274,7 @@ Item {
                 return acc
             })
         }
-        if (currentViewId.length === 0) { // a saved view keeps its query's order
+        if (currentViewId.length === 0 || currentViewId === "@unreviewed") { // a saved view keeps its query's order
             if (sortMode === "title")
                 out.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")))
             else
@@ -278,7 +287,8 @@ Item {
         quickPropOption = "all"; quickMultiOption = "all"; filterUnreviewedOnly = false; filterRules = []
         // reopen the view this type had last time on this device (if it still exists)
         const last = typeScoped ? (prefMap("lastViews")[filterType] || "") : ""
-        const ok = last.length > 0 && ws && ws.typeViews(filterType).some(v => v.id === last)
+        const ok = last.length > 0 && ws && (ws.typeViews(filterType).some(v => v.id === last)
+                                             || (last === "@unreviewed" && hasReviewed))
         selectView(ok ? last : "")
     }
     onSearchQueryChanged: if (visible) recompute()
@@ -490,6 +500,14 @@ Item {
                                 if (library.appWindow) library.appWindow.showToast(qsTr("View moved to trash"))
                             }
                         }
+                    }
+                    ViewTab {
+                        visible: library.hasReviewed
+                        height: viewTabs.height
+                        title: qsTr("Unreviewed · %1").arg(library.unreviewedCount)
+                        fixed: true
+                        current: library.currentViewId === "@unreviewed"
+                        onPicked: library.selectView("@unreviewed")
                     }
                     ViewTab {
                         visible: library.templateCount > 0

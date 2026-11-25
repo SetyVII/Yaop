@@ -574,6 +574,34 @@ void journalRecordScenario(QQuickWindow *window, Workspace *ws)
     });
 }
 
+// Built-in "Unreviewed" tab on daily notes: three days, one reviewed -> the tab lists two.
+void journalUnreviewedScenario(QQuickWindow *window, Workspace *ws)
+{
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    const QDate today = QDate::currentDate();
+    for (int i = 0; i < 3; ++i)
+        ws->journalFor(today.addDays(-i).toString(Qt::ISODate));
+    ws->setObjectProperty(ws->journalFor(today.addDays(-1).toString(Qt::ISODate)), QStringLiteral("reviewed"),
+                          true, QStringLiteral("checkbox"), QString(), false);
+    window->setProperty("libraryType", QStringLiteral("journal"));
+    QMetaObject::invokeMethod(window, "navigate", Q_ARG(QVariant, QStringLiteral("library")));
+    later(1200, [=]() {
+        QObject *lib = nullptr;
+        for (QObject *it : window->findChildren<QObject *>())
+            if (it->property("unreviewedCount").isValid())
+                lib = it;
+        if (!lib) { dlog(QStringLiteral("DRIVE unreviewed FAIL no library")); QCoreApplication::exit(1); return; }
+        QMetaObject::invokeMethod(lib, "selectView", Q_ARG(QVariant, QStringLiteral("@unreviewed")));
+        later(800, [=]() {
+            const int n = lib->property("unreviewedCount").toInt();
+            const int shown = lib->property("items").toList().size();
+            dlog(QStringLiteral("DRIVE unreviewed count=%1 shown=%2").arg(n).arg(shown));
+            shot(window, shotPath(QStringLiteral("unreviewed.png")));
+            QCoreApplication::exit(n == 2 && shown == 2 ? 0 : 1);
+        });
+    });
+}
+
 void keysScenario(QQuickWindow *window)
 {
     EditorModel *model = sessionOf(window);
@@ -865,6 +893,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 dndScenario(window);
             else if (scenario == QLatin1String("keys"))
                 keysScenario(window);
+            else if (scenario == QLatin1String("journal-unreviewed"))
+                journalUnreviewedScenario(window, ws);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
             else if (scenario == QLatin1String("editor-keys"))

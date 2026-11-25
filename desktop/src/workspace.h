@@ -209,6 +209,8 @@ public:
     Q_INVOKABLE QString clipboardText() const;
     Q_INVOKABLE QVariantList typeProperties(const QString &typeId) const;
     Q_INVOKABLE QVariantList objectPropertyEntries(const QString &objectId) const;
+    // true when a checkbox property is ticked (bool true, or the text "true"); missing = false
+    Q_INVOKABLE bool propertyChecked(const QString &objectId, const QString &key) const;
     // select: picks optionId (picking the current one clears it); multi: adds or removes it.
     Q_INVOKABLE void toggleOption(const QString &objectId, const QString &key, const QString &optionId, bool multi);
     Q_INVOKABLE void removeObjectProperty(const QString &objectId, const QString &key);
