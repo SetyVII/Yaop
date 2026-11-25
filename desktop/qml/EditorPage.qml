@@ -1173,9 +1173,14 @@ Item {
                         Layout.leftMargin: editPage.colMargin
                         Layout.rightMargin: editPage.colMargin
                         iso: editPage.journalIso
+                        // an existing day opens here; a day without a note opens in the calendar
+                        // (its "+ Daily note" creates it), so browsing never fills the vault
                         onDayRequested: (iso) => {
-                            const id = ws.journalFor(iso)
-                            if (id && editPage.appWindow) editPage.appWindow.showObject(id)
+                            if (!editPage.appWindow) return
+                            const today = Qt.formatDate(new Date(), "yyyy-MM-dd")
+                            const id = iso === today ? ws.journalFor(iso) : ws.journalLocalFor(iso)
+                            if (id) editPage.appWindow.showObject(id)
+                            else editPage.appWindow.openCalendarDay(iso)
                         }
                         onAudioRecorded: (path, seconds) => {
                             const id = ws.importFileAsAsset(path)

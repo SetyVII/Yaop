@@ -146,6 +146,14 @@ ApplicationWindow {
         Qt.callLater(focusPage)
     }
 
+    // The calendar's Day view of another day (yyyy-MM-dd); nothing is created there until asked.
+    function openCalendarDay(iso) {
+        editorObjectId = ""
+        page = "calendar"
+        const d = new Date(Number(iso.substr(0, 4)), Number(iso.substr(5, 2)) - 1, Number(iso.substr(8, 2)))
+        Qt.callLater(() => { if (calendarLoader.item) calendarLoader.item.openDay(d) })
+    }
+
     // Where a place is, for the tabs.
     function placeIcon(loc) {
         if (loc.startsWith("o:")) {

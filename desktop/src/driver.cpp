@@ -645,23 +645,105 @@ void journalKeysScenario(QQuickWindow *window, Workspace *ws)
                                  .arg(name).arg(visible).arg(typed).arg(bang).arg(model->title(), snap.left(200)));
                         shot(window, shotPath(QStringLiteral("journal-keys.png")));
                         if (!(visible && typed && bang)) { QCoreApplication::exit(1); return; }
-                        // ‹ : the previous day opens in the same editor
+                        // ‹ to a day without a note: the calendar opens on it and nothing is created
                         const QString yesterday = QDate::currentDate().addDays(-1).toString(Qt::ISODate);
                         QQuickItem *header = visibleNamed(window, QStringLiteral("journalHeader"));
                         QMetaObject::invokeMethod(header, "dayRequested", Q_ARG(QString, yesterday));
                         later(1200, [=]() {
-                            EditorModel *m = sessionOf(window);
-                            const QString t = m ? m->title() : QString();
-                            const QString iso = header->property("iso").toString();
-                            dlog(QStringLiteral("DRIVE jkeys prev title=%1 header=%2").arg(t, iso));
-                            shot(window, shotPath(QStringLiteral("journal-prev.png")));
-                            QCoreApplication::exit(t.endsWith(yesterday) && iso == yesterday ? 0 : 1);
+                            const QString page = window->property("page").toString();
+                            const bool created = !ws->journalLocalFor(yesterday).isEmpty();
+                            dlog(QStringLiteral("DRIVE jkeys prev-missing page=%1 created=%2").arg(page).arg(created));
+                            shot(window, shotPath(QStringLiteral("journal-prev-missing.png")));
+                            if (page != QLatin1String("calendar") || created) { QCoreApplication::exit(1); return; }
+                            // ‹ to a day that has a note: it opens in the editor
+                            const QString jy = ws->journalFor(yesterday);
+                            QMetaObject::invokeMethod(window, "showObject", Q_ARG(QVariant, jid));
+                            later(1200, [=]() {
+                                QQuickItem *h = visibleNamed(window, QStringLiteral("journalHeader"));
+                                QMetaObject::invokeMethod(h, "dayRequested", Q_ARG(QString, yesterday));
+                                later(1200, [=]() {
+                                    EditorModel *m = sessionOf(window);
+                                    const QString id = m ? m->objectId() : QString();
+                                    dlog(QStringLiteral("DRIVE jkeys prev-existing opened=%1").arg(id == jy));
+                                    QCoreApplication::exit(id == jy ? 0 : 1);
+                                });
+                            });
                         });
                     });
                 });
             });
         });
     });
+}
+
+// Plain writing: split with Enter, join with Backspace, lists, todos and accents. Keys after an
+// Enter wait 30 ms (faster than a person) so the new line has the caret, as with a real keyboard.
+// Each step logs ok/FAIL with the block order; exit code = number of failures.
+void writingScenario(QQuickWindow *window)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) { QCoreApplication::exit(4); return; }
+    auto order = [model]() {
+        QStringList out;
+        for (const QJsonValue &v : QJsonDocument::fromJson(model->debugSnapshot().toUtf8()).array()) {
+            const QJsonObject o = v.toObject();
+            QString text;
+            for (const QJsonValue &r : o.value(QLatin1String("runs")).toArray())
+                text += r.toObject().value(QLatin1String("text")).toString();
+            out << o.value(QLatin1String("type")).toString() + QLatin1Char(':') + text;
+        }
+        return out.join(QLatin1Char(','));
+    };
+    auto key = [window](int k, Qt::KeyboardModifiers m = Qt::NoModifier, const QString &t = QString()) {
+        sendWindowKey(window, k, t, m);
+    };
+    struct Step { QString name; std::function<void()> act; std::function<bool(const QString &)> ok; };
+    auto steps = std::make_shared<QVector<Step>>();
+    auto fails = std::make_shared<int>(0);
+    auto ends = [](const QString &tail) { return [tail](const QString &o) { return o.endsWith(tail); }; };
+    *steps = {
+        { "type a word", [=]() { typeText(window, QStringLiteral("holamundo")); }, ends("paragraph:holamundo") },
+        { "enter splits the line", [=]() { for (int i = 0; i < 5; ++i) key(Qt::Key_Left); key(Qt::Key_Return, Qt::NoModifier, "\r"); },
+          ends("paragraph:hola,paragraph:mundo") },
+        { "backspace at start joins", [=]() { key(Qt::Key_Backspace, Qt::NoModifier, "\b"); }, ends("paragraph:holamundo") },
+        { "end goes to line end", [=]() { key(Qt::Key_End); }, ends("paragraph:holamundo") },
+        { "enter at the end adds a line", [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r"); }, ends("paragraph:holamundo,paragraph:") },
+        { "'- ' starts a bullet", [=]() { typeText(window, QStringLiteral("- uno")); }, ends("paragraph:holamundo,bullet_list:uno") },
+        { "enter continues the bullet", [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r");
+              QTimer::singleShot(30, window, [=]() { typeText(window, QStringLiteral("dos")); }); },
+          ends("bullet_list:uno,bullet_list:dos") },
+        { "enter on empty bullet leaves the list", [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r");
+              QTimer::singleShot(30, window, [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r"); }); },
+          ends("bullet_list:dos,paragraph:") },
+        { "accents and ñ", [=]() { typeText(window, QStringLiteral("canción ñandú ¿qué?")); }, ends("paragraph:canción ñandú ¿qué?") },
+        { "'[] ' starts a todo", [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r");
+              QTimer::singleShot(30, window, [=]() { typeText(window, QStringLiteral("[] tarea")); }); },
+          ends("todo:tarea") },
+        // ctrl+z: document undo is ROADMAP (ROADMAP.md, docs/keyboard.md), not tested here
+    };
+    auto run = std::make_shared<std::function<void(int)>>();
+    *run = [=](int i) {
+        if (i >= steps->size()) {
+            dlog(QStringLiteral("DRIVE writing done failures=%1").arg(*fails));
+            shot(window, shotPath(QStringLiteral("writing.png")));
+            QCoreApplication::exit(*fails);
+            return;
+        }
+        (*steps)[i].act();
+        QTimer::singleShot(250, window, [=]() {
+            const QString o = order();
+            const bool ok = (*steps)[i].ok(o);
+            QObject *f = window->focusObject();
+            const int caret = f ? f->property("cursorPosition").toInt() : -1;
+            const QString fn = f ? f->objectName() : QString();
+            if (!ok) ++*fails;
+            dlog(QStringLiteral("DRIVE writing %1 %2 (%3) focus=%4 caret=%5").arg(ok ? QStringLiteral("ok  ") : QStringLiteral("FAIL"), (*steps)[i].name, o, fn).arg(caret));
+            (*run)(i + 1);
+        });
+    };
+    window->requestActivate();
+    model->forceFocus(firstBlockId(window), 0);
+    QTimer::singleShot(400, window, [=]() { (*run)(0); });
 }
 
 void keysScenario(QQuickWindow *window)
@@ -959,6 +1041,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 journalUnreviewedScenario(window, ws);
             else if (scenario == QLatin1String("journal-keys"))
                 journalKeysScenario(window, ws);
+            else if (scenario == QLatin1String("writing"))
+                writingScenario(window);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
             else if (scenario == QLatin1String("editor-keys"))
