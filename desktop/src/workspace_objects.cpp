@@ -1312,9 +1312,11 @@ QVariantList Workspace::objectPropertyEntries(const QString &objectId) const
 
     for (const QJsonValue &v : t.propertyDefs) {
         const QJsonObject o = v.toObject();
-        if (o.value(QLatin1String("system")).toBool())
-            continue; // filled by the app (file, url, tags): shown where it belongs, not as a field
         const QString k = normalizePropertyKey(o.value(QLatin1String("key")).toString(o.value(QLatin1String("id")).toString()));
+        if (o.value(QLatin1String("system")).toBool()) {
+            seen.insert(k); // filled by the app (date, file, url, tags): on the type, so never loose
+            continue;       // shown where it belongs, not as a field
+        }
         appendEntry(k, o.value(QLatin1String("name")).toString(k), o.value(QLatin1String("kind")).toString(QStringLiteral("text")),
                     o.value(QLatin1String("options")).toArray());
     }
