@@ -8,6 +8,7 @@
 
 #include "model.h"
 #include "spancodec.h"
+#include "undohistory.h"
 
 #include <QAbstractListModel>
 #include <QQuickTextDocument>
@@ -40,6 +41,8 @@ class EditorModel : public QAbstractListModel {
     Q_PROPERTY(int focusPosition READ focusPosition NOTIFY focusChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectionChanged)
     Q_PROPERTY(QString activeEditingId READ objectId CONSTANT)
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
 
 public:
     enum Roles {
@@ -115,6 +118,12 @@ public:
     QVariantList outline() const;
     QString focusBlockId() const { return m_focusBlockId; }
     int focusPosition() const { return m_focusPosition; }
+    bool canUndo() const { return m_history.canUndo(); }
+    bool canRedo() const { return m_history.canRedo(); }
+
+    // Document undo/redo (Ctrl+Z / Ctrl+Shift+Z). The caller commits pending typing first.
+    Q_INVOKABLE bool undo();
+    Q_INVOKABLE bool redo();
 
     // ---------------- editing operations (from QML) ----------------
     Q_INVOKABLE void commitRichText(int row, QQuickTextDocument *doc, int cursorPos);
@@ -242,6 +251,7 @@ signals:
     void blockCreated(const QString &blockId);
     void scrollFocusRequest(QString blockId, int row);
     void objectSaved(QString objectId);
+    void historyChanged();
 
 public slots:
     void flushNow();
@@ -262,6 +272,9 @@ private:
     void applyIncrementalBlocks(const Blocks &nextBlocks, const QVector<int> &hintRoles = {});
     void refreshRowsFrom(int start);
     void markDirty();
+    // Takes the live text of a block before a structural edit, as its own undo step.
+    void pullDoc(int idx, QQuickTextDocument *doc);
+    void showEditState(const EditState &to);
     void scheduleSave(int ms = 1200);
     void commitObjectToWorkspace();
     void setFocus(const QString &blockId, int pos);
@@ -284,6 +297,8 @@ private:
     QVector<VisibleRow> m_visible;
     QString m_focusBlockId;
     int m_focusPosition = 0;
+    UndoHistory m_history;
+    bool m_restoring = false;
     friend class Workspace;
 };
 

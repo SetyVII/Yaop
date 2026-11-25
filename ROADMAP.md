@@ -88,7 +88,7 @@ mobile and desktop, then a test that both pass.
 - [ ] Two-pane split and pop-out windows (§9).
 - [ ] Editable whiteboard that saves `canvas_data`; placed objects count as references (§10).
       Today the canvas is a visual prototype on both platforms.
-- [ ] Document-level undo/redo.
+- [x] Document-level undo/redo (desktop: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y; Android still to do).
 - [ ] Translation catalogs (`.ts`, es/en).
 - [ ] Trusted node (§23): thumbnails, video posters, PDF text, compaction, integrity checks;
       mobile consumes them and keeps 90 days of originals (§17.3).

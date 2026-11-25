@@ -99,8 +99,10 @@ Writing checked by `--drive writing`: Enter splits, Backspace joins, `- ` bullet
 the list, Enter on an empty item leaves it, `[] ` todo, accents/ñ/¿?.
 
 Still missing:
-- **Undo/redo inside the text** (Ctrl+Z does nothing in blocks) — ROADMAP.md "Document-level
-  undo/redo". The biggest gap when writing.
+- ~~Undo/redo inside the text~~ — done on desktop: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, checked by
+  `--drive writing`. While building it: the markdown probe copied typed text into the model
+  silently, so typing alone never scheduled a save (it waited for another edit or for closing).
+  Android has no undo yet.
 - **Todo block → Task object** (Capacities tasks) — needs the §6 decision and a spec first.
 - **"The day starts at…"** (product §20, DECIDED) is not in the desktop: "today" is the calendar
   date everywhere (journal header, calendar, home).

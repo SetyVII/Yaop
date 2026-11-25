@@ -655,6 +655,14 @@ ListView {
         }
     }
 
+    // Ctrl+Z / Ctrl+Shift+Z: whole-document steps; the caret lands where the change was.
+    function undoRedo(redo) {
+        if (!session) return
+        closePopups()
+        if (redo) session.redo()
+        else session.undo()
+    }
+
     Keys.onShortcutOverride: (event) => {
         if (session && session.selectedCount > 0 && typeof keymap !== "undefined"
                 && keymap.owns("blocks", event.key, event.modifiers))
@@ -675,6 +683,11 @@ ListView {
             else if (event.key === Qt.Key_Escape) closePopups()
             else if (event.key === Qt.Key_Backspace) triggerQuery = triggerQuery.slice(0, -1)
             else if (plain && event.text.length > 0 && event.text.charCodeAt(0) > 32) triggerQuery += event.text
+            return
+        }
+        if (ctrl && (event.key === Qt.Key_Z || event.key === Qt.Key_Y)) {
+            event.accepted = true
+            undoRedo(event.key === Qt.Key_Y || shift)
             return
         }
         if (session.selectedCount <= 0) {

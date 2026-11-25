@@ -56,6 +56,8 @@ qt_add_executable(yaop-desktop
     src/workspace_backup.cpp
     src/editormodel.h
     src/editormodel.cpp
+    src/undohistory.h
+    src/undohistory.cpp
     src/providers.h
     src/providers.cpp
     src/texrender_internal.h

@@ -51,6 +51,8 @@ std::vector<KeyBinding> buildBindings()
         bind("editor.underline", { "Ctrl+U" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Underline")),
         bind("editor.code", { "Ctrl+E" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Inline code")),
         bind("editor.duplicate", { "Ctrl+D" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Duplicate block")),
+        bind("editor.undo", { "Ctrl+Z" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Undo")),
+        bind("editor.redo", { "Ctrl+Shift+Z", "Ctrl+Y" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Redo")),
         bind("editor.selectAll", { "Ctrl+A" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Select all (twice: all blocks)")),
         bind("editor.indent", { "Tab" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Indent")),
         bind("editor.outdent", { "Shift+Tab" }, "editor", QT_TRANSLATE_NOOP("Keymap", "Outdent")),

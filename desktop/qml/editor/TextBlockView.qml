@@ -348,6 +348,14 @@ Item {
             }
             if (event.modifiers & Qt.ControlModifier || event.modifiers & Qt.MetaModifier) {
                 const shift = event.modifiers & Qt.ShiftModifier
+                // Document undo/redo (the TextEdit's own undo only knew this block and lost
+                // everything across Enter/Backspace/paste).
+                if (event.key === Qt.Key_Z || event.key === Qt.Key_Y) {
+                    event.accepted = true
+                    tb.commitNow()
+                    view.undoRedo(event.key === Qt.Key_Y || shift)
+                    return
+                }
                 if (shift && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
                     event.accepted = true
                     tb.moveSelf(event.key === Qt.Key_Up ? -1 : 1)

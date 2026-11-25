@@ -3,6 +3,7 @@
 #include "workspace.h"
 
 #include <QClipboard>
+#include <QDateTime>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -38,6 +39,10 @@ QString blockCssColor(const QString &name)
 
 } // namespace
 
+namespace {
+bool runsEquivalent(const QVector<Run> &a, const QVector<Run> &b);
+} // namespace
+
 EditorModel::EditorModel(Workspace *ws, QObject *parent)
     : QAbstractListModel(parent)
     , m_ws(ws)
@@ -68,8 +73,10 @@ void EditorModel::load(const Object &object)
     if (m_blocks.isEmpty())
         m_blocks.append(Block::makeParagraph(newUuid()));
     m_dirty = false;
+    m_history.reset(makeEditState(m_blocks, m_title));
     rebuildVisible();
     endResetModel();
+    emit historyChanged();
     emit titleChanged();
     emit coverChanged();
     emit metaChanged();
@@ -415,8 +422,73 @@ void EditorModel::clearFocusTarget(const QString &blockId)
     }
 }
 
+void EditorModel::pullDoc(int idx, QQuickTextDocument *doc)
+{
+    if (!doc || idx < 0 || idx >= m_blocks.size() || !m_blocks[idx].isTextual())
+        return;
+    const QVector<Run> runs = runsFromDoc(doc);
+    if (runsEquivalent(m_blocks[idx].runs, runs))
+        return;
+    m_blocks[idx].runs = runs;
+    markDirty();
+}
+
+bool EditorModel::undo()
+{
+    if (!m_history.canUndo())
+        return false;
+    const EditState from = m_history.current();
+    showEditState(m_history.undo());
+    const auto f = editFocus(from, m_history.current());
+    if (!f.first.isEmpty())
+        setFocus(f.first, f.second);
+    emit historyChanged();
+    return true;
+}
+
+bool EditorModel::redo()
+{
+    if (!m_history.canRedo())
+        return false;
+    const EditState from = m_history.current();
+    showEditState(m_history.redo());
+    const auto f = editFocus(from, m_history.current());
+    if (!f.first.isEmpty())
+        setFocus(f.first, f.second);
+    emit historyChanged();
+    return true;
+}
+
+void EditorModel::showEditState(const EditState &to)
+{
+    const Blocks before = m_blocks;
+    m_restoring = true;
+    m_selected.clear();
+    Blocks fresh = to.blocks;
+    fresh.detach(); // rows point into m_blocks: never share its buffer with the history
+    applyIncrementalBlocks(fresh);
+    // Live documents keep their own text: reload the ones whose content changed.
+    for (const Block &b : m_blocks) {
+        if (!b.isTextual())
+            continue;
+        const auto it = std::find_if(before.cbegin(), before.cend(),
+                                     [&](const Block &o) { return o.id == b.id; });
+        if (it == before.cend() || !runsEquivalent(it->runs, b.runs) || it->type != b.type)
+            emit blockHtmlReplaced(b.id);
+    }
+    if (m_title != to.title) {
+        m_title = to.title;
+        emit titleChanged();
+    }
+    markDirty();
+    m_restoring = false;
+    emit selectionChanged();
+}
+
 void EditorModel::markDirty()
 {
+    if (!m_restoring && m_history.record(makeEditState(m_blocks, m_title), QDateTime::currentMSecsSinceEpoch()))
+        emit historyChanged();
     if (!m_dirty) {
         m_dirty = true;
         emit dirtyChanged();
@@ -652,8 +724,7 @@ int EditorModel::handleEnter(int row, int caretInDoc, QQuickTextDocument *doc)
         setFocus(b.id, 0);
         return row;
     }
-    if (doc)
-        b.runs = runsFromDoc(doc);
+    pullDoc(idx, doc);
 
     // Caret position -> span offset (single-block docs: identical numbering).
     const int caret = qBound(0, caretInDoc, runsToPlainText(b.runs).length());
@@ -687,11 +758,9 @@ void EditorModel::handleBackspace(int row, int caretInDoc, QQuickTextDocument *d
     const int idx = visibleRowToBlockIndex(row);
     if (idx < 0)
         return;
-    Block &b = m_blocks[idx];
-    if (doc && b.isTextual())
-        b.runs = runsFromDoc(doc);
     if (caretInDoc > 0)
         return; // normal in-text deletion handled by TextEdit
+    pullDoc(idx, doc);
 
     const auto result = blockops::handleBackspaceAtStart(m_blocks, idx);
     switch (result.kind) {
@@ -737,14 +806,16 @@ bool EditorModel::handleMarkdownPrefix(int row, QQuickTextDocument *doc)
     const int idx = visibleRowToBlockIndex(row);
     if (idx < 0 || !doc)
         return false;
-    Block &b = m_blocks[idx];
-    if (doc && b.isTextual())
-        b.runs = runsFromDoc(doc);
-    const QString text = runsToPlainText(b.runs);
-
-    const auto result = blockops::processMarkdownPrefix(b, text);
+    // Probe on a copy: this runs on every pause in typing, and a silent copy into m_blocks
+    // would hide that typing from commitRichText (never saved, never an undo step).
+    Block probe = m_blocks[idx];
+    if (!probe.isTextual())
+        return false;
+    probe.runs = runsFromDoc(doc);
+    const auto result = blockops::processMarkdownPrefix(probe, runsToPlainText(probe.runs));
     if (result.kind == blockops::MarkdownResult::None)
         return false;
+    pullDoc(idx, doc); // the typed prefix is its own undo step: Ctrl+Z gives "- " back as text
 
     if (result.kind == blockops::MarkdownResult::Divider) {
         Blocks nextBlocks = m_blocks;
@@ -1160,9 +1231,8 @@ bool EditorModel::pasteBlocksAt(int row, int caretInDoc, QQuickTextDocument *doc
         return true;
     }
 
+    pullDoc(idx, doc);
     Block &cur = m_blocks[idx];
-    if (doc && cur.isTextual())
-        cur.runs = runsFromDoc(doc);
 
     if (cur.isTextual()) {
         const QString curPlain = runsToPlainText(cur.runs);

@@ -250,7 +250,7 @@ Pages:
 | Ctrl+, | Settings | GNOME/VS Code |
 | Ctrl+/ (and `?` in navigation mode) | Shortcut sheet | PENDIENTES §4 |
 | Ctrl+Shift+L, Ctrl+Shift+H | Lock, privacy | exist |
-| Ctrl+Z / Ctrl+Shift+Z | Undo / redo (document undo is ROADMAP; until then only toasts) | |
+| Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y) | Undo / redo in the open document: typing bursts are one step, Enter / Backspace / paste / a markdown shortcut each its own; the caret goes back to the change | desktop |
 | Esc | Close the innermost overlay/popup only | §2.2 |
 
 ### 6.1 Command palette

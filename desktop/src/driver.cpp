@@ -647,7 +647,7 @@ void journalKeysScenario(QQuickWindow *window, Workspace *ws)
                     const QString name = f ? f->objectName() : QString();
                     const bool visible = f && f->isVisible();
                     typeText(window, QStringLiteral("!"));
-                    later(300, [=]() {
+                    later(600, [=]() { // after the editor's 400 ms commit
                         const QString snap = model->debugSnapshot();
                         const bool typed = snap.contains(QLatin1String("hola diario"));
                         const bool bang = snap.contains(QLatin1Char('!'));
@@ -729,7 +729,17 @@ void writingScenario(QQuickWindow *window)
         { "'[] ' starts a todo", [=]() { key(Qt::Key_Return, Qt::NoModifier, "\r");
               QTimer::singleShot(30, window, [=]() { typeText(window, QStringLiteral("[] tarea")); }); },
           ends("todo:tarea") },
-        // ctrl+z: document undo is ROADMAP (ROADMAP.md, docs/keyboard.md), not tested here
+        { "ctrl+z gives '[] ' back as text", [=]() { key(Qt::Key_Z, Qt::ControlModifier); }, ends("paragraph:[] tarea") },
+        { "ctrl+shift+z redoes the todo", [=]() { key(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); }, ends("todo:tarea") },
+        { "ctrl+z x3 undoes the line and its Enter", [=]() {
+              key(Qt::Key_Z, Qt::ControlModifier);
+              QTimer::singleShot(30, window, [=]() { key(Qt::Key_Z, Qt::ControlModifier); });
+              QTimer::singleShot(60, window, [=]() { key(Qt::Key_Z, Qt::ControlModifier); }); },
+          ends("bullet_list:dos,paragraph:canción ñandú ¿qué?") },
+        { "typing goes on at the caret undo left", [=]() { typeText(window, QStringLiteral("!")); },
+          ends("bullet_list:dos,paragraph:canción ñandú ¿qué?!") },
+        { "ctrl+y after new typing changes nothing", [=]() { key(Qt::Key_Y, Qt::ControlModifier); },
+          ends("bullet_list:dos,paragraph:canción ñandú ¿qué?!") },
     };
     auto run = std::make_shared<std::function<void(int)>>();
     *run = [=](int i) {
@@ -740,7 +750,8 @@ void writingScenario(QQuickWindow *window)
             return;
         }
         (*steps)[i].act();
-        QTimer::singleShot(250, window, [=]() {
+        // 500 ms: typing reaches the model on the editor's 400 ms commit, as it does for a person
+        QTimer::singleShot(500, window, [=]() {
             const QString o = order();
             const bool ok = (*steps)[i].ok(o);
             QObject *f = window->focusObject();

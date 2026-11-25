@@ -20,6 +20,7 @@
 #include "workspace_internal.h"
 #include "history.h"
 #include "audioplayback.h"
+#include "undohistory.h"
 #include <QElapsedTimer>
 #include <QClipboard>
 #include <QGuiApplication>
@@ -190,6 +191,40 @@ static void testOutboxBatches()
 }
 
 // R4: live stream reconnect backoff.
+static void testUndoHistory()
+{
+    using namespace pkm;
+    auto para = [](const QString &id, const QString &text) {
+        return Block::makeParagraph(id, { Run{ text } });
+    };
+    UndoHistory h;
+    h.reset(makeEditState({ para("a", "") }, "t"));
+    CHECK(!h.canUndo() && !h.canRedo(), "undo: nothing after load");
+    CHECK(!h.record(makeEditState({ para("a", "") }, "t"), 0), "undo: no change, no step");
+    h.record(makeEditState({ para("a", "ho") }, "t"), 1000);
+    h.record(makeEditState({ para("a", "hola") }, "t"), 1400);        // same block, soon: one step
+    h.record(makeEditState({ para("a", "hola mundo") }, "t"), 3000);  // after a pause: new step
+    h.record(makeEditState({ para("a", "hola"), para("b", " mundo") }, "t"), 3100); // Enter: own step
+    EditState s = h.undo();
+    CHECK(s.blocks.size() == 1 && s.blocks[0].plainText() == "hola mundo", "undo: Enter undone alone");
+    s = h.undo();
+    CHECK(s.blocks[0].plainText() == "hola", "undo: typing after a pause is its own step");
+    const auto f = editFocus(makeEditState({ para("a", "hola mundo") }, "t"), s);
+    CHECK(f.first == "a" && f.second == 4, "undo: caret where the removed text was");
+    s = h.undo();
+    CHECK(s.blocks[0].plainText().isEmpty() && !h.canUndo(), "undo: a typing burst is one step");
+    s = h.redo();
+    CHECK(s.blocks[0].plainText() == "hola" && h.canRedo(), "redo: steps forward");
+    h.record(makeEditState({ para("a", "hola!") }, "t"), 9000);
+    CHECK(!h.canRedo(), "redo: a new edit drops the redo branch");
+    CHECK(editChange(makeEditState({ para("a", "x") }, "t"), makeEditState({ para("a", "x") }, "u")) == "#title",
+          "undo: title change detected");
+    Block todo = para("a", "x");
+    todo.type = BlockType::Todo;
+    CHECK(editChange(makeEditState({ para("a", "x") }, "t"), makeEditState({ todo }, "t")) == "*",
+          "undo: a type change is structural");
+}
+
 static void testLiveBackoff()
 {
     CHECK(liveBackoffMs(0, 0.5) == 1000, "backoff: first retry after 1 s");
@@ -1483,6 +1518,7 @@ int runAll()
     testAudioPeaks();
     testOutboxBatches();
     testLiveBackoff();
+    testUndoHistory();
     testCacheCipher();
     testStoreEncryptedAtRest();
     testSearchAndBacklinks();
