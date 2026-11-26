@@ -70,6 +70,8 @@ qt_add_executable(yaop-desktop
     src/audiorecorder.cpp
     src/keymap.h
     src/keymap.cpp
+    src/keynav.h
+    src/keynav.cpp
     src/keyinput.h
     src/keyinput.cpp
     src/selftest.h

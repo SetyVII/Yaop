@@ -11,6 +11,7 @@
 #include "editormodel.h"
 #include "applock.h"
 #include "keymap.h"
+#include "keynav.h"
 #include "outbox.h"
 #include "searchindex.h"
 #include "store.h"
@@ -790,6 +791,31 @@ static void testKeymap()
     CHECK(km.owns(QStringLiteral("blocks"), Qt::Key_Backtab, Qt::ShiftModifier), "keymap: Backtab matches Shift+Tab");
     CHECK(!km.owns(QStringLiteral("editor"), Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier),
           "keymap: Ctrl+Shift+H stays the privacy key");
+    CHECK(km.keysText(QStringLiteral("today")) == QStringLiteral("Ctrl+J"), "keymap: Ctrl+J opens today's note");
+}
+
+static void testKeyNav()
+{
+    // a 3-column grid of 100x60 cards with 20 px gaps, then a full-width row below
+    QList<QRectF> grid;
+    for (int r = 0; r < 2; ++r)
+        for (int c = 0; c < 3; ++c)
+            grid << QRectF(c * 120, r * 80, 100, 60);
+    grid << QRectF(0, 160, 340, 40);
+    const QRectF mid = grid.at(4);   // row 1, column 1
+    CHECK(pickNeighbor(mid, grid, 2) == 1, "keynav: up goes to the card above, same column");
+    CHECK(pickNeighbor(mid, grid, 0) == 3, "keynav: left goes to the card beside");
+    CHECK(pickNeighbor(mid, grid, 1) == 5, "keynav: right goes to the card beside");
+    CHECK(pickNeighbor(mid, grid, 3) == 6, "keynav: down goes to the row below");
+    CHECK(pickNeighbor(grid.at(2), grid, 1) == -1, "keynav: nothing past the last column");
+    CHECK(pickNeighbor(grid.at(0), grid, 2) == -1, "keynav: nothing above the first row");
+    // a list: the next row wins over one further down, even if it is wider
+    const QList<QRectF> list = { QRectF(0, 0, 200, 30), QRectF(0, 40, 300, 30), QRectF(0, 80, 200, 30) };
+    CHECK(pickNeighbor(list.at(0), list, 3) == 1, "keynav: down in a list is the next row");
+    CHECK(pickNeighbor(list.at(2), list, 2) == 1, "keynav: up in a list is the previous row");
+    // a button on the right of a header row is not "below" the header text it shares a line with
+    const QList<QRectF> header = { QRectF(400, 2, 30, 30), QRectF(0, 50, 200, 30) };
+    CHECK(pickNeighbor(QRectF(0, 0, 200, 34), header, 3) == 1, "keynav: down skips what is on the same line");
 }
 
 static void testEditorNoirActions()
@@ -1530,6 +1556,7 @@ int runAll()
     testStandardTypeSeeding();
     testSnapshotStore();
     testKeymap();
+    testKeyNav();
     testEditorNoirActions();
     testWebPEncoding();
     testCaptureBridge();

@@ -817,6 +817,81 @@ void keysScenario(QQuickWindow *window)
     });
 }
 
+// Keyboard-first F2/F3 (docs/keyboard.md §5): pages, sidebar and the shortcut sheet by keys only.
+// Each step logs ok/FAIL; exit code = number of failures.
+void navScenario(QQuickWindow *window)
+{
+    auto key = [window](int k, Qt::KeyboardModifiers m = Qt::NoModifier) {
+        QTest::keyClick(static_cast<QWindow *>(window), Qt::Key(k), m);
+    };
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    auto fails = std::make_shared<int>(0);
+    auto step = [fails](const QString &name, bool ok, const QString &detail = QString()) {
+        if (!ok) ++*fails;
+        dlog(QStringLiteral("DRIVE nav %1 %2 %3").arg(ok ? QStringLiteral("ok") : QStringLiteral("FAIL"), name, detail));
+    };
+    auto focusName = [window]() {
+        QQuickItem *f = window->activeFocusItem();
+        return f ? QString::fromLatin1(f->metaObject()->className()) + QLatin1Char('/') + f->objectName() : QStringLiteral("-");
+    };
+    auto inside = [window](const char *id) {
+        for (QQuickItem *p = window->activeFocusItem(); p; p = p->parentItem())
+            if (p->objectName() == QLatin1String(id)) return true;
+        return false;
+    };
+    window->requestActivate();
+    key(Qt::Key_1, Qt::ControlModifier);                                 // Home
+    later(600, [=]() {
+        key(Qt::Key_Down);
+        later(300, [=]() {
+            QQuickItem *first = window->activeFocusItem();
+            const bool isPage = first && QString::fromLatin1(first->metaObject()->className()).contains(QLatin1String("Page"));
+            step(QStringLiteral("down-focuses-an-item"), inside("navPages") && first && !isPage, focusName());
+            key(Qt::Key_Down);
+            later(300, [=]() {
+                step(QStringLiteral("down-moves"), window->activeFocusItem() != first && inside("navPages"), focusName());
+                shot(window, shotPath(QStringLiteral("nav-home.png")));
+                key(Qt::Key_F6, Qt::ShiftModifier);                      // page -> tabs -> sidebar
+                key(Qt::Key_F6, Qt::ShiftModifier);
+                later(300, [=]() {
+                    step(QStringLiteral("shift-f6-sidebar"), inside("navSidebar"), focusName());
+                    key(Qt::Key_Down);
+                    key(Qt::Key_Down);
+                    later(300, [=]() {
+                        const QString before = window->property("page").toString();
+                        step(QStringLiteral("sidebar-arrows"), inside("navSidebar"), focusName());
+                        shot(window, shotPath(QStringLiteral("nav-sidebar.png")));
+                        key(Qt::Key_Return);
+                        later(700, [=]() {
+                            const QString after = window->property("page").toString();
+                            step(QStringLiteral("enter-opens-page"), after != before || !window->property("editorObjectId").toString().isEmpty(),
+                                 before + QStringLiteral(" -> ") + after);
+                            key(Qt::Key_Slash, Qt::ControlModifier);
+                            later(500, [=]() {
+                                QQuickItem *f = window->activeFocusItem();
+                                step(QStringLiteral("ctrl-slash-sheet"), f && f->objectName() == QLatin1String("shortcutFilter"), focusName());
+                                key(Qt::Key_Escape);
+                                later(500, [=]() {
+                                    QQuickItem *g = window->activeFocusItem();
+                                    step(QStringLiteral("esc-closes-sheet"), !g || g->objectName() != QLatin1String("shortcutFilter"), focusName());
+                                    key(Qt::Key_J, Qt::ControlModifier);
+                                    later(900, [=]() {
+                                        QQuickItem *h = window->activeFocusItem();
+                                        step(QStringLiteral("ctrl-j-today"), h && h->objectName() == QLatin1String("blockEdit")
+                                             && window->property("page").toString() == QLatin1String("calendar"), focusName());
+                                        shot(window, shotPath(QStringLiteral("nav-today.png")));
+                                        QCoreApplication::exit(*fails);
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 // Keyboard-first F1 (docs/keyboard.md §4): the editor is driven by keys only.
 void editorKeysScenario(QQuickWindow *window)
 {
@@ -1066,6 +1141,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 writingScenario(window);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
+            else if (scenario == QLatin1String("nav"))
+                navScenario(window);
             else if (scenario == QLatin1String("editor-keys"))
                 editorKeysScenario(window);
             else

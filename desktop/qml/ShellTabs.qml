@@ -155,6 +155,12 @@ Item {
                 }
             }
             TapHandler { onTapped: strip.tabClicked(tab.index) }
+            // a stop for the arrows (Main.navKey): Enter opens the tab, Delete closes it
+            activeFocusOnTab: true
+            property bool focusRing: true
+            Keys.onReturnPressed: strip.tabClicked(tab.index)
+            Keys.onSpacePressed: strip.tabClicked(tab.index)
+            Keys.onDeletePressed: strip.tabCloseRequested(tab.index)
             TapHandler { acceptedButtons: Qt.MiddleButton; onTapped: strip.tabCloseRequested(tab.index) }
             ToolTip.visible: tabHover.hovered && !tab.roomy
             ToolTip.text: tab.title

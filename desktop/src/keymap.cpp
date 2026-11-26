@@ -24,9 +24,9 @@ std::vector<KeyBinding> buildBindings()
         // ---- global (Main.qml)
         bind("palette", { "Ctrl+K", "Ctrl+P" }, "global", QT_TRANSLATE_NOOP("Keymap", "Search and commands")),
         bind("capture", { "Ctrl+N" }, "global", QT_TRANSLATE_NOOP("Keymap", "Quick capture")),
-        bind("today", { "Ctrl+D", "Alt+Home" }, "global", QT_TRANSLATE_NOOP("Keymap", "Today")),
+        bind("today", { "Ctrl+J", "Ctrl+D", "Alt+Home" }, "global", QT_TRANSLATE_NOOP("Keymap", "Today")),
         bind("page.home", { "Ctrl+1" }, "global", QT_TRANSLATE_NOOP("Keymap", "Home")),
-        bind("page.journal", { "Ctrl+2", "Ctrl+J" }, "global", QT_TRANSLATE_NOOP("Keymap", "Journal")),
+        bind("page.journal", { "Ctrl+2" }, "global", QT_TRANSLATE_NOOP("Keymap", "Journal (list of days)")),
         bind("page.library", { "Ctrl+3", "Ctrl+L" }, "global", QT_TRANSLATE_NOOP("Keymap", "Library")),
         bind("page.whiteboard", { "Ctrl+4" }, "global", QT_TRANSLATE_NOOP("Keymap", "Whiteboard")),
         bind("page.tasks", { "Ctrl+5" }, "global", QT_TRANSLATE_NOOP("Keymap", "Tasks")),
@@ -43,6 +43,10 @@ std::vector<KeyBinding> buildBindings()
         bind("editor.focusMode", { "Ctrl+Shift+F" }, "global", QT_TRANSLATE_NOOP("Keymap", "Toggle focus mode")),
         bind("settings", { "Ctrl+," }, "global", QT_TRANSLATE_NOOP("Keymap", "Settings")),
         bind("lock", { "Ctrl+Shift+L" }, "global", QT_TRANSLATE_NOOP("Keymap", "Lock")),
+        bind("shortcuts", { "Ctrl+/", "F1" }, "global", QT_TRANSLATE_NOOP("Keymap", "Keyboard shortcuts and how to move")),
+        bind("region.next", { "F6" }, "global", QT_TRANSLATE_NOOP("Keymap", "Next area (sidebar, tabs, page, side pane)")),
+        bind("region.prev", { "Shift+F6" }, "global", QT_TRANSLATE_NOOP("Keymap", "Previous area")),
+        bind("region.sidebar", { "Ctrl+Shift+E" }, "global", QT_TRANSLATE_NOOP("Keymap", "Go to the sidebar")),
         appWide(bind("privacy", { "Ctrl+Shift+H" }, "global", QT_TRANSLATE_NOOP("Keymap", "Hide private content"))),
 
         // ---- editor: caret in a text block (TextBlockView)
@@ -95,6 +99,16 @@ std::vector<KeyBinding> buildBindings()
         bind("blocks.moveUp", { "Ctrl+Shift+Up" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Move blocks up")),
         bind("blocks.moveDown", { "Ctrl+Shift+Down" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Move blocks down")),
         bind("blocks.menu", { "Ctrl+.", "Menu", "Shift+F10" }, "blocks", QT_TRANSLATE_NOOP("Keymap", "Block actions")),
+
+        // ---- lists and pages: focus on an item, not in a text (Main.qml, keynav.cpp). Documented
+        // here for the sheet; arrows are handled by KeyNav, Enter by the item's activate().
+        bind("nav.move", { "Up", "Down", "Left", "Right" }, "list", QT_TRANSLATE_NOOP("Keymap", "Move to the nearest item that way")),
+        bind("nav.open", { "Return", "Space" }, "list", QT_TRANSLATE_NOOP("Keymap", "Open or press the item")),
+        bind("nav.tab", { "Ctrl+Return" }, "list", QT_TRANSLATE_NOOP("Keymap", "Open in a new tab")),
+        bind("nav.pane", { "Shift+Return" }, "list", QT_TRANSLATE_NOOP("Keymap", "Open in the side pane")),
+        bind("nav.first", { "Home" }, "list", QT_TRANSLATE_NOOP("Keymap", "First item of the page")),
+        bind("nav.last", { "End" }, "list", QT_TRANSLATE_NOOP("Keymap", "Last item of the page")),
+        bind("nav.next", { "Tab" }, "list", QT_TRANSLATE_NOOP("Keymap", "Next control")),
     };
     // Alt+1…9: go to tab N (Firefox on Linux).
     for (int n = 1; n <= 9; ++n) {
@@ -110,6 +124,15 @@ std::vector<KeyBinding> buildBindings()
 QString normalized(const QString &keys)
 {
     return QKeySequence::fromString(keys, QKeySequence::PortableText).toString(QKeySequence::PortableText);
+}
+
+// "Ctrl+K" as the platform writes it, for the shortcut sheet.
+QStringList nativeLabels(const QStringList &keys)
+{
+    QStringList out;
+    for (const QString &k : keys)
+        out << QKeySequence::fromString(k, QKeySequence::PortableText).toString(QKeySequence::NativeText);
+    return out;
 }
 
 QString translatedTitle(const KeyBinding &b)
@@ -153,6 +176,7 @@ QVariantList Keymap::bindings(const QString &scope) const
         out.append(QVariantMap {
             { QStringLiteral("id"), b.id },
             { QStringLiteral("keys"), b.keys },
+            { QStringLiteral("labels"), nativeLabels(b.keys) },
             { QStringLiteral("title"), translatedTitle(b) },
             { QStringLiteral("slateOnly"), b.slateOnly },
             { QStringLiteral("appWide"), b.appWide },

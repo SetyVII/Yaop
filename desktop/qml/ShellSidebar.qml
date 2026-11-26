@@ -15,6 +15,7 @@ Rectangle {
     signal typeSelected(string typeId)
     signal searchRequested()
     signal settingsRequested()
+    signal shortcutsRequested()
     signal newRequested()
     signal newTypeRequested()
     signal hideRequested()
@@ -329,6 +330,12 @@ Rectangle {
                 active: Privacy.active
                 onClicked: Privacy.toggle()
                 ToolTip.visible: hovered; ToolTip.text: qsTr("Image privacy (Ctrl+Shift+H)"); ToolTip.delay: 400
+            }
+            IconButton {
+                implicitWidth: 30; implicitHeight: 30
+                icon: "keyboard"
+                onClicked: sidebar.shortcutsRequested()
+                ToolTip.visible: hovered; ToolTip.text: qsTr("Keyboard shortcuts (%1)").arg(keymap.keysText("shortcuts")); ToolTip.delay: 400
             }
             IconButton {
                 implicitWidth: 30; implicitHeight: 30

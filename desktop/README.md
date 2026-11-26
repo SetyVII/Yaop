@@ -30,7 +30,7 @@ QT_QPA_PLATFORM=offscreen ./build/yaop --profile qa --showcase --size 1280x800 -
 `--keylog` prints every key press, the items it was delivered to and the Shortcut that fired
 (why a key "misses"); shortcuts live in one table, `src/keymap.cpp` ([docs/keyboard.md](../docs/keyboard.md)).
 `tools/qa-desktop.sh <dir>` takes screenshots of every page at several window sizes.
-`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`, `keys`; logs and shots in
+`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`, `keys`, `nav` — pages, sidebar and the shortcut sheet by keys only; logs and shots in
 `YAOP_DRIVE_DIR`); `rename` checks that a mention follows a rename of its target (run it
 with `--server`/`--token` too: a sync echo must not undo a title being typed). `rename-ui` does
 the same through keys and clicks only (`YAOP_DRIVE_DAILY=1`: in today's daily note,
@@ -40,7 +40,9 @@ the same through keys and clicks only (`YAOP_DRIVE_DAILY=1`: in today's daily no
 
 | Action | Keys |
 |---|---|
-| Command palette / quick capture | `Ctrl+K` / `Ctrl+N` |
+| All shortcuts and how to move | `Ctrl+/` or `F1` |
+| Today's note / command palette / quick capture | `Ctrl+J` / `Ctrl+K` / `Ctrl+N` |
+| Move between items / areas (sidebar, tabs, page, pane) | arrows, `Enter` / `F6`, `Shift+F6` |
 | Bold, italic, underline, code, highlight | `Ctrl+B` `Ctrl+I` `Ctrl+U` `Ctrl+E` `Ctrl+Shift+H` |
 | Indent / outdent block | `Tab` / `Shift+Tab` |
 | Duplicate block | `Ctrl+D` |

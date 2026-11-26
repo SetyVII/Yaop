@@ -294,12 +294,116 @@ ApplicationWindow {
         else item.forceActiveFocus()
     }
     onActiveChanged: if (active) Qt.callLater(ensureFocus)
-    // Opening a place (Enter, Ctrl+K, Ctrl+D, back, a tab) puts the caret in it: the page's default.
-    function focusPage() {
+    // Opening a place (Enter, Ctrl+K, Ctrl+D, back, a tab) puts the caret in it: the page's default,
+    // else the item you were on the last time, else (keyboard) the page's first item.
+    function currentPageItem() {
         const host = pages.children[pages.currentIndex]
-        const item = host && host.item !== undefined ? host.item : host
-        if (item && typeof item.focusDefault === "function") item.focusDefault()
-        else ensureFocus()
+        return host && host.item !== undefined ? host.item : host
+    }
+    function focusPage() {
+        const item = currentPageItem()
+        if (!item) { ensureFocus(); return }
+        if (typeof item.focusDefault === "function") { item.focusDefault(); return }
+        const mem = navMemory["page|" + location]
+        if (mem && mem.visible && within(mem, item)) { focusStop(mem); return }
+        if (keyInput.keyboardMode && focusStop(keyNav.first(item))) return
+        if (!within(app.activeFocusItem, item)) item.forceActiveFocus()
+    }
+
+    // ---- Moving with the keyboard (docs/keyboard.md §3, §5). The window has areas — sidebar,
+    // tabs, page, side pane — and arrows move between the clickable things of one area
+    // (src/keynav.cpp). F6 / Shift+F6 cycle the areas; ← → at an edge step into the next one.
+    property var navMemory: ({})   // area (page: per place) -> last item you were on
+    function within(it, root) {
+        for (let p = it; p; p = p.parent) if (p === root) return true
+        return false
+    }
+    function navRegions() {
+        const out = []
+        const side = Theme.modern ? shellSidebar : sidebar
+        if (Theme.modern ? sidebarSlot.shown : side.visible) out.push({ name: "sidebar", item: side })
+        if (Theme.modern && shellTopBar.visible) out.push({ name: "tabs", item: shellTopBar })
+        out.push({ name: "page", item: pages })
+        if (paneOpen) out.push({ name: "pane", item: sidePane })
+        return out
+    }
+    function navKeyOf(name) { return name === "page" ? "page|" + location : name }
+    function regionNameOf(it) {
+        const rs = navRegions()
+        for (let i = 0; i < rs.length; ++i) if (within(it, rs[i].item)) return rs[i].name
+        return ""
+    }
+    function focusStop(it) {
+        if (!it) return false
+        it.forceActiveFocus(Qt.TabFocusReason)
+        keyNav.reveal(it)
+        return true
+    }
+    function enterRegion(r) {
+        if (r.name === "page") { focusPage(); return }
+        const mem = navMemory[navKeyOf(r.name)]
+        if (mem && mem.visible && within(mem, r.item)) focusStop(mem)
+        else if (!focusStop(keyNav.first(r.item))) r.item.forceActiveFocus()
+    }
+    function cycleRegion(step) {
+        const rs = navRegions()
+        const at = rs.findIndex(r => r.name === regionNameOf(app.activeFocusItem))
+        const i = at < 0 ? rs.findIndex(r => r.name === "page") : (at + step + rs.length) % rs.length
+        enterRegion(rs[i])
+    }
+    function focusRegion(name) {
+        const r = navRegions().find(x => x.name === name)
+        if (r) enterRegion(r)
+    }
+    onActiveFocusItemChanged: {
+        const it = activeFocusItem
+        if (!keyNav.isStop(it)) return
+        const name = regionNameOf(it)
+        if (name) navMemory[navKeyOf(name)] = it
+    }
+    // Keys a focused item did not take bubble up to its area (Keys.onPressed below).
+    function navKey(event, name) {
+        if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier | Qt.ShiftModifier)) {
+            // Ctrl+Enter / Shift+Enter: the click handler reads the modifiers (new tab, side pane)
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    && !(event.modifiers & (Qt.AltModifier | Qt.MetaModifier))
+                    && keyNav.activate(app.activeFocusItem))
+                event.accepted = true
+            return
+        }
+        const it = app.activeFocusItem
+        const onStop = keyNav.isStop(it)
+        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) && onStop) {
+            if (keyNav.activate(it)) event.accepted = true
+            return
+        }
+        const r = navRegions().find(x => x.name === name)
+        if (!r) return
+        if (onStop && (event.key === Qt.Key_Home || event.key === Qt.Key_End)) {
+            event.accepted = focusStop(event.key === Qt.Key_Home ? keyNav.first(r.item) : keyNav.last(r.item))
+            return
+        }
+        const dir = event.key === Qt.Key_Left ? 0 : event.key === Qt.Key_Right ? 1
+                  : event.key === Qt.Key_Up ? 2 : event.key === Qt.Key_Down ? 3 : -1
+        if (dir < 0) return
+        // never take arrows from text or from the block editor; a one-line field gives ↓ to its list
+        const typing = it && it.cursorPosition !== undefined
+        for (let p = it; p; p = p.parent) if (p.objectName === "blocks") return
+        if (typing && !(dir === 3 && it.lineCount === undefined)) return
+        event.accepted = true
+        const next = onStop || typing ? keyNav.neighbor(r.item, it, dir) : keyNav.first(r.item)
+        if (next) { focusStop(next); return }
+        if (onStop && keyNav.scrollToward(it, dir)) {   // lazy list rows appear after scrolling
+            Qt.callLater(() => focusStop(keyNav.neighbor(r.item, it, dir)))
+            return
+        }
+        // at an edge: ← → step into the area beside, ↑ from the page goes to the tabs, ↓ back
+        const rs = navRegions()
+        const row = rs.filter(x => x.name !== "tabs")
+        const at = row.findIndex(x => x.name === name)
+        if (dir <= 1 && at >= 0 && row[at + (dir === 1 ? 1 : -1)]) enterRegion(row[at + (dir === 1 ? 1 : -1)])
+        else if (dir === 2 && name === "page") focusRegion("tabs")
+        else if (dir === 3 && name === "tabs") focusRegion("page")
     }
 
     function showPage(p) { editorObjectId = ""; page = p }
@@ -321,6 +425,13 @@ ApplicationWindow {
             captureOpen = true
             break
         case "today": openToday(); break
+        case "shortcuts": shortcutSheet.visible ? shortcutSheet.close() : shortcutSheet.open(); break
+        case "region.next": cycleRegion(1); break
+        case "region.prev": cycleRegion(-1); break
+        case "region.sidebar":
+            if (!sidebarOpen) sidebarOpen = true
+            Qt.callLater(() => focusRegion("sidebar"))
+            break
         case "back": goBack(); break
         case "forward": goForward(); break
         case "tab.new": newTab("p:calendar"); openToday(); break
@@ -480,6 +591,9 @@ ApplicationWindow {
             Layout.fillHeight: true
 
             ShellSidebar {
+                id: shellSidebar
+                objectName: "navSidebar"
+                Keys.onPressed: (event) => app.navKey(event, "sidebar")
                 transform: Translate {
                     id: sidebarShift
                     x: sidebarSlot.shown ? 0 : -Theme.sidebarW
@@ -508,6 +622,7 @@ ApplicationWindow {
                 onNewRequested: app.captureOpen = true
                 onSearchRequested: app.paletteOpen = true
                 onSettingsRequested: settingsSheet.open()
+                onShortcutsRequested: shortcutSheet.open()
                 onHideRequested: app.sidebarOpen = false
                 onOpenObjectRequested: (id) => app.openObject(id)
             }
@@ -515,6 +630,8 @@ ApplicationWindow {
 
         Sidebar {
             id: sidebar
+            objectName: "navSidebar"
+            Keys.onPressed: (event) => app.navKey(event, "sidebar")
             visible: !Theme.modern
             Layout.preferredWidth: Theme.sidebarW
             Layout.fillHeight: true
@@ -540,6 +657,8 @@ ApplicationWindow {
             spacing: 0
 
             ShellTopBar {
+                id: shellTopBar
+                Keys.onPressed: (event) => app.navKey(event, "tabs")
                 visible: Theme.modern
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.paneBarH
@@ -597,6 +716,7 @@ ApplicationWindow {
                 }
                 SidePane {
                     id: sidePane
+                    Keys.onPressed: (event) => app.navKey(event, "pane")
                     z: 2
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -623,6 +743,8 @@ ApplicationWindow {
 
                 StackLayout {
                     id: pages
+                    objectName: "navPages"
+                    Keys.onPressed: (event) => app.navKey(event, "page")
                     anchors.fill: pageArea
                     // Changing page or tab is instant, like a browser: the page is not faded or moved.
                     // A fade over the whole page made every frame of it two times slower, on top of
@@ -802,6 +924,19 @@ ApplicationWindow {
 
     Toast { id: toast }
 
+    ShortcutSheet { id: shortcutSheet }
+
+    // First start: say once where the keys are (Ctrl+/ or F1 opens the sheet).
+    Settings { id: keysTip; category: "keyboard"; property bool shown: false }
+    Timer {
+        interval: 2500
+        running: !keysTip.shown
+        onTriggered: {
+            keysTip.shown = true
+            app.showToast(qsTr("Tip: press %1 to learn the keys").arg(keymap.keysText("shortcuts")))
+        }
+    }
+
     FocusRing { }
 
     LockScreen { }
@@ -812,6 +947,8 @@ ApplicationWindow {
             page = "editor"
         if (typeof initialOverlay !== "undefined" && initialOverlay === "palette")
             app.paletteOpen = true
+        else if (typeof initialOverlay !== "undefined" && initialOverlay === "shortcuts")
+            shortcutSheet.open()
         else if (typeof initialOverlay !== "undefined" && initialOverlay === "capture")
             app.captureOpen = true
         else if (typeof initialOverlay !== "undefined" && initialOverlay.startsWith("libview:"))

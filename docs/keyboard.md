@@ -237,9 +237,9 @@ Pages:
 | Ctrl+Shift+P | Palette in actions-only mode | |
 | Ctrl+N | Quick capture | exists |
 | Ctrl+Shift+N | New note and open it in the editor | |
-| Ctrl+D | Today (day note, caret in it) | outside the editor only, see §7 |
-| Ctrl+1 … 5 | Home, Journal, Library, Whiteboard, Tasks | exists; Slate maps to its own top entries |
-| Ctrl+J, Ctrl+L | Journal, Library | exist; Ctrl+L is kept (no text "link" binding uses it) |
+| Ctrl+J, Ctrl+D, Alt+Home | Today (day note, caret in it) | Ctrl+D outside the editor only, see §7 |
+| Ctrl+1 … 5 | Home, Journal (list of days), Library, Whiteboard, Tasks | exists; Slate maps to its own top entries |
+| Ctrl+L | Library | Ctrl+L is kept (no text "link" binding uses it) |
 | Alt+1 … 9 | Go to tab N (9 = last) | Firefox on Linux |
 | Ctrl+T / Ctrl+W | New tab / close tab | exist |
 | Ctrl+Shift+T | Reopen closed tab | |
@@ -248,7 +248,7 @@ Pages:
 | Ctrl+\\ | Open current object in side pane / close side pane | |
 | F6 / Shift+F6, Ctrl+Shift+E, Ctrl+B | Regions, sidebar (§3) | |
 | Ctrl+, | Settings | GNOME/VS Code |
-| Ctrl+/ (and `?` in navigation mode) | Shortcut sheet | PENDIENTES §4 |
+| Ctrl+/, F1 | Shortcut sheet with a six-step "how to move" guide | done (`ShortcutSheet.qml`) |
 | Ctrl+Shift+L, Ctrl+Shift+H | Lock, privacy | exist |
 | Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y) | Undo / redo in the open document: typing bursts are one step, Enter / Backspace / paste / a markdown shortcut each its own; the caret goes back to the change | desktop |
 | Esc | Close the innermost overlay/popup only | §2.2 |
@@ -274,7 +274,7 @@ submits multi-field forms.
 |---|---|
 | Ctrl+D: Today vs Duplicate block | Inside the editor (edit or block mode) Ctrl+D = Duplicate (Notion/VS Code habit). Today stays Ctrl+D elsewhere, and also gets **Alt+Home** (browser "home") which works everywhere. |
 | Esc: global close vs editor | The global `Escape` Shortcut goes away; each overlay handles its own Esc. |
-| Ctrl+2 and Ctrl+J both Journal | Keep both (aliases are fine; the sheet shows both). |
+| Ctrl+J: Journal list or today's note | Today's note (2026-11-26): "journal" means writing today, not browsing days. Ctrl+2 keeps the list of days. |
 | Ctrl+Alt+arrows | Not used: GNOME/KDE switch workspaces with them. |
 | Ctrl+Shift+↑/↓ in Qt text = select to paragraph edge | Our blocks are one paragraph each, so moving the block is the better use. |
 | Alt alone | Never bound; no menu bar mnemonics (Alt must not steal focus). |
@@ -309,14 +309,25 @@ Spanish and other layouts.
 5. Move blocks, turn into, block menu keys (§4.3).
 6. Title / properties / tags / task bar flow (§4.6).
 
-**F2 — Lists and pages**
-1. `KeyList` behavior, applied to Library, Tasks, Home, Inbox, Sets, Journal, Habits.
-2. Sidebar and tabs regions, F6.
-3. Calendar keys (§5.1).
+**F2 — Lists and pages — DONE except where noted** (`src/keynav.*`, `Main.navKey`, `--drive nav`).
+Instead of a `KeyList` per page, arrows are spatial: every stop of the area (a focusable control
+with a focus ring, or anything clickable — a left TapHandler with a pointing-hand HoverHandler)
+is a candidate and the arrow goes to the nearest one that way (`pickNeighbor`, selftest). So every
+page, grid, day strip, the sidebar and the tabs move the same way with no code of their own. A
+card's inner buttons are not stops (Tab or mouse). Enter/Space runs the item's click; Ctrl+Enter /
+Shift+Enter reach the click with the modifiers (new tab / side pane). Home/End: first/last item.
+Areas: sidebar, tabs, page, side pane; F6 / Shift+F6 cycle them, Ctrl+Shift+E goes to the sidebar,
+← → at the edge of an area step into the one beside, ↑ from the top of the page goes to the tabs.
+Each area (the page: per place) remembers the item you were on. On a page without its own
+`focusDefault`, keyboard focus starts on its first item.
+Not yet: type-ahead, F2 rename, Delete to trash, Space = toggle task (Space clicks), calendar
+single-letter keys (§5.1); arrows in the editor stay the editor's.
 
 **F3 — Palette and overlays**
-1. Palette ↑/↓ + actions from the keymap + `>` mode.
-2. Shortcut sheet (Ctrl+/) generated from the keymap.
+1. Palette ↑/↓ (done) + actions from the keymap + `>` mode.
+2. ~~Shortcut sheet (Ctrl+/) generated from the keymap~~ — done: Ctrl+/ or F1, the keyboard button
+   in the sidebar footer, and a one-time tip on first start. Six-step guide, then every binding by
+   scope (`global`, `list`, `editor`, `blocks`), filtered by word or key.
 3. Overlay focus trap and return-to-opener; shared context menu reachable by Menu/Shift+F10,
    with shortcuts on the right (PENDIENTES §1).
 

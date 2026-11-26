@@ -11,6 +11,7 @@
 #include "capturebridge.h"
 #include "keyinput.h"
 #include "keymap.h"
+#include "keynav.h"
 
 #include <QCommandLineParser>
 #include <QCoreApplication>
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
     pkm::KeyInput keyInput(parser.isSet(QStringLiteral("keylog")));
     app.installEventFilter(&keyInput);
     pkm::Keymap keymap;
+    pkm::KeyNav keyNav;
     pkm::CaptureBridge captureBridge(&workspace);
 
     QQmlApplicationEngine engine;
@@ -261,6 +263,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("ws"), &workspace);
     engine.rootContext()->setContextProperty(QStringLiteral("captureBridge"), &captureBridge);
     engine.rootContext()->setContextProperty(QStringLiteral("keymap"), &keymap);
+    engine.rootContext()->setContextProperty(QStringLiteral("keyNav"), &keyNav);
     engine.rootContext()->setContextProperty(QStringLiteral("keyInput"), &keyInput);
     engine.rootContext()->setContextProperty(QStringLiteral("initialPage"), parser.value(QStringLiteral("page")));
     engine.rootContext()->setContextProperty(QStringLiteral("initialOverlay"), parser.value(QStringLiteral("overlay")));

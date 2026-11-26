@@ -3,8 +3,8 @@ import QtQuick.Controls
 import "."
 
 // One keyboard focus ring for the window (docs/keyboard.md §2.6). It follows the focused item
-// and slides to the next one; only items that declare `property bool focusRing: true` get it,
-// and only while you navigate with the keyboard (a click hides it until the next key).
+// and slides to the next one; only items that declare `property bool focusRing: true` or that
+// arrows stop on (keyNav.isStop: anything clickable) get it, and only while you navigate with the keyboard (a click hides it until the next key).
 Rectangle {
     id: ring
     // In the overlay layer, so it also draws over popups and sheets.
@@ -12,7 +12,7 @@ Rectangle {
     readonly property Item host: parent
     readonly property Item target: {
         const it = host.Window.activeFocusItem
-        return it && it.focusRing === true && it.visible ? it : null
+        return it && (it.focusRing === true || keyNav.isStop(it)) && it.visible ? it : null
     }
     readonly property bool shown: target !== null && keyInput.keyboardMode
 
