@@ -84,6 +84,9 @@ QString chipBackground(const Run &r)
 
 QString visibleLabel(const Run &r)
 {
+    // a date with a time reads "2026-11-27 09:00" (same length as the ISO form, so offsets hold)
+    if (r.hasTime || r.date.contains(QLatin1Char('T')))
+        return QString(r.date).replace(QLatin1Char('T'), QLatin1Char(' '));
     return runVisibleText(r);
 }
 

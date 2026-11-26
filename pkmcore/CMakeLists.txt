@@ -24,6 +24,7 @@ add_library(pkmcore STATIC
     editor/spancodec.h editor/spancodec.cpp
     editor/query.h editor/query.cpp
     editor/mentionquery.h editor/mentionquery.cpp
+    editor/datequery.h editor/datequery.cpp
     editor/standardtypes.h editor/standardtypes.cpp
     editor/imagecolors.h editor/imagecolors.cpp
     editor/objectops.h editor/objectops.cpp
@@ -63,7 +64,7 @@ endif()
 
 if(PKMCORE_TESTS)
     enable_testing()
-    add_executable(pkmcore_tests tests/main.cpp tests/testing.h tests/editor_tests.cpp)
+    add_executable(pkmcore_tests tests/main.cpp tests/testing.h tests/editor_tests.cpp tests/datequery_tests.cpp)
     target_link_libraries(pkmcore_tests PRIVATE pkmcore)
     target_include_directories(pkmcore_tests PRIVATE tests)
     target_compile_definitions(pkmcore_tests PRIVATE PKMCORE_SPEC_DIR="${PKMCORE_SPEC_DIR}/fixtures")

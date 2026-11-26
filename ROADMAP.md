@@ -48,6 +48,9 @@ mobile and desktop, then a test that both pass.
       search and from the object menu (`pkmcore/editor/collection`, `CollectionView.qml`).
       Missing: multi-select add, add from capture, mobile, a per-key merge for `items` (today
       last writer wins on the whole list).
+- [ ] Date picker for `@` (any day and time from a calendar) on desktop; mobile: the full
+      `@` date words of §4.5 (today it has only today/tomorrow/yesterday), sharing the
+      `pkmcore/editor/datequery` cases as a fixture.
 - [ ] Day timeline: captures, shares and edits with their time (§5).
 - [ ] Editable daily template; time zone and "day starts at" setting with a shared fixture (§20).
 - [ ] Base types **File** and **Table** (§4.1).

@@ -40,6 +40,7 @@
 
 #include "workspace_internal.h"
 #include "mentionquery.h"
+#include "datequery.h"
 
 namespace pkm {
 
@@ -91,6 +92,30 @@ static const QHash<QString, QString> &typeAliases()
 // `@` popup entries, in order: types matching the token (only before `/`), up to [limit]
 // objects (title matches first, then most recent), and "create <title> in <type>".
 // A type entry is {kind:"type", typeId, title (name), slug}; picking it writes `@slug/`.
+QVariantList Workspace::dateMentions(const QString &query) const
+{
+    // "1/12" is 1 December where the short date starts with the day (es), January 12 in en_US
+    const QString fmt = QLocale().dateFormat(QLocale::ShortFormat);
+    const bool dayFirst = fmt.indexOf(QLatin1Char('d')) < fmt.indexOf(QLatin1Char('M'));
+    QVariantList out;
+    for (const mention::DateSuggestion &d : mention::dateSuggestions(query, QDateTime::currentDateTime(), dayFirst)) {
+        out.append(QVariantMap {
+            { QStringLiteral("kind"), QStringLiteral("date") },
+            { QStringLiteral("key"), d.key },
+            { QStringLiteral("iso"), d.iso },
+            { QStringLiteral("hasTime"), d.hasTime },
+            { QStringLiteral("dayOffset"), d.dayOffset },
+            { QStringLiteral("exact"), d.exact },
+        });
+    }
+    return out;
+}
+
+bool Workspace::mayBecomeDate(const QString &query) const
+{
+    return mention::mayBecomeDate(query, QDateTime::currentDateTime());
+}
+
 QVariantList Workspace::mentionSearch(const QString &rawQuery, int limit)
 {
     const QString trimmed = rawQuery.trimmed();

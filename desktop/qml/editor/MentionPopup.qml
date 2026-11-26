@@ -8,6 +8,9 @@ import "../"
 // thumbnail when the referenced object is an image (or has a cover), so references are recognisable.
 // Object mode lists matching types first (picking one writes `@type-slug/` and narrows the list to
 // that type), then up to 10 objects, then "+ Create "x" in <Type>" (first when nothing matches).
+// Text that reads as a date (`@today`, `@mañana 9`, `@now`, `@friday`, `@+3`, `@15:30`, `@1/12`)
+// adds date rows (pkmcore datequery): a whole word or a number first, a word cut short (`@ma`)
+// after the objects.
 
 Popup {
     id: mp
@@ -31,7 +34,15 @@ Popup {
         if (mode === "object") {
             if (!workspace)
                 return []
-            return workspace.mentionSearch(query, 10)
+            const found = workspace.mentionSearch(query, 10)
+            const dates = workspace.dateMentions(query)
+            if (dates.length === 0)
+                return found
+            const exact = dates.filter(d => d.exact), loose = dates.filter(d => !d.exact)
+            const types = found.filter(e => e.kind === "type")
+            const objects = found.filter(e => e.kind !== "type" && !e.createNew)
+            const create = found.filter(e => e.createNew)
+            return types.concat(exact, objects, loose, create)
         }
         if (mode === "tag") {
             if (workspace)
@@ -62,7 +73,38 @@ Popup {
         return true
     }
 
+    // "Tomorrow", "Friday", "In 3 days"… and, under it, the day it lands on.
+    function dateLabel(e) {
+        const d = new Date(Number(e.iso.substr(0, 4)), Number(e.iso.substr(5, 2)) - 1, Number(e.iso.substr(8, 2)))
+        switch (e.key) {
+        case "now": return qsTr("Now")
+        case "today": return e.hasTime ? qsTr("Today at %1").arg(e.iso.substr(11, 5)) : qsTr("Today")
+        case "tomorrow": return e.hasTime ? qsTr("Tomorrow at %1").arg(e.iso.substr(11, 5)) : qsTr("Tomorrow")
+        case "yesterday": return qsTr("Yesterday")
+        case "weekday": {
+            const day = Qt.locale().dayName(d.getDay(), Locale.LongFormat)
+            const name = day.charAt(0).toUpperCase() + day.slice(1)
+            return e.hasTime ? qsTr("%1 at %2").arg(name).arg(e.iso.substr(11, 5)) : name
+        }
+        case "next-week": return qsTr("Next week")
+        case "offset": return e.dayOffset >= 0 ? qsTr("In %n day(s)", "", e.dayOffset) : qsTr("%n day(s) ago", "", -e.dayOffset)
+        case "time": return qsTr("Today at %1").arg(e.iso.substr(11, 5))
+        default: return e.hasTime ? qsTr("%1 at %2").arg(Qt.formatDate(d, Qt.locale(), Locale.ShortFormat)).arg(e.iso.substr(11, 5))
+                                  : Qt.formatDate(d, Qt.locale(), Locale.ShortFormat)
+        }
+    }
+    function dateDetail(e) {
+        const d = new Date(Number(e.iso.substr(0, 4)), Number(e.iso.substr(5, 2)) - 1, Number(e.iso.substr(8, 2)))
+        const day = Qt.formatDate(d, Qt.locale(), "ddd d MMM yyyy")
+        return Theme.caps(e.hasTime ? day + " · " + e.iso.substr(11, 5) : day)
+    }
+
     function activate(e) {
+        if (mode === "object" && e.kind === "date") {
+            pickedDate(e.iso)
+            closeRequested()
+            return
+        }
         if (mode === "object") {
             if (e.kind === "type") {
                 pickedType(e.slug) // the popup stays open on the narrowed query
@@ -106,7 +148,8 @@ Popup {
                 anchors.left: parent.left
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: mp.mode === "object" ? Theme.caps(qsTr("REFERENCE AN OBJECT"))
+                text: mp.mode === "object" ? (mp.entries.some(e => e.kind === "date") ? Theme.caps(qsTr("REFERENCE OR DATE"))
+                                                                                      : Theme.caps(qsTr("REFERENCE AN OBJECT")))
                      : mp.mode === "tag" ? Theme.caps(qsTr("TAG")) : Theme.caps(qsTr("DATE"))
                 color: mp.mode === "object" ? Theme.note : mp.mode === "tag" ? Theme.accent : Theme.journal
                 font.family: Theme.mono
@@ -134,6 +177,7 @@ Popup {
                 width: list.width
                 height: mp.rowHeight
                 readonly property bool isCur: index === mp.currentIndex
+                readonly property bool isDate: modelData.kind === "date"
                 color: isCur ? (Theme.noir ? Theme.accent : Theme.panel3) : "transparent"
 
                 readonly property string assetId: mp.mode === "object"
@@ -157,8 +201,15 @@ Popup {
                         anchors.fill: parent
                         anchors.margins: 1
                         visible: thumb.status !== Image.Ready
-                        color: Theme.typeColor(row.modelData.typeId !== undefined ? row.modelData.typeId : "")
+                        color: row.isDate ? Theme.journal : Theme.typeColor(row.modelData.typeId !== undefined ? row.modelData.typeId : "")
                         opacity: 0.35
+                    }
+                    TintedIcon {
+                        visible: row.isDate
+                        anchors.centerIn: parent
+                        name: row.modelData.hasTime ? "clock" : "calendar"
+                        size: 16
+                        color: Theme.text
                     }
                     PrivateImage {
                         id: thumb
@@ -182,7 +233,8 @@ Popup {
                     anchors.verticalCenterOffset: mp.mode === "object" ? -7 : 0
                     horizontalAlignment: Text.AlignLeft
                     text: mp.mode === "object"
-                              ? (row.modelData.createNew
+                              ? (row.isDate ? mp.dateLabel(row.modelData)
+                                 : row.modelData.createNew
                                  ? qsTr("+ Create \"%1\" in %2").arg(row.modelData.title !== undefined ? row.modelData.title : "")
                                        .arg(row.modelData.typeName !== undefined ? row.modelData.typeName : "")
                                  : row.modelData.kind === "type"
@@ -194,6 +246,7 @@ Popup {
                                  : "#" + row.modelData.name)
                          : row.modelData.label
                     color: (row.isCur && Theme.noir) ? Theme.accentInk
+                         : row.isDate ? Theme.journal
                          : (row.modelData.createNew === true || row.modelData.kind === "type")
                                ? (mp.mode === "tag" ? Theme.accent : Theme.ice)
                                : (mp.mode === "tag" ? Theme.accent : mp.mode === "date" ? Theme.journal : Theme.text)
@@ -211,7 +264,8 @@ Popup {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: 9
                     horizontalAlignment: Text.AlignLeft
-                    text: row.modelData.createNew
+                    text: row.isDate ? mp.dateDetail(row.modelData)
+                          : row.modelData.createNew
                           ? Theme.caps(qsTr("NEW %1")).arg(Theme.typeLabel(row.modelData.typeId !== undefined ? row.modelData.typeId : ""))
                           : row.modelData.kind === "type"
                           ? Theme.caps(qsTr("TYPE · %1")).arg(row.modelData.title)

@@ -175,6 +175,10 @@ public:
     Q_INVOKABLE QVariantMap typeCounts() const;
     Q_INVOKABLE QVariantList searchObjects(const QString &query, int limit = 50);
     Q_INVOKABLE QVariantList mentionSearch(const QString &rawQuery, int limit = 14);
+    // Dates for the `@` list (pkmcore datequery): [{ kind: "date", key, iso, hasTime, dayOffset, exact }].
+    Q_INVOKABLE QVariantList dateMentions(const QString &query) const;
+    // The `@` list stays open across a space while the text may still become a date.
+    Q_INVOKABLE bool mayBecomeDate(const QString &query) const;
     Q_INVOKABLE QVariantList tagSuggestions(const QString &query, int limit = 16) const;
     Q_INVOKABLE QString ensureTagObject(const QString &tagName);
     // An object's tags (spec/object.md: properties.tags = [name]), in their stored order.

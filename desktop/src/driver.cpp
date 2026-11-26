@@ -817,6 +817,54 @@ void keysScenario(QQuickWindow *window)
     });
 }
 
+// Dates after `@` (pkmcore datequery): each query is typed, Enter picks the first row, and the
+// block must hold a date span with that ISO value. Exit code = number of failures.
+void dateMentionScenario(QQuickWindow *window)
+{
+    EditorModel *model = sessionOf(window);
+    if (!model) { QCoreApplication::exit(4); return; }
+    window->requestActivate();
+    model->forceFocus(firstBlockId(window), 0);
+    const QDate today = QDate::currentDate();
+    const QTime now = QTime::currentTime();
+    struct Case { QString typed; QString iso; };
+    auto cases = std::make_shared<QList<Case>>(QList<Case> {
+        { QStringLiteral("hoy"), today.toString(Qt::ISODate) },
+        { QStringLiteral("mañana 9"), today.addDays(1).toString(Qt::ISODate) + QStringLiteral("T09:00") },
+        { QStringLiteral("now"), today.toString(Qt::ISODate) + now.toString(QStringLiteral("'T'HH:mm")) },
+        { QStringLiteral("+3"), today.addDays(3).toString(Qt::ISODate) },
+        { QStringLiteral("15:30"), today.toString(Qt::ISODate) + QStringLiteral("T15:30") },
+    });
+    auto fails = std::make_shared<int>(0);
+    auto step = std::make_shared<std::function<void(int)>>();
+    *step = [=](int i) {
+        if (i >= cases->size()) {
+            QTimer::singleShot(600, window, [=]() {
+                shot(window, shotPath(QStringLiteral("date-mentions.png")));
+                const QString snap = model->debugSnapshot();
+                for (const Case &c : *cases) {
+                    const bool ok = snap.contains(QStringLiteral("\"date\":\"%1\"").arg(c.iso));
+                    if (!ok) ++*fails;
+                    dlog(QStringLiteral("DRIVE date %1 @%2 -> %3").arg(ok ? QStringLiteral("ok") : QStringLiteral("FAIL"), c.typed, c.iso));
+                }
+                if (*fails) dlog(QStringLiteral("DRIVE date snap=%1").arg(snap.left(1200)));
+                QCoreApplication::exit(*fails);
+            });
+            return;
+        }
+        typeText(window, QStringLiteral("@") + cases->at(i).typed);
+        QTimer::singleShot(500, window, [=]() {
+            if (i == 1) shot(window, shotPath(QStringLiteral("date-popup.png")));
+            sendWindowKey(window, Qt::Key_Return, QStringLiteral("\r"));
+            QTimer::singleShot(300, window, [=]() {
+                typeText(window, QStringLiteral(" "));
+                QTimer::singleShot(150, window, [=]() { (*step)(i + 1); });
+            });
+        });
+    };
+    QTimer::singleShot(400, window, [=]() { (*step)(0); });
+}
+
 // Keyboard-first F2/F3 (docs/keyboard.md §5): pages, sidebar and the shortcut sheet by keys only.
 // Each step logs ok/FAIL; exit code = number of failures.
 void navScenario(QQuickWindow *window)
@@ -1141,6 +1189,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 writingScenario(window);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
+            else if (scenario == QLatin1String("date-mention"))
+                dateMentionScenario(window);
             else if (scenario == QLatin1String("nav"))
                 navScenario(window);
             else if (scenario == QLatin1String("editor-keys"))

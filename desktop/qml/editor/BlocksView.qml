@@ -398,7 +398,9 @@ ListView {
             if (ch === "@" || ch === "#") {
                 const rawToken = text.substring(i + 1, caret)
                 const hasSlash = rawToken.indexOf("/") >= 0
-                if (!hasSlash && firstSpaceAfterCaret > i)
+                // a space ends a mention, unless the text is still becoming a date ("@mañana 9")
+                if (!hasSlash && firstSpaceAfterCaret > i
+                        && !(ch === "@" && typeof ws !== "undefined" && ws && ws.mayBecomeDate(rawToken)))
                     return closePopups()
                 if (ch === "#" && firstSpaceAfterCaret > i)
                     return closePopups()

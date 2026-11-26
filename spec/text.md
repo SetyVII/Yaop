@@ -43,7 +43,7 @@ export (looked up by `id` in the received blocks), even if the block is edited.
 | text | `{text, bold?, italic?, underline?, strike?, code?, highlight?, href?, text_color?, bg_color?}`; only active marks (`true`) are emitted |
 | mention | `{text: label, object_id, block_id?}`. No `href`; on import a mention `href` is accepted and dropped. With `block_id` it is a **block reference** (product §14): it points at that block inside `object_id`, the UI jumps there, and the block shows how many references point at it. It still counts as a mention of `object_id` in `links`. There is no transclusion: the referenced block is never rendered inline. |
 | tag | `{text: "#name", tag_id, tag_name}` |
-| date | `{text: iso, date: iso, has_time?}` |
+| date | `{text: iso, date: iso, has_time?}`. `date` is `YYYY-MM-DD`, or with `has_time: true` `YYYY-MM-DDTHH:MM` (local wall-clock time, no zone: "tomorrow at 9" stays 9:00 when you travel). It links to that day's daily note (`daily-` + the first 10 characters). Editors may show the `T` as a space. |
 | inline math | `{text: "￼", type: "math", latex, display?}` |
 
 ## Normalization rules (same on every platform)

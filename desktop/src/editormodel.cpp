@@ -1995,12 +1995,14 @@ void EditorModel::insertDateAt(int row, int caret, QQuickTextDocument *doc, cons
     const int idx = visibleRowToBlockIndex(row);
     if (idx < 0 || !doc)
         return;
-    insertAnchorText(doc, caret, QLatin1Char('@') + isoDate,
-                     QStringLiteral("yaop-date://") + isoDate, "#E8EEFF", "#2B3D7C");
+    // The chip shows what a reloaded note shows (spancodec: the date, "T" read as a space), so
+    // offsets in the document and in the runs agree (an extra "@" put every caret after it off by one).
+    const QString label = QString(isoDate).replace(QLatin1Char('T'), QLatin1Char(' '));
+    insertAnchorText(doc, caret, label, QStringLiteral("yaop-date://") + isoDate, "#E8EEFF", "#2B3D7C");
     m_blocks[idx].runs = runsFromDoc(doc);
     emit dataChanged(index(row), index(row), { HtmlRole, PlainTextRole, HasMentionRole });
     markDirty();
-    setFocus(m_blocks[idx].id, caret + isoDate.length() + 1);
+    setFocus(m_blocks[idx].id, caret + label.length());
 }
 
 void EditorModel::insertLinkAt(int row, int caretStart, int selectionEnd, QQuickTextDocument *doc,
@@ -2159,6 +2161,8 @@ QString EditorModel::debugSnapshot() const
             ro.insert("text", runVisibleText(r));
             if (!r.objectId.isEmpty())
                 ro.insert("object_id", r.objectId);
+            if (!r.date.isEmpty())
+                ro.insert("date", r.date);
             if (!r.textColor.isEmpty())
                 ro.insert("text_color", r.textColor);
             if (!r.bgColor.isEmpty())

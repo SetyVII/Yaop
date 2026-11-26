@@ -122,6 +122,15 @@ Each type defines the template its objects are born with:
 
 - `@name`, `@type/name`, create any type on the fly, chips with preview, the last 3 used first,
   aliases per language (`@image/`, `@today`…).
+- **Dates after `@`** (es/en, accents and case ignored, words may be cut short): `@today`/`@hoy`,
+  `@tomorrow`/`@mañana`, `@yesterday`/`@ayer`, `@now`/`@ahora`/`@hour`/`@hora` (today at this
+  minute), weekdays (`@friday`, `@vie`: the next one), `@next week`/`@próxima semana`, `@+3`,
+  `@-2`, `@+2w`, `@in 3 days`/`@en 2 semanas`, `@hace 3 días`/`@3 days ago`, a time (`@15:30`,
+  `@9am`, `@21h`: today), a day word then a time (`@mañana 9`, `@friday 15:30`) and dates
+  (`@2026-12-01`, `@1/12` day-first or month-first by locale, `@25/12/27 18:00`). A whole word or a
+  number shows before the objects in the list, a cut-short word after them. Desktop: done
+  (`pkmcore/editor/datequery`). Mobile still has only today/tomorrow/yesterday. A calendar picker
+  for any day and time — ROADMAP.
 - A type is written as its slug: lowercase, no accents, `-` for spaces (`@web-links/`,
   `@modelos-de-ia/`); `weblinks` or `web_links` also resolve. The `@` list shows matching types
   first (recently used first, user types included), then up to 10 objects that narrow while

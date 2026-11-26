@@ -4,6 +4,7 @@
 
 namespace pkm::testing {
 int runEditorTests();
+int runDateQueryTests();
 #ifdef PKMCORE_WITH_VAULT
 int runVaultTests();
 #endif
@@ -14,6 +15,7 @@ int main(int argc, char **argv)
     qputenv("QT_QPA_PLATFORM", qgetenv("QT_QPA_PLATFORM").isEmpty() ? "offscreen" : qgetenv("QT_QPA_PLATFORM"));
     QGuiApplication app(argc, argv); // QTextDocument (spancodec) needs a GUI app
     pkm::testing::runEditorTests();
+    pkm::testing::runDateQueryTests();
 #ifdef PKMCORE_WITH_VAULT
     pkm::testing::runVaultTests();
 #endif

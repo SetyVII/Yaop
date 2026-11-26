@@ -30,7 +30,7 @@ QT_QPA_PLATFORM=offscreen ./build/yaop --profile qa --showcase --size 1280x800 -
 `--keylog` prints every key press, the items it was delivered to and the Shortcut that fired
 (why a key "misses"); shortcuts live in one table, `src/keymap.cpp` ([docs/keyboard.md](../docs/keyboard.md)).
 `tools/qa-desktop.sh <dir>` takes screenshots of every page at several window sizes.
-`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`, `keys`, `nav` — pages, sidebar and the shortcut sheet by keys only; logs and shots in
+`--drive <scenario>` drives the real editor (`mention`, `rename`, `rename-ui`, `caret`, `dnd`, `keys`, `nav` — pages, sidebar and the shortcut sheet by keys only, `date-mention` — dates typed after `@`; logs and shots in
 `YAOP_DRIVE_DIR`); `rename` checks that a mention follows a rename of its target (run it
 with `--server`/`--token` too: a sync echo must not undo a title being typed). `rename-ui` does
 the same through keys and clicks only (`YAOP_DRIVE_DAILY=1`: in today's daily note,
@@ -48,7 +48,7 @@ the same through keys and clicks only (`YAOP_DRIVE_DAILY=1`: in today's daily no
 | Duplicate block | `Ctrl+D` |
 | Lock (when the lock is enabled) | `Ctrl+Shift+L` |
 | Markdown at line start | `# ` `- ` `1. ` `[] ` `> ` `! ` `>> ` `---` ```` ``` ```` `$$` |
-| Inline | `/` blocks · `@` mention · `@today` · `#tag` |
+| Inline | `/` blocks · `@` mention · `@today` `@mañana 9` `@now` `@friday` `@+3` `@15:30` `@1/12` · `#tag` |
 
 ## Where things are
 
