@@ -17,6 +17,9 @@ public:
     explicit KeyInput(bool log, QObject *parent = nullptr) : QObject(parent), m_log(log) {}
 
     bool keyboardMode() const { return m_keyboardMode; }
+    // Mouse presses so far: coming back to the window by clicking somewhere wins over restoring
+    // the caret where it was (Main.resumeFocus).
+    Q_INVOKABLE int pressCount() const { return m_pressCount; }
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
@@ -27,6 +30,7 @@ private:
 
     bool m_log = false;
     bool m_keyboardMode = false;
+    int m_pressCount = 0;
 };
 
 } // namespace pkm

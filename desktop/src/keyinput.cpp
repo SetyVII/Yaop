@@ -61,6 +61,7 @@ bool KeyInput::eventFilter(QObject *watched, QEvent *event)
                          qPrintable(describe(watched)));
         break;
     case QEvent::MouseButtonPress:
+        ++m_pressCount;
         setKeyboardMode(false);
         break;
     default:

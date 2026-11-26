@@ -66,7 +66,7 @@ The window is split into **regions**. Exactly one region is active; inside it on
 | F6 / Shift+F6 | Next / previous region (Sidebar → Tabs → Page → Side pane), like browsers. |
 | Ctrl+Shift+E | Focus sidebar (VS Code's explorer). |
 | Ctrl+B | Show/hide sidebar (keeps focus where it was; if it was in the sidebar, goes to Page). |
-| Alt+Tab back into the window | Restores the last focused item of the active region. |
+| Alt+Tab back into the window | Restores the last focused item, with its caret and selection — done (`Main.resumeFocus`, `--drive return`). If Qt put the focus elsewhere it is moved back; if the block was rebuilt meanwhile, by block id. Coming back with a click wins (the click decides). |
 
 Each region remembers its last focused item (`Window.activeFocusItem` captured on change, stored
 per region and per tab). Overlays return focus to the item that opened them when closed.

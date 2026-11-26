@@ -26,6 +26,7 @@
 #include <QTextDocument>
 #include <QTimer>
 #include <QTest>
+#include <QWindow>
 #include <QDate>
 #include <functional>
 #include <memory>
@@ -817,6 +818,83 @@ void keysScenario(QQuickWindow *window)
     });
 }
 
+// Alt+Tab away and back (docs/keyboard.md §3): the caret must be where it was, in the same
+// block, so typing goes on there. Runs in a note and in today's daily note (Ctrl+J).
+// Exit code = number of failures.
+void returnScenario(QQuickWindow *window)
+{
+    auto later = [window](int ms, std::function<void()> f) { QTimer::singleShot(ms, window, std::move(f)); };
+    auto fails = std::make_shared<int>(0);
+    auto leaveAndCome = std::make_shared<std::function<void(QString, std::function<void()>)>>();
+    // `steal`: on the way back the focus lands on another visible item, as Qt sometimes does
+    *leaveAndCome = [=](QString where, std::function<void()> done) {
+        const bool steal = where.endsWith(QLatin1String("-lost"));
+        QQuickItem *f = window->activeFocusItem();
+        const int caret = f ? f->property("cursorPosition").toInt() : -1;
+        const QString block = f && f->parentItem() ? f->parentItem()->property("blockId").toString() : QString();
+        // another window takes the focus (the browser), then this one gets it back
+        static QWindow *other = nullptr;
+        if (!other) { other = new QWindow; other->resize(200, 200); other->show(); }
+        other->requestActivate();
+        later(700, [=]() {
+            window->requestActivate();
+            // `-lost`: right after coming back something else on screen takes the focus (the page)
+            if (steal)
+                later(30, [=]() { if (QQuickItem *p = visibleNamed(window, QStringLiteral("navPages"))) p->forceActiveFocus(); });
+            later(700, [=]() {
+                QQuickItem *g = window->activeFocusItem();
+                const int caret2 = g ? g->property("cursorPosition").toInt() : -1;
+                const QString block2 = g && g->parentItem() ? g->parentItem()->property("blockId").toString() : QString();
+                const bool ok = g && g->objectName() == QLatin1String("blockEdit") && caret2 == caret && block2 == block;
+                if (!ok) ++*fails;
+                dlog(QStringLiteral("DRIVE return %1 %2 before=%3@%4 after=%5@%6 (%7)")
+                         .arg(ok ? QStringLiteral("ok") : QStringLiteral("FAIL"), where, block.left(8)).arg(caret)
+                         .arg(block2.left(8)).arg(caret2)
+                         .arg(g ? QString::fromLatin1(g->metaObject()->className()) + QLatin1Char('/') + g->objectName() : QStringLiteral("-")));
+                done();
+            });
+        });
+    };
+    EditorModel *model = sessionOf(window);
+    if (!model) { QCoreApplication::exit(4); return; }
+    window->requestActivate();
+    model->forceFocus(firstBlockId(window), 0);
+    later(400, [=]() {
+        typeText(window, QStringLiteral("uno dos tres"));
+        sendWindowKey(window, Qt::Key_Left, QString());
+        sendWindowKey(window, Qt::Key_Left, QString());
+        later(700, [=]() {   // after the editor's 400 ms commit
+            (*leaveAndCome)(QStringLiteral("note-middle"), [=]() {
+                typeText(window, QStringLiteral("X"));
+                later(700, [=]() {
+                    const QString snap = model->debugSnapshot();
+                    const bool typed = snap.contains(QLatin1String("uno dos trXes"));
+                    if (!typed) ++*fails;
+                    dlog(QStringLiteral("DRIVE return %1 typing-goes-on %2").arg(typed ? QStringLiteral("ok") : QStringLiteral("FAIL"), snap.left(300)));
+                    // leave right after typing, before the commit
+                    typeText(window, QStringLiteral("Y"));
+                    (*leaveAndCome)(QStringLiteral("note-just-typed"), [=]() {
+                    (*leaveAndCome)(QStringLiteral("note-lost"), [=]() {
+                        QTest::keyClick(static_cast<QWindow *>(window), Qt::Key_J, Qt::ControlModifier);
+                        later(900, [=]() {
+                            typeText(window, QStringLiteral("diario"));
+                            later(700, [=]() {
+                                (*leaveAndCome)(QStringLiteral("daily-note"), [=]() {
+                                (*leaveAndCome)(QStringLiteral("daily-note-lost"), [=]() {
+                                    shot(window, shotPath(QStringLiteral("return.png")));
+                                    QCoreApplication::exit(*fails);
+                                });
+                                });
+                            });
+                        });
+                    });
+                    });
+                });
+            });
+        });
+    });
+}
+
 // Dates after `@` (pkmcore datequery): each query is typed, Enter picks the first row, and the
 // block must hold a date span with that ISO value. Exit code = number of failures.
 void dateMentionScenario(QQuickWindow *window)
@@ -1189,6 +1267,8 @@ int runDrive(QQuickWindow *window, Workspace *ws, const QString &scenario)
                 writingScenario(window);
             else if (scenario == QLatin1String("journal-record"))
                 journalRecordScenario(window, ws);
+            else if (scenario == QLatin1String("return"))
+                returnScenario(window);
             else if (scenario == QLatin1String("date-mention"))
                 dateMentionScenario(window);
             else if (scenario == QLatin1String("nav"))

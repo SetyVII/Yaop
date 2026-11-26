@@ -293,7 +293,57 @@ ApplicationWindow {
         if (typeof item.focusDefault === "function") item.focusDefault()
         else item.forceActiveFocus()
     }
-    onActiveChanged: if (active) Qt.callLater(ensureFocus)
+    // Coming back to the window (Alt+Tab from the browser) puts you where you were: the same field,
+    // block, caret and selection. Qt usually restores the focused item by itself, but not always
+    // (Wayland, a block redrawn while away, focus taken by the page): then it is done here, by
+    // block id when the block's item was rebuilt.
+    property var resumeItem: null    // the last focused item while the window was active
+    property var resumeState: null   // saved when the window lost the focus
+    function saveResume() {
+        const it = resumeItem
+        if (!it || !it.visible) { resumeState = null; return }
+        const st = { item: it, location: location }
+        if (it.cursorPosition !== undefined) {
+            st.caret = it.cursorPosition
+            st.selStart = it.selectionStart
+            st.selEnd = it.selectionEnd
+        }
+        for (let p = it.parent; p; p = p.parent) {
+            if (!st.blockId && typeof p.blockId === "string" && p.blockId.length > 0) st.blockId = p.blockId
+            if (p.objectName === "blocks" && p.session) { st.session = p.session; break }
+        }
+        resumeState = st
+    }
+    property int resumePresses: 0
+    function resumeFocus() {
+        if (keyInput.pressCount() !== resumePresses) return   // you came back with a click: it decides
+        const st = resumeState
+        if (!st || st.location !== location) { ensureFocus(); return }
+        const it = st.item   // null once destroyed
+        if (it && it.visible) {
+            if (app.activeFocusItem !== it) it.forceActiveFocus(Qt.ActiveWindowFocusReason)
+            if (st.caret !== undefined && it.cursorPosition !== undefined) {
+                if (st.selEnd > st.selStart) {
+                    if (it.selectionStart !== st.selStart || it.selectionEnd !== st.selEnd) {
+                        const backwards = st.caret === st.selStart
+                        it.select(backwards ? st.selEnd : st.selStart, backwards ? st.selStart : st.selEnd)
+                    }
+                } else if (it.cursorPosition !== st.caret) {
+                    it.cursorPosition = Math.min(st.caret, it.length !== undefined ? it.length : st.caret)
+                }
+            }
+            return
+        }
+        if (st.blockId && st.session) { st.session.forceFocus(st.blockId, st.caret !== undefined ? st.caret : 0); return }
+        ensureFocus()
+    }
+    onActiveChanged: {
+        if (!active) { saveResume(); return }
+        resumePresses = keyInput.pressCount()
+        Qt.callLater(resumeFocus)
+        resumeAgain.restart()   // some compositors hand the keyboard over a moment later
+    }
+    Timer { id: resumeAgain; interval: 150; onTriggered: if (app.active) app.resumeFocus() }
     // Opening a place (Enter, Ctrl+K, Ctrl+D, back, a tab) puts the caret in it: the page's default,
     // else the item you were on the last time, else (keyboard) the page's first item.
     function currentPageItem() {
@@ -357,6 +407,7 @@ ApplicationWindow {
     }
     onActiveFocusItemChanged: {
         const it = activeFocusItem
+        if (active && it && it !== contentItem && it.parent) resumeItem = it
         if (!keyNav.isStop(it)) return
         const name = regionNameOf(it)
         if (name) navMemory[navKeyOf(name)] = it
