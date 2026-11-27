@@ -41,7 +41,7 @@ QStringList containedObjectIds(const QVector<Block> &blocks, const QString &self
             out << id;
     };
     for (const Block &b : blocks) {
-        if (b.type == QLatin1String(BlockType::Embed))
+        if (b.type == QLatin1String(BlockType::Embed) || b.type == QLatin1String(BlockType::Bookmark))
             add(b.objectId);
         for (const Run &r : b.runs)
             add(r.objectId);

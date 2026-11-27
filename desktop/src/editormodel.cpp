@@ -557,6 +557,10 @@ QString EditorModel::thumbnailUrl() const
     const QString t = m_object.propertyString(QStringLiteral("thumbnail_url"));
     if (!t.isEmpty())
         return t;
+    // Only a Web object's own bookmark stands in for its cover; a link card pasted in a note or
+    // journal must not become that note's banner.
+    if (m_object.typeId != QLatin1String(TypeId::Web))
+        return {};
     for (const Block &b : m_blocks) {
         if (b.type == BlockType::Bookmark && !b.thumbnailUrl.isEmpty())
             return b.thumbnailUrl;

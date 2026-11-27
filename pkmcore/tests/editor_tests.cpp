@@ -1029,6 +1029,8 @@ static void testTextStats()
     CHECK(s.characters == blocks[0].plainText().size() + blocks[1].plainText().size() + blocks[5].plainText().size(),
           "characters of the text, mentions as they read");
     CHECK(pkm::containedObjectIds(blocks, "self") == QStringList({ "ana", "book" }), "mentions and embeds, first seen first, no repeats");
+    Block card = Block::makeParagraph("c"); card.type = BlockType::Bookmark; card.objectId = QStringLiteral("web");
+    CHECK(pkm::containedObjectIds({ embed, card }, "self") == QStringList({ "book", "web" }), "a link card contains its web link");
     CHECK(pkm::containedObjectIds(blocks, "ana") == QStringList({ "book" }), "an object never contains itself");
 }
 
